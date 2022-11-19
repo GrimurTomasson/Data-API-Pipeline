@@ -1,0 +1,37 @@
+version: '1.0' # Version number for this config
+
+database:
+  name: 'SOME-FANCY-API' # We require the name of the target database and project folder to be the same.
+  server: '?' # Including port number if not default
+  type: SQL-Server
+
+pipeline-scripts: # The relative location is set in GenerateAPI.py, it is needed before the config has been processed.
+  git-branch-name: 'main' # We pull the current version of this branch if it is set. 
+
+latest:
+    name: 'Nustada'
+    relative-path: '/dbt/nustada'
+
+history:
+  snapshot-date-column: 'sogu_dagur'
+  projects:
+    - project:
+        source-schema: 'Nustada'
+        snapshot-schema: 'Private_snapshot'
+        public-schema: 'Saga'
+    
+# Used for both documentation creation and validation (BG/DD/dbt models)
+public-schemas: # Schemas need to be case-correct
+  - 'Nustada'
+  - 'Saga'
+  
+documentation:
+    publish-to: 'Confluence' # Only supported target right now!
+    publish:
+        data-health-report: True
+        definition-health-report: True
+        user-documentation: True
+
+verbose: False # Flip this switch when analyzing problems.
+
+
