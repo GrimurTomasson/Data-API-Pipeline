@@ -15,6 +15,14 @@ supportedDatabases = ['SQL-Server']
 maxConfigVersion = float(1.99999)
 separator = "-" * 120
 
+def initialize() -> None:
+    if 'config' in globals():
+        return
+    print ('Initializing APISupport')
+    get_config()
+    get_target_database_interface()
+    get_verbose_print()
+
 def get_verbose_print () -> any:
     return print if config["verbose"] else lambda *a, **k: None
 
