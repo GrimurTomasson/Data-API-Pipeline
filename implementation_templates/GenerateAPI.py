@@ -23,7 +23,7 @@ def refreshPipelineScripts(workingDirectory, pipelineBranch):
     return
 
 def main():
-    APISupport.get_config() # Fá villuna strax ef þetta er ekki í lagi
+    APISupport.initialize () # Fá villuna strax ef þetta er ekki í lagi
     
     workingDirectory = os.getcwd()
     APISupport.print_v(f"Starting location: {workingDirectory}")
