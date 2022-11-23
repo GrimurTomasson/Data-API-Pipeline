@@ -5,11 +5,9 @@ import shutil
 import APISupport
 import CreateSnapshots
 import GenerateDataHealthReportData
-import GenerateDataHealthReport
 import EnrichMetadataCatalog
 import GenerateDefinitionHealthReportData
 import GenerateDocumentationData
-
 
 separator = "-" * 120
 
@@ -85,9 +83,11 @@ def run ():
     
     print_bordered_comment ("Generating data health report data")
     GenerateDataHealthReportData.run () # Reads dbt test results and returns a transformed and enriched version for report generation. Skilar skrá: 2
+    
     print_bordered_comment ("Generating data health report")
     dataHealthReportFilename = "api_data_health_report.md"
     APISupport.generate_markdown_document ("api_data_health_report_template.md", APISupport.api_data_health_report_data_file_info.name, dataHealthReportFilename)
+    
     print_bordered_comment ("Publishing data health report")
     publish_to_confluence (dataHealthReportFilename, 'data-health-report') # Skipta út fyrir almennari útgáfu! Sjá publish fall.
 
@@ -96,22 +96,25 @@ def run ():
     
     print_bordered_comment ("Generating definition health report data")
     GenerateDefinitionHealthReportData.run () # Skilar skrá: 6
+    
     print_bordered_comment ("Generating definition health report")
     definitionHealthReportFilename = "api_definition_health_report.md"
     APISupport.generate_markdown_document ("api_definition_health_report_template.md", APISupport.api_definition_health_report_data_file_info.name, definitionHealthReportFilename)
+    
     print_bordered_comment ("Publishing definition health report")
     publish_to_confluence (definitionHealthReportFilename, 'definition-health-report')
     
     print_bordered_comment ("Generating user documentation data")
     GenerateDocumentationData.run() # Skilar skrá 7
+    
     documentationFilename = "api_documentation.md"
     print_bordered_comment ("Generating user documentation")
     APISupport.generate_markdown_document ("api_documentation_template.md", APISupport.api_documentation_data_file_info.name, documentationFilename, True)
+    
     print_bordered_comment ("Publishing user documentation")
     publish_to_confluence (documentationFilename, 'user-documentation')
 
     print_bordered_comment (f"API pipeline finished in {APISupport.get_execution_time_in_seconds (startTime)} seconds!")
-
     return 0
 
 def main ():

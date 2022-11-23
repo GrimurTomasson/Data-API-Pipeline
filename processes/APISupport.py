@@ -173,9 +173,6 @@ def write_file (contents, filename) -> None:
         f.write (contents)
     return
 
-def generate_count_and_percentage_dictionary (teljari, nefnari, aukastafir=2) -> dict[str, any]:
-    return {'count':teljari, 'percentage':to_percentage (teljari, nefnari, aukastafir) }
-
 class EnhancedJSONEncoder(json.JSONEncoder):
         def default(self, o):
             if dataclasses.is_dataclass(o):
