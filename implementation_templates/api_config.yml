@@ -1,12 +1,13 @@
 version: '1.0' # Version number for this config
 
-database:
-  name: 'SOME-FANCY-API' # We require the name of the target database and project folder to be the same.
-  server: '?' # Including port number if not default
-  type: SQL-Server
-
-pipeline-scripts: # The relative location is set in GenerateAPI.py, it is needed before the config has been processed.
+data-api-pipeline: # The relative location is set in GenerateAPI.py, it is needed before the config has been processed.
+  relative-location: '../../gt/Data-API-Pipeline/processes' # Update the relative path as needed (../..)
   git-branch-name: 'main' # We pull the current version of this branch if it is set. 
+
+database:
+  name: 'RVK-DATA-REFERENCE-API' # We require the name of the target database and project folder to be the same.
+  server: 'instdataservice.rvk.borg,64839' # Including port number if not default
+  type: SQL-Server
 
 latest:
     name: 'Nustada'

@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 
 import APISupport
 
@@ -29,16 +30,27 @@ def get_column_description(jsonData, modelName, columnName):
         APISupport.print_v("\t\tNo column description found !!!")
         return ''
 
-def run():
-    workingDirectory = os.getcwd()
-    targetDatabase = APISupport.get_target_database_interface()
-    path = f"{workingDirectory}{APISupport.config['latest']['relative-path']}/target/"
+def run ():
+    targetDatabase = APISupport.get_target_database_interface ()
+
+    dbt_output_path = f"{APISupport.latest_path}/target/"
+    source_manifest_file = os.path.join (dbt_output_path, "manifest.json")
+    source_catalog_file = os.path.join (dbt_output_path, "catalog.json")
+
+    target_manifest_file = os.path.join (APISupport.runFileDirectory, "3_dbt_manifest.json")
+    target_catalog_file = os.path.join (APISupport.runFileDirectory, "4_dbt_catalog.json")
+
+    APISupport.print_v (f"Manifest - Source: {source_manifest_file} - Target: {target_manifest_file}")
+    APISupport.print_v (f"Catalog - Source: {source_catalog_file} - Target: {target_catalog_file}")
+
+    shutil.copy2 (source_manifest_file, target_manifest_file)
+    shutil.copy2 (source_catalog_file, target_catalog_file)
+    
+    with open (target_catalog_file, encoding="utf-8") as json_file:
+        catalogJson = json.load (json_file)
     #
-    with open(f"{path}catalog.json", encoding="utf-8") as json_file:
-        catalogJson = json.load(json_file)
-    #
-    with open(f"{path}manifest.json", encoding="utf-8") as json_file:
-        manifestJson = json.load(json_file)
+    with open (target_manifest_file, encoding="utf-8") as json_file:
+        manifestJson = json.load (json_file)
     #
     for relationKey in catalogJson['sources']:
         relation = catalogJson['sources'][relationKey]
@@ -50,16 +62,16 @@ def run():
             tableName = relation['metadata']['name']
             columnName = column ['name']
             APISupport.print_v(f"\tSchema name: {schemaName} - Table name: {tableName} - Column name: {columnName}")
-            #
+            
             typeInfoData = targetDatabase.get_type_info_column_data (schemaName, tableName, columnName)
             column['database_info'] = typeInfoData
-            #
+            
             glossaryData = targetDatabase.get_glossary_column_data(schemaName, tableName, columnName)
             column['glossary_info'] = glossaryData
             # Add logic
-    #
+    
     jsonData = json.dumps(catalogJson, indent=4)
-    APISupport.write_file (jsonData, f"{workingDirectory}/enriched_catalog.json")
+    APISupport.write_file (jsonData, APISupport.enriched_dbt_catalog_file_info.qualified_name)
     return 0
 
 def main():

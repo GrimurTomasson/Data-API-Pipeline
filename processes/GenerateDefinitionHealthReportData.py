@@ -94,11 +94,11 @@ def generate_health_data(enrichedCatalogJson) -> HealthReport:
 
 def run() -> int:
     workingDirectory = os.getcwd()
-    with open(f"{workingDirectory}/enriched_catalog.json", encoding="utf-8") as json_file:
+    with open (APISupport.enriched_dbt_catalog_file_info.qualified_name, encoding="utf-8") as json_file:
         enrichedCatalogJson = json.load(json_file)
-    apiHealth = generate_health_data(enrichedCatalogJson)
-    jsonData = json.dumps(apiHealth, indent=4, cls=APISupport.EnhancedJSONEncoder)
-    APISupport.write_file (jsonData, f"{workingDirectory}/api_definition_health_report_data.json")
+    apiHealth = generate_health_data (enrichedCatalogJson)
+    jsonData = json.dumps (apiHealth, indent=4, cls=APISupport.EnhancedJSONEncoder)
+    APISupport.write_file (jsonData, APISupport.api_definition_health_report_data_file_info.qualified_name) 
     return 0
 
 def main():

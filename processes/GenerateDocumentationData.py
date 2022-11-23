@@ -35,14 +35,13 @@ def generate_documentation (enrichedCatalogJson) -> Documentation:
     return docs
 
 def run ():
-    workingDirectory = os.getcwd ()
-    with open(f"{workingDirectory}/enriched_catalog.json", encoding="utf-8") as json_file:
+    with open (APISupport.enriched_dbt_catalog_file_info.qualified_name, encoding="utf-8") as json_file:
         enrichedCatalogJson = json.load (json_file)
     
     documentation = generate_documentation (enrichedCatalogJson)
 
     jsonData = json.dumps (documentation, indent=4, cls=APISupport.EnhancedJSONEncoder)
-    APISupport.write_file (jsonData, f"{workingDirectory}/api_documentation_data.json")
+    APISupport.write_file (jsonData, APISupport.api_documentation_data_file_info.qualified_name)
     return 0
 
 def main ():

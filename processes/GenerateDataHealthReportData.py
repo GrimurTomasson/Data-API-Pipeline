@@ -40,8 +40,8 @@ def retrieve_relation_cardinality (databaseServer, api, project, filePath) -> in
         cardinalityMap[tableName] = rows
         return rows
 
-def retrieve_json_object (filename):
-    testLog = APISupport.get_file_contents (filename)
+def retrieve_json_object ():
+    testLog = APISupport.get_file_contents (APISupport.dbt_test_output_file_info.qualified_name)
     # Convert the log file contents into legal json
     testLog = testLog.replace ("\n", "").replace ("\r", "")
     testLog = "{\"entries\": [" + testLog.replace ("}{", "},{") + "]}"
@@ -73,7 +73,7 @@ def create_relation_stats (projectName: str, testList: list[TestEntry]) -> list[
     #print(f"Relation stats: {stats}")
     return stats
 
-def enrich_errors (errorList, fileMap, projectName, workingDirectory) -> list[DataHealthClasses.Error]:
+def enrich_errors (errorList, fileMap, projectName) -> list[DataHealthClasses.Error]:
     databaseName = APISupport.config['database']['name']
     databaseServer = APISupport.config['database']['server']
     
@@ -82,19 +82,19 @@ def enrich_errors (errorList, fileMap, projectName, workingDirectory) -> list[Da
         filePath = fileMap[error.sql_filename]
         if len (filePath) > 0:
             fRelativePath = f"{projectName}\{filePath}"
-            fPath = f"{workingDirectory}/dbt/{fRelativePath}" # Á þetta að koma úr config?
+            fPath = f"{APISupport.workingDirectory}/dbt/{fRelativePath}" # Á þetta að koma úr config?
             sql = APISupport.get_file_contents (fPath).strip ()
             noRows = retrieve_relation_cardinality (databaseServer, databaseName, projectName, fPath)
             relationName = get_relation_name (fPath)
 
-            error.name = relationName # Yfirskrift ! Skoða betur.
+            error.relation_name = relationName 
             error.rows_in_relation = noRows
             error.rows_on_error_percentage = APISupport.to_percentage (error.rows_on_error, noRows, 4)
             error.query_path = fRelativePath
             error.sql = sql
     return errorList
 
-def retrieve_data(jsonObject, workingDirectory) -> DataHealthClasses.HealthReport:
+def retrieve_data(jsonObject) -> DataHealthClasses.HealthReport:
     healthReport = DataHealthClasses.HealthReport (None, DataHealthClasses.Stats(None, list[DataHealthClasses.RelationStats]), list[DataHealthClasses.Error]())
     fileMap = {}
     testList = [] #list[TestEntry]
@@ -133,24 +133,25 @@ def retrieve_data(jsonObject, workingDirectory) -> DataHealthClasses.HealthRepor
 
     # Enrichment
     healthReport.stats.relation = create_relation_stats (projectName, testList)
-    healthReport.errors = enrich_errors (healthReport.errors, fileMap, projectName, workingDirectory)
+    healthReport.errors = enrich_errors (healthReport.errors, fileMap, projectName)
     
     return healthReport
 
 def run():
-    workingDirectory = os.getcwd ()
+    APISupport.initialize () # Til þess að geta keyrt hverja skriftu sjálfstætt
     # Process input params!
     startTime = APISupport.get_current_time ()
-    jsonObject = retrieve_json_object (f"{workingDirectory}/test_results.json") 
+    jsonObject = retrieve_json_object () 
     print(f"Json object retrieved in {APISupport.get_execution_time_in_seconds (startTime)} seconds")
     # Extract data from json object
     startTime = APISupport.get_current_time ()
-    apiHealth = retrieve_data (jsonObject, workingDirectory)
+    apiHealth = retrieve_data (jsonObject)
     print(f"Data retrieved from json in {APISupport.get_execution_time_in_seconds (startTime)} seconds")
     # Create results
     startTime = APISupport.get_current_time ()
     jsonData = json.dumps (apiHealth, indent=4, cls=APISupport.EnhancedJSONEncoder)
-    APISupport.write_file (jsonData, f"{workingDirectory}/api_data_health_report_data.json")
+    APISupport.print_v (f"Writing data health report data to: {APISupport.api_data_health_report_data_file_info.qualified_name}")
+    APISupport.write_file (jsonData, APISupport.api_data_health_report_data_file_info.qualified_name)
     print(f"Enriched test data written to disk in {APISupport.get_execution_time_in_seconds (startTime)} seconds")
     return 0
 
