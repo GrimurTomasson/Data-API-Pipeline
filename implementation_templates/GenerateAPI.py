@@ -32,7 +32,7 @@ def main():
     if len (pipelineBranch) > 0:
         refreshPipelineScripts(workingDirectory, pipelineBranch)
     
-    GenerateAPIShared.run()
+    GenerateAPIShared.generate_api()
     os.chdir(workingDirectory)
     return 0
 

@@ -7,7 +7,7 @@ data-api-pipeline: # The relative location is set in GenerateAPI.py, it is neede
 
 database:
   name: 'REFERENCE-API' # We require the name of the target database and project folder to be the same.
-  server: 'some_db_server' # Including port number if not default
+  server: 'some_db' # Including port number if not default
   type: SQL-Server
 
 latest:
