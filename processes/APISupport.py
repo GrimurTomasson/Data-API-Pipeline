@@ -12,6 +12,9 @@ from jinja2 import Environment, FileSystemLoader
 import TargetDatabaseInterface
 from TargetDatabase_SQLServer import TargetDatabase_SQLServer
 
+import TargetKnowledgeBaseInterface
+from TargetKnowledgeBase_Confluence import TargetKnowledgeBase_Confluence
+
 @dataclass
 class FileInfo:
     name: str
@@ -19,6 +22,7 @@ class FileInfo:
     qualified_name: str
 
 supportedDatabases = ['SQL-Server']
+supportedKnowledgebases = ['Confluence']
 maxConfigVersion = float(1.99999)
 separator = "-" * 120
 
@@ -45,6 +49,7 @@ def initialize() -> None:
     print_v (f"\n{config}\n")
 
     get_target_database_interface ()
+    get_target_knowledge_base_interface ()
 
     # Setting globals to simplify the rest of the code
     global scriptDirectory
@@ -105,23 +110,35 @@ def get_config () -> any:
 
     return process_config ()
 
+def process_target_knowledge_base_interface () -> TargetKnowledgeBaseInterface:
+    global targetKnowledgeBaseInterface
+    publishTo = config['documentation']['publish-to']
+    if len (publishTo) > 0 and publishTo not in supportedKnowledgebases:
+        print (f"Documentation target is not supported, value: {publishTo} - Supported values: {supportedKnowledgebases}")
+        raise
+    
+    if publishTo == 'Confluence':
+        targetKnowledgeBaseInterface = TargetKnowledgeBase_Confluence ()
+    return targetKnowledgeBaseInterface
+
+def get_target_knowledge_base_interface () -> TargetKnowledgeBaseInterface:
+    if 'targetKnowledgeBaseInterface' in globals ():
+        return targetKnowledgeBaseInterface
+    return process_target_knowledge_base_interface ()
+
 def process_target_database_interface () -> TargetDatabaseInterface:
     global targetDatabaseInterface 
-    supportedDatabase = False
     targetDatabaseName = config['database']['type']
-    for database in supportedDatabases:
-        if targetDatabaseName == database:
-            supportedDatabase = True
-    
-    if not supportedDatabase:
+    if len (targetDatabaseName) and targetDatabaseName not in supportedDatabases:
         print(f"Database in config is not support by pipeline. Config: {config['database']['type']}. Supported databases: {supportedDatabases}")
         raise
+    
     if targetDatabaseName == 'SQL-Server':    
-        targetDatabaseInterface = TargetDatabase_SQLServer()
+        targetDatabaseInterface = TargetDatabase_SQLServer ()
     return targetDatabaseInterface
 
-def get_target_database_interface() -> TargetDatabaseInterface:
-    if 'targetDatabaseInterface' in globals():
+def get_target_database_interface () -> TargetDatabaseInterface:
+    if 'targetDatabaseInterface' in globals ():
         return targetDatabaseInterface
     return process_target_database_interface ()
 
@@ -172,6 +189,16 @@ def write_file (contents, filename) -> None:
     with open (filename, mode="w", encoding="utf-8") as f:
         f.write (contents)
     return
+
+def run_operation (startingLocation, location, operation, captureOutput = False):
+    startTime = get_current_time ()
+    print (separator)
+    print_v (f"Starting location: {startingLocation} - Location: {location} - Operation: {operation}")
+    os.chdir (location)
+    output = subprocess.run (operation, capture_output=captureOutput, text=True)
+    os.chdir (startingLocation)
+    print_v (f"Execution time: {get_execution_time_in_seconds(startTime)} seconds.")
+    return output
 
 class EnhancedJSONEncoder(json.JSONEncoder):
         def default(self, o):
