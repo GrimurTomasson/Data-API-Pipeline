@@ -169,12 +169,6 @@ def generate_markdown_document (templateFilename, jsonDataFilename, targetFilena
     print (f"Markdown document has been generated!")
     return
 
-def get_execution_time_in_seconds(start_time) -> float:
-    return timedelta(seconds=get_current_time() - start_time).total_seconds()
-
-def get_current_time() -> float:
-    return time.monotonic()
-
 def to_percentage(teljari, nefnari, aukastafir = 2) -> int:
     if nefnari == 0:
         return 0
@@ -191,13 +185,10 @@ def write_file (contents, filename) -> None:
     return
 
 def run_operation (startingLocation, location, operation, captureOutput = False):
-    startTime = get_current_time ()
-    print (separator)
     print_v (f"Starting location: {startingLocation} - Location: {location} - Operation: {operation}")
     os.chdir (location)
     output = subprocess.run (operation, capture_output=captureOutput, text=True)
     os.chdir (startingLocation)
-    print_v (f"Execution time: {get_execution_time_in_seconds(startTime)} seconds.")
     return output
 
 class EnhancedJSONEncoder(json.JSONEncoder):
