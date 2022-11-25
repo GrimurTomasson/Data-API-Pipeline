@@ -4,9 +4,13 @@ from pkgutil import get_data
 import re
 from dataclasses import dataclass
 
-import Decorators
-import APISupport
-from SharedDataClasses import CountPercentage
+from Shared.Decorators import output_headers, execution_time
+from Shared.Config import Config
+from Shared.Utils import Utils
+from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
+from Shared.DataClasses import CountPercentage
+import Shared.Json
 
 @dataclass
 class HeaderExecution:
@@ -68,37 +72,55 @@ class DataHealthReport: # Main class
         error: int
 
     def __init__ (self) -> None:
-        APISupport.initialize ()
         self._reportFilename = "api_data_health_report.md"
-        self._tableNameRegEx = re.compile('[a-z\_0-9]+\.yml', re.IGNORECASE)
+        self._tableNameRegEx = re.compile ('[a-z\_0-9]+\.yml', re.IGNORECASE)
         self._cardinalityMap = {}
+
+        self._config = Config ()
+        self._utils = Utils ()
         
-        self._projectName = APISupport.config['latest']['name']
-        self._databaseServer = APISupport.config['database']['server']
-        self._databaseName = APISupport.config['database']['name']
-        self._databaseConnection = APISupport.get_database_connection (self._databaseServer, self._databaseName)
+        self._projectName = self._config['latest']['name']
+        self._projectRelativePath = self._config['latest']['relative-path']
+        self._utils.print_v (f"Project name: {self._projectName} - Relative path: {self._projectRelativePath}")
+
+        self._targetDatabase = TargetDatabaseFactory ().get_target_database ()
+        self._databaseConnection = self._targetDatabase.get_connection ()
+        
+        self._targetKnowledgeBase = TargetKnowledgeBaseFactory ().get_target_knowledge_base ()
         return
 
     def __get_relation_name (self, filePath) -> str:
         return self._tableNameRegEx.search (filePath).group ()[:-4]
 
-    def __get_relation_name_from_test_name (self, projectName, testName) -> str:
-        tableNameFromTestRegEx = re.compile (f"{projectName}\_[a-z\_]+\_v[0-9]+", re.IGNORECASE) # source_is_true_Nustada_bekkur_v1_lokadagur__lokadagur_upphafsdagur
-        return tableNameFromTestRegEx.search (testName).group ()[len (projectName)+1:]
+    def __get_relation_name_from_test_name (self, testName) -> str:
+        self._utils.print_v (f"project: {self._projectName} - test name: {testName}")
+        tableNameFromTestRegEx = re.compile (f"{self._projectName}\_[a-z\_]+\_v[0-9]+", re.IGNORECASE) # source_is_true_Nustada_bekkur_v1_lokadagur__lokadagur_upphafsdagur
+        # ToDo: Búa til mynstur sem höndlar fleiri útgáfur, t.d.: project: Latest - test name: accepted_values_Address_fiber_optic_state_v1_L_apartment_number__MISSING_FROM_SOURCE
+        searchResults = tableNameFromTestRegEx.search (testName)
+        if searchResults == None:
+                return ''
+        return searchResults.group ()[len (self._projectName)+1:]
 
-    def __retrieve_relation_cardinality (self, project, filePath) -> int:
+    def __retrieve_relation_cardinality (self, filePath) -> int:
         tableName = self.__get_relation_name (filePath)
         if tableName in self._cardinalityMap:
             return self._cardinalityMap[tableName]
         else:
-            rows = self._databaseConnection.cursor ().execute (f"SELECT COUNT(1) AS fjoldi FROM {project}.{tableName}").fetchval ()
-            print (f"\tCardinality for table {project}.{tableName} retrieved - cardinality: {rows}")
+            rows = -1
+            try:
+                rows = self._databaseConnection.cursor ().execute (f"SELECT COUNT(1) AS fjoldi FROM {self._projectName}.{tableName}").fetchval ()
+                print (f"\tCardinality for table {self._projectName}.{tableName} retrieved - cardinality: {rows}")
+                
+            except Exception as ex:
+                print (f"Failure to retrieve relation cardinality: {ex}")
+                
             self._cardinalityMap[tableName] = rows
             return rows
 
-    @Decorators.execution_time(tabCount=1)
+    @execution_time(tabCount=1)
     def __retrieve_json_object (self) -> any:
-        testLog = APISupport.get_file_contents (APISupport.dbt_test_output_file_info.qualified_name)
+        """Retrieving json file from disk and fixing it"""
+        testLog = self._utils.get_file_contents (self._config.dbtTestOutputFileInfo.qualified_name)
         # Convert the log file contents into legal json
         testLog = testLog.replace ("\n", "").replace ("\r", "")
         testLog = "{\"entries\": [" + testLog.replace ("}{", "},{") + "]}"
@@ -109,7 +131,7 @@ class DataHealthReport: # Main class
         relationStatMap = {}
         # Aggregating results
         for test in testList:
-            relation = self.__get_relation_name_from_test_name (self._projectName, test.testName)
+            relation = self.__get_relation_name_from_test_name (test.testName)
             if relation in relationStatMap:
                 relationStatMap[relation] = DataHealthReport.StatsEntry (relationStatMap[relation].ok + test.ok, relationStatMap[relation].error + test.error)
             else:
@@ -122,9 +144,9 @@ class DataHealthReport: # Main class
             error = relationStatMap[key].error
             total = ok + error     
 
-            okStats = CountPercentage (ok, APISupport.to_percentage (ok, total, 2))
-            errorStats =CountPercentage (error, APISupport.to_percentage (error, total, 2))
-            relStats = RelationStats(name = key, ok = okStats, error = errorStats, total = total)
+            okStats = CountPercentage (ok, self._utils.to_percentage (ok, total, 2))
+            errorStats = CountPercentage (error, self._utils.to_percentage (error, total, 2))
+            relStats = RelationStats (name = key, ok = okStats, error = errorStats, total = total)
 
             stats.append (relStats)
         #print(f"Relation stats: {stats}")
@@ -136,20 +158,25 @@ class DataHealthReport: # Main class
             filePath = fileMap[error.sql_filename]
             if len (filePath) > 0:
                 fRelativePath = f"{self._projectName}\{filePath}"
-                fPath = f"{APISupport.workingDirectory}/dbt/{fRelativePath}" # Á þetta að koma úr config?
-                sql = APISupport.get_file_contents (fPath).strip ()
-                noRows = self.__retrieve_relation_cardinality (self._projectName, fPath)
+                fPath = f"{self._config.workingDirectory}/{self._projectRelativePath}/{filePath}" 
+
+                self._utils.print_v (f"fRelativePath: {fRelativePath}")
+                self._utils.print_v (f"fPath: {fPath}")
+
+                sql = self._utils.get_file_contents (fPath).strip ()
+                noRows = self.__retrieve_relation_cardinality (fPath)
                 relationName = self.__get_relation_name (fPath)
 
                 error.relation_name = relationName 
                 error.rows_in_relation = noRows
-                error.rows_on_error_percentage = APISupport.to_percentage (error.rows_on_error, noRows, 4)
+                error.rows_on_error_percentage = self._utils.to_percentage (error.rows_on_error, noRows, 4)
                 error.query_path = fRelativePath
                 error.sql = sql
         return errorList
 
-    @Decorators.execution_time(tabCount=1)
+    @execution_time(tabCount=1)
     def __retrieve_data(self, jsonObject) -> HealthReport:
+        """Extraction of relevant data from dbt testing json"""
         healthReport = HealthReport (None, Stats(None, list[RelationStats]), list[Error]())
         fileMap = {}
         testList = [] #list[TestEntry]
@@ -170,15 +197,15 @@ class DataHealthReport: # Main class
                 skipped = ((entry["data"])["stats"])["skip"]
                 total = ((entry["data"])["stats"])["total"]
                 
-                errorStats = CountPercentage (error, APISupport.to_percentage (error, total, 2))
-                okStats = CountPercentage (ok, APISupport.to_percentage (ok, total, 2))
-                skippedStats = CountPercentage (skipped, APISupport.to_percentage (skipped, total, 2))
+                errorStats = CountPercentage (error, self._utils.to_percentage (error, total, 2))
+                okStats = CountPercentage (ok, self._utils.to_percentage (ok, total, 2))
+                skippedStats = CountPercentage (skipped, self._utils.to_percentage (skipped, total, 2))
                 totalStats = CountPercentage (total, 100)
                 healthReport.stats.total = StatsTotal (errorStats, okStats, skippedStats, totalStats)
 
             if entry["code"] == "A001": # Header
                 headerExecution = HeaderExecution (entry["ts"], entry["invocation_id"])
-                healthReport.header = Header (APISupport.config['database']['name'], (entry["data"])["v"].replace ("=", ""), headerExecution)     
+                healthReport.header = Header (self._config['database']['name'], (entry["data"])["v"].replace ("=", ""), headerExecution)     
 
             if entry["code"] == "Z026": # File map
                 sqlPath = (entry["data"])["path"]
@@ -191,34 +218,33 @@ class DataHealthReport: # Main class
         
         return healthReport
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def generate_data (self) -> None:
         """Generating data health report data"""
-        APISupport.initialize () # Til þess að geta keyrt hverja skriftu sjálfstætt
         jsonObject = self.__retrieve_json_object () 
         apiHealth = self.__retrieve_data (jsonObject)
-        jsonData = json.dumps (apiHealth, indent=4, cls=APISupport.EnhancedJSONEncoder)
-        APISupport.print_v (f"\tWriting data health report data to: {APISupport.api_data_health_report_data_file_info.qualified_name}")
-        APISupport.write_file (jsonData, APISupport.api_data_health_report_data_file_info.qualified_name)
+        jsonData = json.dumps (apiHealth, indent=4, cls=Shared.Json.EnhancedJSONEncoder)
+        self._utils.print_v (f"\tWriting data health report data to: {self._config.apiDataHealthReportDataFileInfo.qualified_name}")
+        self._utils.write_file (jsonData, self._config.apiDataHealthReportDataFileInfo.qualified_name)
         return 
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def generate_report (self) -> None:
         """Generating data health report"""
-        APISupport.generate_markdown_document ("api_data_health_report_template.md", APISupport.api_data_health_report_data_file_info.name, self._reportFilename)
+        self._utils.generate_markdown_document ("api_data_health_report_template.md", self._config.apiDataHealthReportDataFileInfo.name, self._reportFilename)
         return
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def publish (self) -> None:
         """Publishing data health report"""
-        APISupport.get_target_knowledge_base_interface ().publish (self._reportFilename, 'data-health-report') 
+        self._targetKnowledgeBase.publish (self._reportFilename, 'data-health-report') 
         return
 
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def generate (self) -> None:
         """Producing a data health report"""
         self.generate_data ()

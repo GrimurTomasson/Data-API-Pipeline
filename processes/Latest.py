@@ -1,25 +1,27 @@
-import Decorators
-import APISupport
+from Shared.Decorators import output_headers, execution_time
+from Shared.Config import Config
+from Shared.Utils import Utils
 
 class Latest:
 
     def __init__ (self) -> None:
-        APISupport.initialize ()
+        self._config = Config ()
+        self._utils = Utils ()
         
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
         dbtOperation = ["dbt", "run", "--full-refresh"] #  --fail-fast fjarlægt þar sem dbt rakti dependencies ekki nógu vel
-        APISupport.run_operation (APISupport.workingDirectory, APISupport.latest_path, dbtOperation)
+        self._utils.run_operation (self._config.workingDirectory, self._config.latestPath, dbtOperation)
         return
 
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def run_tests (self):
         """Running dbt tests"""
         dbtOperation = ["dbt", "--log-format", "json",  "test"]
-        output = APISupport.run_operation (APISupport.workingDirectory, APISupport.latest_path, dbtOperation, True)
-        APISupport.print_v (f"Output for dbt test results: {APISupport.dbt_test_output_file_info.qualified_name}")
-        APISupport.write_file (output.stdout, APISupport.dbt_test_output_file_info.qualified_name)
+        output = self._utils.run_operation (self._config.workingDirectory, self._config.latestPath, dbtOperation, True)
+        self._utils.print_v (f"Output for dbt test results: {self._config.dbtTestOutputFileInfo.qualified_name}")
+        self._utils.write_file (output.stdout, self._config.dbtTestOutputFileInfo.qualified_name)
         return

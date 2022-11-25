@@ -1,6 +1,6 @@
 from abc import ABC,abstractmethod
 
-class TargetKnowledgeBaseInterface(ABC):
+class TargetKnowledgeBase(ABC):
 
     @abstractmethod
     def publish (self, documentName, configParam):

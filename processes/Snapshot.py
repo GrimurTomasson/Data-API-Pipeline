@@ -2,8 +2,10 @@
 from logging import NullHandler
 from tkinter import FIRST
 
-import Decorators
-import APISupport
+from Shared.Decorators import output_headers, execution_time
+from Shared.Config import Config
+from Shared.Utils import Utils
+from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 
 class Snapshot:
     missingTablesQuery = """SELECT t.TABLE_NAME FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA = ?
@@ -32,13 +34,12 @@ class Snapshot:
                             WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ?"""
 
     def __init__ (self):
-        APISupport.initialize ()
-        self._databaseServer = APISupport.config["database"]["server"]
-        self._databaseName = APISupport.config["database"]["name"]
-        self._snapshotDateColumnName = APISupport.config["history"]["snapshot-date-column"]
-
-        APISupport.print_v (f"Database server: {self._databaseServer} - Database name: {self._databaseName} - Snapshot date colum name: {self._snapshotDateColumnName}")
-        self._databaseConnection = APISupport.get_database_connection (self._databaseServer, self._databaseName)
+        self._config = Config ()
+        self._utils = Utils ()
+        self._snapshotDateColumnName = self._config["history"]["snapshot-date-column"]
+        self._utils.print_v (f"Snapshot date colum name: {self._snapshotDateColumnName}")
+        self._targetDatabase = TargetDatabaseFactory ().get_target_database ()
+        self._databaseConnection = self._targetDatabase.get_connection ()
         return
 
     def __get_all_source_tables (self, source_schema):
@@ -48,7 +49,7 @@ class Snapshot:
     def __get_first_column (self, source_schema, source_table):
         """Retrieves the name of the first column in a relation"""
         firstColumn = self._databaseConnection.cursor ().execute("SELECT c.COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ? AND c.ORDINAL_POSITION = 1", source_schema, source_table).fetchval ()
-        APISupport.print_v (f"First column for {source_schema}.{source_table} is {firstColumn}")
+        self._utils.print_v (f"First column for {source_schema}.{source_table} is {firstColumn}")
         return firstColumn
 
     def __get_ordered_column_list (self, source_schema, source_table):
@@ -75,7 +76,7 @@ class Snapshot:
         for row in missingTables:
             print (f"\tCreating missing snapshot table: {row.TABLE_NAME}", end="")
             # Our API tables always contain a first column, single column unique id
-            firstColumn = self.get_first_column (source_schema, row.TABLE_NAME)
+            firstColumn = self.__get_first_column (source_schema, row.TABLE_NAME)
             self._databaseConnection.cursor ().execute (f"SELECT CAST (NULL AS DATE) AS {self._snapshotDateColumnName}, s.* INTO {snapshot_schema}.{row.TABLE_NAME} FROM {source_schema}.{row.TABLE_NAME} s WHERE s.{firstColumn} IS NULL")
             print (" - Done")
 
@@ -83,16 +84,18 @@ class Snapshot:
         """Creates or updates a view for a single snapshot"""
         self._databaseConnection.cursor ().execute (f"CREATE OR ALTER VIEW {history_schema}.{view_name} AS SELECT * FROM {snapshot_schema}.{table_name}")
 
+    @output_headers
+    @execution_time(tabCount=1)
     def __create_missing_views (self, snapshot_schema, history_schema):
         """Creates missing views for snapshot tables"""
-        APISupport.print_v (f"create_missing_views -> snapshot_schema: {snapshot_schema}, history_schema: {history_schema}")
+        self._utils.print_v (f"create_missing_views -> snapshot_schema: {snapshot_schema}, history_schema: {history_schema}")
         self.__create_schema_if_missing (history_schema)
         print ("Creating initial views. Those need to be updated by hand when new versions are released!")
         allTables = self._databaseConnection.cursor ().execute (Snapshot.tablesAndViewsQuery, snapshot_schema).fetchall ()
         print (f"Checking for views for {len (allTables)} snapshot tables in {snapshot_schema}")
-        APISupport.print_v (allTables)
+        self._utils.print_v (allTables)
         for row in allTables:
-            APISupport.print_v (f"\t\ttable: {row.table_name}, view: {row.view_name}, schema: {snapshot_schema}")
+            self._utils.print_v (f"\t\ttable: {row.table_name}, view: {row.view_name}, schema: {snapshot_schema}")
             print (f"\tChecking for table {row.table_name}", end="")        
             if self._databaseConnection.cursor ().execute("SELECT COUNT(1) FROM INFORMATION_SCHEMA.VIEWS v WHERE v.TABLE_SCHEMA = ? AND v.TABLE_NAME = ?", history_schema, row.view_name).fetchval () == 0:
                 print (f" - Creating view {row.view_name}", end="")
@@ -122,11 +125,12 @@ class Snapshot:
         if columnInfo.IS_NULLABLE == 'NO':
             alterCommand += " NOT NULL"
         #
-        APISupport.print_v (f"\t\t\tAlter command: {alterCommand}")
+        self._utils.print_v (f"\t\t\tAlter command: {alterCommand}")
         self._databaseConnection.cursor ().execute (alterCommand)
         # We do not update views when snapshot tables are extended, they might be unions of multiple versions!
 
     def __add_missing_columns (self, source_schema, snapshot_schema):
+        """Adding missing columns to snapshot tables missing columns"""
         sourceTables = self.__get_all_source_tables (source_schema)
         print (f"Checking for missing columns in {len (sourceTables)} source tables")
         for sourceTable in sourceTables:
@@ -135,56 +139,54 @@ class Snapshot:
             for missingColumn in missingColumns:
                 self.__add_missing_column (source_schema, sourceTable.Name, missingColumn.COLUMN_NAME, snapshot_schema)
 
-    @Decorators.execution_time(tabCount=1)
+    @execution_time(tabCount=1)
     def __remove_data_current_date (self, snapshot_schema, table_name, target_date):
+        """Removing all data for a single date"""
         print (f"\tRemoving data from {snapshot_schema}.{table_name} for {self._snapshotDateColumnName} = {target_date}")
         deleteCursor = self._databaseConnection.cursor ()
         deleteCursor.execute (f"DELETE {snapshot_schema}.{table_name} WHERE {self._snapshotDateColumnName} = ?", target_date)
         print (f"\t\t{deleteCursor.rowcount} rows deleted")
 
-    @Decorators.output_headers
-    @Decorators.execution_time(tabCount=1)
+    @output_headers
+    @execution_time(tabCount=1)
     def __create_snapshot (self, source_schema, table_name, snapshot_schema, target_date):
+        """Creating a single snapshot"""
         print (f"\tTaking a snapshot of {source_schema}.{table_name} and adding it to {snapshot_schema}.{table_name} for {self._snapshotDateColumnName} = {target_date}")
         firstColumn = self.__get_first_column (source_schema, table_name)
         columnList = self.__get_ordered_column_list (source_schema, table_name)
         insertColumnList = f"{self._snapshotDateColumnName}, {columnList}"
         command = f"INSERT INTO {snapshot_schema}.{table_name} ({insertColumnList}) SELECT '{target_date}', {columnList} FROM {source_schema}.{table_name} WHERE {firstColumn} IS NOT NULL"
-        APISupport.print_v (f"\t\tExecuting: {command}")
+        self._utils.print_v (f"\t\tExecuting: {command}")
         insertCursor = self._databaseConnection.cursor ()
         insertCursor.execute (command)
         print (f"\t\t{insertCursor.rowcount} rows inserted")
 
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def __create_snapshots (self, source_schema, snapshot_schema, history_schema) -> None:
+        """Creating snapshots for one schema"""
         # Testing the connection
         targetDate = self._databaseConnection.cursor ().execute("SELECT CAST (GETDATE() AS date)").fetchval () # Ensures we always remove and add the same date, even if we cross midnight, also a great connection test!
         print (f"Snapshot date - {self._snapshotDateColumnName}: {targetDate}")
         # Create the snapshot schema if it does not exist
-        print (APISupport.separator)
         self.__create_schema_if_missing (snapshot_schema)
-        print (APISupport.separator)
         self.__create_missing_tables (source_schema, snapshot_schema)
-        print (APISupport.separator)
         self.__add_missing_columns (source_schema, snapshot_schema)
-        print (APISupport.separator)
         self.__create_missing_views (snapshot_schema, history_schema)
         for sourceTable in self.__get_all_source_tables (source_schema):
-            print (APISupport.separator)
             self.__remove_data_current_date (snapshot_schema, sourceTable.Name, targetDate)
             self.__create_snapshot (source_schema, sourceTable.Name, snapshot_schema, targetDate)
         return
 
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def create (self) -> None:
         """Taking snapshots for the Latest models"""
-        for item in APISupport.config["history"]["projects"]:
+        for item in self._config["history"]["projects"]:
             sourceSchema = item["project"]["source-schema"]
             snapshotSchema = item["project"]["snapshot-schema"]
             publicSchema = item["project"]["public-schema"]
-            APISupport.print_v (f"sourceSchema: {sourceSchema} - snapshotSchema: {snapshotSchema} - publicSchema: {publicSchema}")
+            self._utils.print_v (f"sourceSchema: {sourceSchema} - snapshotSchema: {snapshotSchema} - publicSchema: {publicSchema}")
             self.__create_snapshots (sourceSchema, snapshotSchema, publicSchema)
         return
 

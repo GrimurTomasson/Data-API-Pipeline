@@ -9,12 +9,13 @@ with open (f"{os.getcwd()}/api_config.yml", "r", encoding="utf8") as stream:
 pipelineScriptLocation = config['data-api-pipeline']['relative-location']
 sys.path.append(f"{os.getcwd()}/{pipelineScriptLocation}") 
 
-import APISupport
-import GenerateAPIShared
+from Shared.Config import Config
+from Shared.Utils import Utils
+from API import API
 
 def refreshPipelineScripts(workingDirectory, pipelineBranch):
     scriptDir = f"{workingDirectory}/{pipelineScriptLocation}"
-    APISupport.print_v(f"Pipeline repo dir: {scriptDir} - Branch: {pipelineBranch}")
+    Utils().print_v(f"Pipeline repo dir: {scriptDir} - Branch: {pipelineBranch}")
     os.chdir(scriptDir)
     # Pull this once by hand if you get a authentication/authorization error
     subprocess.run(["git", "checkout", pipelineBranch])
@@ -23,16 +24,14 @@ def refreshPipelineScripts(workingDirectory, pipelineBranch):
     return
 
 def main():
-    APISupport.initialize () # Fá villuna strax ef þetta er ekki í lagi
-    
     workingDirectory = os.getcwd()
-    APISupport.print_v(f"Starting location: {workingDirectory}")
+    Utils().print_v(f"Starting location: {workingDirectory}")
     # Retrieve the most recent version of the pipeline scripts
-    pipelineBranch = APISupport.config["data-api-pipeline"]["git-branch-name"]
+    pipelineBranch = Config()["data-api-pipeline"]["git-branch-name"]
     if len (pipelineBranch) > 0:
         refreshPipelineScripts(workingDirectory, pipelineBranch)
     
-    GenerateAPIShared.generate_api()
+    API ().generate()
     os.chdir(workingDirectory)
     return 0
 

@@ -1,7 +1,10 @@
-import APISupport
-from TargetDatabaseInterface import TargetDatabaseInterface
+import pyodbc
 
-class TargetDatabase_SQLServer (TargetDatabaseInterface):
+from Shared.Config import Config
+from Shared.Utils import Utils
+from TargetDatabase.TargetDatabase import TargetDatabase
+
+class SQLServer (TargetDatabase):
     typeQuery = """
         SELECT
             TABLE_SCHEMA AS schema_name
@@ -39,19 +42,27 @@ class TargetDatabase_SQLServer (TargetDatabaseInterface):
     """
 
     def __init__(self):
-        self.types = {}
-        self.glossary = {}
+        self._config = Config()
+        self._utils = Utils()
+        self._databaseServer = self._config['database']['server']
+        self._databaseName = self._config['database']['name']
+        self._types = {}
+        self._glossary = {}
+
+    def get_connection (self) -> pyodbc.Connection:
+        self._utils.print_v (f"Creating a DB connection to: {self._databaseServer} - {self._databaseName}")
+        conn = pyodbc.connect ('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+self._databaseServer+';DATABASE='+self._databaseName+';Trusted_Connection=yes;')
+        conn.autocommit = True # Þetta á við allar útfærslur, koma betur fyrir!
+        return conn
 
     def load_data (self, query, enrichmentFunction, destination):
-        database = APISupport.config['database']['name']
-        conn = APISupport.get_database_connection (APISupport.config['database']['server'], database)
-        rows = conn.cursor().execute(query, database).fetchall()
+        conn = self.get_connection ()
+        rows = conn.cursor().execute(query, self._databaseName).fetchall()
         for row in rows:
             schemaName = row.schema_name
             tableName = row.relation_name
             columnName = row.column_name
-            APISupport.print_v(f"\tSchema name: {schemaName} - Table name: {tableName} - Column name: {columnName}")
-            #
+            
             if not schemaName in destination:
                 destination[schemaName] = { }
             if not tableName in destination[schemaName]:
@@ -92,10 +103,10 @@ class TargetDatabase_SQLServer (TargetDatabaseInterface):
 
     def get_glossary_column_data (self, schemaName, tableName, columnName) -> dict:
         if len (self.glossary) == 0:
-            self.load_data (TargetDatabase_SQLServer.glossaryQuery, self.retrieve_glossary_info, self.glossary)
+            self.load_data (SQLServer.glossaryQuery, self.retrieve_glossary_info, self.glossary)
         return self.glossary[schemaName][tableName][columnName] 
 
     def get_type_info_column_data (self, schemaName, tableName, columnName) -> dict:
         if len (self.types) == 0:
-            self.load_data (TargetDatabase_SQLServer.typeQuery, self.retrieve_type_info, self.types)
+            self.load_data (SQLServer.typeQuery, self.retrieve_type_info, self.types)
         return self.types[schemaName][tableName][columnName] 
