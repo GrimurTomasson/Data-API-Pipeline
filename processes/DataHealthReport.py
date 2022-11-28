@@ -93,11 +93,12 @@ class DataHealthReport: # Main class
         return self._tableNameRegEx.search (filePath).group ()[:-4]
 
     def __get_relation_name_from_test_name (self, testName) -> str:
-        self._utils.print_v (f"project: {self._projectName} - test name: {testName}")
+        #self._utils.print_v (f"project: {self._projectName} - test name: {testName}")
         tableNameFromTestRegEx = re.compile (f"{self._projectName}\_[a-z\_]+\_v[0-9]+", re.IGNORECASE) # source_is_true_Nustada_bekkur_v1_lokadagur__lokadagur_upphafsdagur
         # ToDo: Búa til mynstur sem höndlar fleiri útgáfur, t.d.: project: Latest - test name: accepted_values_Address_fiber_optic_state_v1_L_apartment_number__MISSING_FROM_SOURCE
         searchResults = tableNameFromTestRegEx.search (testName)
         if searchResults == None:
+                self._utils.print_v (f"No relation name found for test name: {testName}")
                 return ''
         return searchResults.group ()[len (self._projectName)+1:]
 

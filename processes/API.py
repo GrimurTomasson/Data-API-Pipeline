@@ -15,8 +15,8 @@ from DataHealthReport import DataHealthReport
 
 class API:
     def __init__ (self) -> None:
-        self._config = Config()
-        self._utils = Utils()
+        self._config = Config ()
+        self._utils = Utils ()
 
     @output_headers
     @execution_time
@@ -39,11 +39,12 @@ class API:
     @execution_time
     def generate (self) -> None:
         """API pipeline run"""
-        # self.__run_file_cleanup () Úti meðan við erum að keyra bút og bút í einu
+        #self.__run_file_cleanup ()
         
         #Latest().refresh ()
         #Snapshot().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
-        #Latest().run_tests () # Skrifar skrá: 1
+        latest = Latest()
+        latest.run_tests () # Skrifar skrá: 1
         
         DataHealthReport ().generate ()
         #MetadataCatalog ().enrich () # Skrifar skrár: 3, 4, 5

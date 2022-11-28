@@ -7,10 +7,10 @@ from Shared.Config import Config
 
 class Utils:
     def __init__(self):
-        self._config = Config()
+        self._config = Config ()
         # Verbose output support 
         self.print_v = print if self._config["verbose"] else lambda *a, **k: None
-        self.print_v (f"\n{self._config}\n")
+        return
 
     def render_jinja_template (self, jinjaTemplateFilename, qualifiedJsonFilename, templateDirectory) -> any:
         environment = Environment (loader = FileSystemLoader (templateDirectory))
