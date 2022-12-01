@@ -1,16 +1,17 @@
 import functools
 import time
 import datetime 
+from colorama import Fore
+
+from Shared.PrettyPrint import Pretty
 
 def output_headers (_func=None, *, tabCount=0):
     def decorator_output_headers (function):
         @functools.wraps (function)
         def wrapper (*args, **kwargs):
-            separator = "-" * 120
-            tabs = "\t" * tabCount
-            print (f"\n{tabs}{separator}\n\n{tabs}{function.__doc__} ({function.__qualname__})\n{tabs}{separator}\n")
+            Pretty.print (f"STARTING - {function.__doc__} ({function.__qualname__})", True, True, Fore.GREEN, 0, tabCount)
             retval = function(*args, **kwargs)
-            print (f"{tabs}{separator}\n")
+            Pretty.print (f"FINISHING - {function.__doc__} ({function.__qualname__})", False, True, Fore.GREEN, 0, tabCount)
             return retval
         return wrapper
     if _func is None:
@@ -24,8 +25,7 @@ def execution_time (_func=None, *, tabCount=0):
             startTime = time.monotonic()
             retval = function(*args, **kwargs)
             execution_time = datetime.timedelta(seconds=time.monotonic() - startTime).total_seconds()
-            tabs = "\t" * tabCount
-            print (f"\n{tabs}{function.__qualname__} - Execution time in seconds: {execution_time}")
+            Pretty.print (f"\n\tExecution time in seconds: {execution_time} - ({function.__qualname__})", False, False, Fore.LIGHTBLUE_EX, 0, tabCount + 1)
             return retval
         return wrapper
     if _func is None:

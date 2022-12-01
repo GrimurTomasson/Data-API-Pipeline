@@ -2,9 +2,13 @@ import json
 import copy
 from dataclasses import dataclass, field
 
-import Decorators
-import APISupport
-from SharedDataClasses import CountPercentage
+from Shared.Decorators import output_headers, execution_time
+from Shared.Config import Config
+from Shared.Utils import Utils
+from Shared.Json import EnhancedJSONEncoder
+from Shared.DataClasses import CountPercentage
+from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
+from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory
 
 def default_field(obj):
     return field(default_factory=lambda: copy.copy(obj))
@@ -33,13 +37,14 @@ class Relation:
         columns: list[Column] = default_field([])
 
 @dataclass
-class DocumentationData:
+class DocumentationData: # Naming collision without the Data postfix
     relations: list[Relation] = default_field([])
 
 class Documentation:
 
     def __init__ (self) -> None:
-        APISupport.initialize ()
+        self._targetDatabase = TargetDatabaseFactory ().get_target_database()
+        self._targetKnowledgeBase = TargetKnowledgeBaseFactory ().get_target_knowledge_base()
         self._docFilename = "api_documentation.md"
 
     def __get_column_description (self, columnData) -> ColumnDescription:
@@ -55,50 +60,50 @@ class Documentation:
             relationData = enrichedCatalogJson['sources'][relationKey]
             schemaName = relationData['metadata']['schema']
             relationName = relationData['metadata']['name']
-            APISupport.print_v (f"\tSchema: {schemaName} - Relation: {relationName}")
+            Utils.print_v (f"\tSchema: {schemaName} - Relation: {relationName}")
             
-            if not schemaName in APISupport.config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
-                APISupport.print_v (f"\tNon public schema: {schemaName}")
+            if not schemaName in Config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
+                Utils.print_v (f"\tNon public schema: {schemaName}")
                 continue
             
             relation = Relation (schemaName, relationName)
             for columnKey in relationData['columns']:
                 columnData = relationData['columns'][columnKey]
-                columnType = ColumnType (columnData['database_info']['type_name'], APISupport.targetDatabaseInterface.get_type_length(columnData))
+                columnType = ColumnType (columnData['database_info']['type_name'], self._targetDatabase.get_type_length(columnData))
                 relation.columns.append (Column(columnData['name'], columnType, self.__get_column_description (columnData)))
             
             docs.relations.append (relation)
         return docs
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def generate_data (self) -> None:
         """Generating user documentation data"""
-        with open (APISupport.enriched_dbt_catalog_file_info.qualified_name, encoding="utf-8") as json_file:
+        with open (Config.enrichedDbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
             enrichedCatalogJson = json.load (json_file)
         
         documentation = self.__generate_documentation (enrichedCatalogJson)
 
-        jsonData = json.dumps (documentation, indent=4, cls=APISupport.EnhancedJSONEncoder)
-        APISupport.write_file (jsonData, APISupport.api_documentation_data_file_info.qualified_name)
+        jsonData = json.dumps (documentation, indent=4, cls=EnhancedJSONEncoder)
+        Utils.write_file (jsonData, Config.apiDocumentationDataFileInfo.qualified_name)
         return 
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def generate_documentation (self) -> None:
         """Generating user documentation"""
-        APISupport.generate_markdown_document ("api_documentation_template.md", APISupport.api_documentation_data_file_info.name, self._docFilename, True)
+        Utils.generate_markdown_document ("api_documentation_template.md", Config.apiDocumentationDataFileInfo.name, self._docFilename, True)
         return
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def publish (self) -> None:
         """Publishing user documentation"""
-        APISupport.get_target_knowledge_base_interface ().publish (self._docFilename, 'user-documentation')
+        self._targetKnowledgeBase.publish (self._docFilename, 'user-documentation')
         return
 
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def generate (self) -> None:
         """Producing user documentation"""
         self.generate_data ()

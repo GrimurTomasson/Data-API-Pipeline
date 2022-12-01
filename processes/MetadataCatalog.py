@@ -2,54 +2,55 @@ import os
 import json
 import shutil
 
-import Decorators
-import APISupport
+from Shared.Decorators import output_headers, execution_time
+from Shared.Config import Config
+from Shared.Utils import Utils
+from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 
 class MetadataCatalog:
     def __init__ (self) -> None:
-        APISupport.initialize ()
+        self._targetDatabase = TargetDatabaseFactory ().get_target_database()
+        return
 
     def __get_model_description (self, jsonData, modelName) -> str:
-        APISupport.print_v(f"getModelDescription - modelName: {modelName}")
+        Utils.print_v(f"\tgetModelDescription - modelName: {modelName}")
         if not modelName in jsonData['sources']:
             return 'There is no model for this relation!'
         model = jsonData['sources'][modelName]
         if 'description' in model:
             desc = model['description']
-            APISupport.print_v(f"\tModel description found: {desc}")
+            Utils.print_v(f"\t\tModel description found: {desc}\n")
             return desc
         else:
-            APISupport.print_v("\tNo model description found !!!")
+            Utils.print_v("\t\tNo model description found !!!\n")
             return ''
 
     def __get_column_description (self, jsonData, modelName, columnName) -> str:
-        APISupport.print_v(f"\tgetColumnDescription - modelName: {modelName}, columnName: {columnName}")
+        Utils.print_v(f"\tgetColumnDescription - modelName: {modelName}, columnName: {columnName}")
         if not columnName in jsonData['sources'][modelName]['columns']:
             return 'This column is not in the model for this relation!'
         column = jsonData['sources'][modelName]['columns'][columnName]
         if 'description' in column:
             desc = column['description']
-            APISupport.print_v(f"\t\tColumn description found: {desc}")
-            return desc
-        else:
-            APISupport.print_v("\t\tNo column description found !!!")
-            return ''
+            if len (desc) > 0:
+                Utils.print_v(f"\t\tColumn description found: {desc}\n")
+                return desc
+        Utils.print_v("\t\tNo column description found !!!\n")
+        return ''
 
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def enrich (self) -> None:
         """Enriching dbt test result data with Concept Glossary and Data Dicationary data, along with DB type info"""
-        targetDatabase = APISupport.get_target_database_interface ()
-
-        dbt_output_path = f"{APISupport.latest_path}/target/"
+        dbt_output_path = os.path.join (Config.latestPath, "target")
         source_manifest_file = os.path.join (dbt_output_path, "manifest.json")
         source_catalog_file = os.path.join (dbt_output_path, "catalog.json")
 
-        target_manifest_file = os.path.join (APISupport.runFileDirectory, "3_dbt_manifest.json")
-        target_catalog_file = os.path.join (APISupport.runFileDirectory, "4_dbt_catalog.json")
+        target_manifest_file = os.path.join (Config.runFileDirectory, "3_dbt_manifest.json")
+        target_catalog_file = os.path.join (Config.runFileDirectory, "4_dbt_catalog.json")
 
-        APISupport.print_v (f"Manifest - Source: {source_manifest_file} - Target: {target_manifest_file}")
-        APISupport.print_v (f"Catalog - Source: {source_catalog_file} - Target: {target_catalog_file}")
+        Utils.print_v (f"\tManifest \n\t\tSource: {source_manifest_file} \n\t\tTarget: {target_manifest_file}\n")
+        Utils.print_v (f"\tCatalog \n\t\tSource: {source_catalog_file} \n\t\tTarget: {target_catalog_file}\n")
 
         shutil.copy2 (source_manifest_file, target_manifest_file)
         shutil.copy2 (source_catalog_file, target_catalog_file)
@@ -69,16 +70,16 @@ class MetadataCatalog:
                 schemaName = relation['metadata']['schema']
                 tableName = relation['metadata']['name']
                 columnName = column ['name']
-                APISupport.print_v(f"\tSchema name: {schemaName} - Table name: {tableName} - Column name: {columnName}")
+                Utils.print_v(f"\tSchema name: {schemaName} - Table name: {tableName} - Column name: {columnName}")
                 
-                typeInfoData = targetDatabase.get_type_info_column_data (schemaName, tableName, columnName)
+                typeInfoData = self._targetDatabase.get_type_info_column_data (schemaName, tableName, columnName)
                 column['database_info'] = typeInfoData
                 
-                glossaryData = targetDatabase.get_glossary_column_data (schemaName, tableName, columnName)
+                glossaryData = self._targetDatabase.get_glossary_column_data (schemaName, tableName, columnName)
                 column['glossary_info'] = glossaryData
         
         jsonData = json.dumps(catalogJson, indent=4)
-        APISupport.write_file (jsonData, APISupport.enriched_dbt_catalog_file_info.qualified_name)
+        Utils.write_file (jsonData, Config.enrichedDbtCatalogFileInfo.qualified_name)
         return
 
 def main():

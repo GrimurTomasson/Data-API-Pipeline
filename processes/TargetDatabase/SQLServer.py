@@ -3,6 +3,7 @@ import pyodbc
 from Shared.Config import Config
 from Shared.Utils import Utils
 from TargetDatabase.TargetDatabase import TargetDatabase
+from Shared.Decorators import execution_time
 
 class SQLServer (TargetDatabase):
     typeQuery = """
@@ -42,20 +43,18 @@ class SQLServer (TargetDatabase):
     """
 
     def __init__(self):
-        self._config = Config()
-        self._utils = Utils()
-        self._databaseServer = self._config['database']['server']
-        self._databaseName = self._config['database']['name']
-        self._types = {}
-        self._glossary = {}
+        self._databaseServer = Config['database']['server']
+        self._databaseName = Config['database']['name']
+        return
 
     def get_connection (self) -> pyodbc.Connection:
-        self._utils.print_v (f"Creating a DB connection to: {self._databaseServer} - {self._databaseName}")
+        Utils.print_v (f"\tCreating a DB connection to: {self._databaseServer} - {self._databaseName}")
         conn = pyodbc.connect ('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+self._databaseServer+';DATABASE='+self._databaseName+';Trusted_Connection=yes;')
         conn.autocommit = True # Þetta á við allar útfærslur, koma betur fyrir!
         return conn
 
-    def load_data (self, query, enrichmentFunction, destination):
+    @execution_time
+    def load_data (self, query, enrichmentFunction, destination, what):
         conn = self.get_connection ()
         rows = conn.cursor().execute(query, self._databaseName).fetchall()
         for row in rows:
@@ -69,7 +68,7 @@ class SQLServer (TargetDatabase):
                 destination[schemaName][tableName] = { }
             info = enrichmentFunction(row)
             destination[schemaName][tableName][columnName] = info
-        #APISupport.print_v(f"Allt: {destination}")
+        Utils.print_v (f"\t\tNumber of items for {what}: {len (rows)}")
         return
         
     def retrieve_glossary_info (self, row):
@@ -101,12 +100,14 @@ class SQLServer (TargetDatabase):
             return f"{int (precision) - int (scale)}, {scale}"
         return ""
 
-    def get_glossary_column_data (self, schemaName, tableName, columnName) -> dict:
-        if len (self.glossary) == 0:
-            self.load_data (SQLServer.glossaryQuery, self.retrieve_glossary_info, self.glossary)
-        return self.glossary[schemaName][tableName][columnName] 
+    def get_glossary_column_data (self, schemaName, tableName, columnName) -> dict:    
+        if not hasattr (SQLServer, '_glossary'):
+            SQLServer._glossary = {}
+            self.load_data (SQLServer.glossaryQuery, self.retrieve_glossary_info, SQLServer._glossary, "Concept glossary")
+        return SQLServer._glossary[schemaName][tableName][columnName] 
 
     def get_type_info_column_data (self, schemaName, tableName, columnName) -> dict:
-        if len (self.types) == 0:
-            self.load_data (SQLServer.typeQuery, self.retrieve_type_info, self.types)
-        return self.types[schemaName][tableName][columnName] 
+        if not hasattr (SQLServer, "_types"):
+            SQLServer._types = {}
+            self.load_data (SQLServer.typeQuery, self.retrieve_type_info, SQLServer._types, "Datatypes")
+        return SQLServer._types[schemaName][tableName][columnName] 

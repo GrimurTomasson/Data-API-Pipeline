@@ -3,9 +3,12 @@ import json
 import copy
 from dataclasses import dataclass, field
 
-import Decorators
-import APISupport
-from SharedDataClasses import CountPercentage
+from Shared.Decorators import output_headers, execution_time
+from Shared.Config import Config
+from Shared.Utils import Utils
+from Shared.Json import EnhancedJSONEncoder
+from Shared.DataClasses import CountPercentage
+from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
 
 def default_field(obj):
         return field(default_factory=lambda: copy.copy(obj))
@@ -65,7 +68,7 @@ class HealthReport: # Root
 class DefinitionHealthReport:
 
     def __init__ (self) -> None:
-        APISupport.initialize ()
+        self._targetKnowledgeBase = TargetKnowledgeBaseFactory ().get_target_knowledge_base ()
         self._reportFilename = "api_definition_health_report.md"
         return
 
@@ -92,7 +95,7 @@ class DefinitionHealthReport:
         return None
 
     def __generate_health_data (self, enrichedCatalogJson) -> HealthReport:
-        apiHealth = HealthReport (api_name = APISupport.config['database']['name'])
+        apiHealth = HealthReport (api_name = Config['database']['name'])
         relationsTotal = 0 
         columnsTotal = 0
         okColumnsTotal = 0
@@ -101,9 +104,9 @@ class DefinitionHealthReport:
             relation = enrichedCatalogJson['sources'][relationKey]
             schemaName = relation['metadata']['schema']
             relationName = relation['metadata']['name']
-            APISupport.print_v (f"\tSchema: {schemaName} - Relation: {relationName}")
-            if not schemaName in APISupport.config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
-                APISupport.print_v (f"\tNon public schema: {schemaName}")
+            Utils.print_v (f"\tSchema: {schemaName} - Relation: {relationName}")
+            if not schemaName in Config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
+                Utils.print_v (f"\tNon public schema: {schemaName}")
                 continue
             # Per relation stats
             relationTypeErrorList = []
@@ -134,12 +137,12 @@ class DefinitionHealthReport:
             columnsTotal += relationColumns
             okColumnsTotal += relationOkColumns
             
-            overwrittenConcepts = CountPercentage (len (relationOverwrittenConceptList), APISupport.to_percentage (len (relationOverwrittenConceptList), relationColumns))
-            okColumns = CountPercentage (relationOkColumns, APISupport.to_percentage (relationOkColumns, relationColumns))
+            overwrittenConcepts = CountPercentage (len (relationOverwrittenConceptList), Utils.to_percentage (len (relationOverwrittenConceptList), relationColumns))
+            okColumns = CountPercentage (relationOkColumns, Utils.to_percentage (relationOkColumns, relationColumns))
             combinedErrors = len (relationTypeErrorList) + len (relationDocsErrorList)
-            errors = CountPercentage (combinedErrors, APISupport.to_percentage (combinedErrors, relationColumns))
-            typeErrors = CountPercentage (len (relationTypeErrorList), APISupport.to_percentage (len (relationTypeErrorList), relationColumns))
-            docErrors = CountPercentage (len (relationDocsErrorList), APISupport.to_percentage (len (relationDocsErrorList), relationColumns))
+            errors = CountPercentage (combinedErrors, Utils.to_percentage (combinedErrors, relationColumns))
+            typeErrors = CountPercentage (len (relationTypeErrorList), Utils.to_percentage (len (relationTypeErrorList), relationColumns))
+            docErrors = CountPercentage (len (relationDocsErrorList), Utils.to_percentage (len (relationDocsErrorList), relationColumns))
             relationStats = StatsRelation (schemaName, relationName, relationColumns, overwrittenConcepts, okColumns, errors, typeErrors, docErrors)
             apiHealth.stats.relation.append (relationStats)
             
@@ -147,43 +150,43 @@ class DefinitionHealthReport:
             apiHealth.errors.type.extend (relationTypeErrorList)
             apiHealth.errors.documentation.extend (relationDocsErrorList)
             
-        oaOverwrittenConcepts = CountPercentage (len (apiHealth.overwritten_concepts), APISupport.to_percentage (len (apiHealth.overwritten_concepts), columnsTotal))
-        oaOkColumns = CountPercentage (okColumnsTotal, APISupport.to_percentage (okColumnsTotal, columnsTotal))
-        oaErrors = CountPercentage (len (apiHealth.errors.type) + len (apiHealth.errors.documentation), APISupport.to_percentage (len (apiHealth.errors.type) + len (apiHealth.errors.documentation), columnsTotal))
-        oaTypeErrors = CountPercentage (len (apiHealth.errors.type), APISupport.to_percentage (len (apiHealth.errors.type), columnsTotal))
-        oaDocErrors = CountPercentage (len (apiHealth.errors.documentation), APISupport.to_percentage (len (apiHealth.errors.documentation), columnsTotal))
+        oaOverwrittenConcepts = CountPercentage (len (apiHealth.overwritten_concepts), Utils.to_percentage (len (apiHealth.overwritten_concepts), columnsTotal))
+        oaOkColumns = CountPercentage (okColumnsTotal, Utils.to_percentage (okColumnsTotal, columnsTotal))
+        oaErrors = CountPercentage (len (apiHealth.errors.type) + len (apiHealth.errors.documentation), Utils.to_percentage (len (apiHealth.errors.type) + len (apiHealth.errors.documentation), columnsTotal))
+        oaTypeErrors = CountPercentage (len (apiHealth.errors.type), Utils.to_percentage (len (apiHealth.errors.type), columnsTotal))
+        oaDocErrors = CountPercentage (len (apiHealth.errors.documentation), Utils.to_percentage (len (apiHealth.errors.documentation), columnsTotal))
         apiHealth.stats.total = StatsTotal (relationsTotal, oaOverwrittenConcepts, columnsTotal, oaOkColumns, oaErrors, oaTypeErrors, oaDocErrors)
 
         return apiHealth
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def generate_data (self) -> None:
         """Generating definition health report data"""
-        with open (APISupport.enriched_dbt_catalog_file_info.qualified_name, encoding="utf-8") as json_file:
+        with open (Config.enrichedDbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
             enrichedCatalogJson = json.load(json_file)
 
         apiHealth = self.__generate_health_data (enrichedCatalogJson)
-        jsonData = json.dumps (apiHealth, indent=4, cls=APISupport.EnhancedJSONEncoder)
-        APISupport.write_file (jsonData, APISupport.api_definition_health_report_data_file_info.qualified_name) 
+        jsonData = json.dumps (apiHealth, indent=4, cls=EnhancedJSONEncoder)
+        Utils.write_file (jsonData, Config.apiDefinitionHealthReportDataFileInfo.qualified_name) 
         return
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def generate_report (self) -> None:
         """Generating definition health report"""
-        APISupport.generate_markdown_document ("api_definition_health_report_template.md", APISupport.api_definition_health_report_data_file_info.name, self._reportFilename)
+        Utils.generate_markdown_document ("api_definition_health_report_template.md", Config.apiDefinitionHealthReportDataFileInfo.name, self._reportFilename)
         return
 
-    @Decorators.output_headers(tabCount=1)
-    @Decorators.execution_time(tabCount=1)
+    @output_headers(tabCount=1)
+    @execution_time(tabCount=1)
     def publish (self) -> None:
         """Publishing definition health report"""
-        APISupport.get_target_knowledge_base_interface ().publish (self._reportFilename, 'definition-health-report')
+        self._targetKnowledgeBase.publish (self._reportFilename, 'definition-health-report')
         return
 
-    @Decorators.output_headers
-    @Decorators.execution_time
+    @output_headers
+    @execution_time
     def generate (self) -> None:
         """Producing a definition health report"""
         self.generate_data ()
