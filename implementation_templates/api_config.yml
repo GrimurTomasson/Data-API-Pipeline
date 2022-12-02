@@ -10,6 +10,9 @@ database:
   server: 'some_db' # Including port number if not default
   type: SQL-Server
 
+concept-glossary:
+  type: 'Rvk'
+
 latest:
     name: 'Nustada'
     relative-path: 'dbt/nustada' # No slashes before or after!

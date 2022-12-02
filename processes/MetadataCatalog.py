@@ -7,10 +7,12 @@ from Shared.Config import Config
 from Shared.Utils import Utils
 from Shared.Logger import Logger
 from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from ConceptGlossary.ConceptGlossaryFactory import ConceptGlossaryFactory, ConceptGlossary
 
 class MetadataCatalog:
     def __init__ (self) -> None:
         self._targetDatabase = TargetDatabaseFactory ().get_target_database()
+        self._conceptGlossary = ConceptGlossaryFactory ().get_concept_glossary()
         return
 
     def __get_model_description (self, jsonData, modelName) -> str:
@@ -76,7 +78,7 @@ class MetadataCatalog:
                 typeInfoData = self._targetDatabase.get_type_info_column_data (schemaName, tableName, columnName)
                 column['database_info'] = typeInfoData
                 
-                glossaryData = self._targetDatabase.get_glossary_column_data (schemaName, tableName, columnName)
+                glossaryData = self._conceptGlossary.get_glossary_column_data (schemaName, tableName, columnName).as_dictionary()
                 column['glossary_info'] = glossaryData
         
         jsonData = json.dumps(catalogJson, indent=4)

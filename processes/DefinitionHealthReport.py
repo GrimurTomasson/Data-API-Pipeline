@@ -80,7 +80,7 @@ class DefinitionHealthReport:
 
     def __check_for_concept_overwrite (self, schemaName, relationName, columnName, column) -> Concept:
         if len (column['description']) > 0 and len (column['glossary_info']['description']) > 0:
-            return Concept (schemaName, relationName, columnName, column['glossary_info']['concept_name'])
+            return Concept (schemaName, relationName, columnName, column['glossary_info']['name'])
         return None
 
     def __check_for_type_error (self, schemaName, relationName, columnName, column) -> Error:
@@ -89,6 +89,7 @@ class DefinitionHealthReport:
 
         glossaryType = column['glossary_info']['data_type']
         databaseType = column['database_info']['type_name']
+        
         if glossaryType != databaseType:
             return Error (schemaName, relationName, columnName, f"Gagnatýpa í skilgreiningu hugtaks: {glossaryType} - Gagnatýpa í grunni: {databaseType}")
         if glossaryType == databaseType and glossaryType in ['char', 'nchar', 'varchar', 'nvarchar'] and column['glossary_info']['max_length'] != column['database_info']['max_length']:

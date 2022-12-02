@@ -12,9 +12,5 @@ class TargetDatabase (ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_glossary_column_data (self, schemaName, tableName, columnName) -> dict:
-        raise NotImplementedError
-
-    @abstractmethod
     def get_type_info_column_data (self, schemaName, tableName, columnName) -> dict:
         raise NotImplementedError

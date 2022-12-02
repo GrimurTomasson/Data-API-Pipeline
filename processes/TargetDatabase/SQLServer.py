@@ -1,7 +1,6 @@
 import pyodbc
 
 from Shared.Config import Config
-from Shared.Utils import Utils
 from Shared.Logger import Logger
 from TargetDatabase.TargetDatabase import TargetDatabase
 from Shared.Decorators import execution_time
@@ -23,24 +22,6 @@ class SQLServer (TargetDatabase):
             TABLE_CATALOG = ?
         ORDER BY 
             TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION
-    """
-    glossaryQuery = """
-        SELECT
-            TABLE_SCHEMA AS schema_name
-            ,TABLE_NAME AS relation_name
-            ,COLUMN_NAME AS column_name
-            ,COALESCE (bg.heiti, '') AS concept_name
-            ,COALESCE (bg.lysing, '') AS description
-            ,LOWER (COALESCE (dd.typu_id, '')) AS data_type
-            ,COALESCE (dd.hamarkslengd, -1) AS max_length
-        FROM
-            INFORMATION_SCHEMA.COLUMNS c
-            LEFT JOIN [RVK-DATA-MASTER-API].Nustada.hugtak_utfaersla_V1 dd ON dd.gagnaform_id = 'SQL_SERVER' AND dd.heiti = c.COLUMN_NAME
-            LEFT JOIN [RVK-DATA-MASTER-API].Nustada.hugtak_V1 bg ON bg.id = dd.hugtak_id
-        WHERE
-            c.TABLE_CATALOG = ?
-        ORDER BY 
-            c.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
     """
 
     def __init__(self):
@@ -72,15 +53,7 @@ class SQLServer (TargetDatabase):
         Logger.debug (f"\t\tNumber of items for {what}: {len (rows)}")
         return
         
-    def retrieve_glossary_info (self, row):
-        column = {}
-        column['concept_name'] = row.concept_name
-        column['description'] = row.description
-        column['data_type'] = row.data_type
-        column['max_length'] = row.max_length
-        return column
-
-    def retrieve_type_info (self, row): 
+    def retrieve_type_info (self, row): # ToDo: Búa til dataclass fyrir þetta, á heima í TargetDatabase (sjá ConceptGlossary útfærslu)
         column = {}
         column['type_name'] = row.data_type
         column['max_length'] = row.character_maximum_length
@@ -100,12 +73,6 @@ class SQLServer (TargetDatabase):
             scale = columnData['database_info']['numeric_scale'] 
             return f"{int (precision) - int (scale)}, {scale}"
         return ""
-
-    def get_glossary_column_data (self, schemaName, tableName, columnName) -> dict:    
-        if not hasattr (SQLServer, '_glossary'):
-            SQLServer._glossary = {}
-            self.load_data (SQLServer.glossaryQuery, self.retrieve_glossary_info, SQLServer._glossary, "Concept glossary")
-        return SQLServer._glossary[schemaName][tableName][columnName] 
 
     def get_type_info_column_data (self, schemaName, tableName, columnName) -> dict:
         if not hasattr (SQLServer, "_types"):
