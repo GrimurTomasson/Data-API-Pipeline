@@ -47,13 +47,13 @@ class Utils:
 
     @staticmethod
     def get_file_contents (filename) -> str:
-        Logger.info (f"\n\tReading file: {filename}")
+        Logger.debug (f"\n\tReading file: {filename}")
         with open (filename, mode="r", encoding="utf-8") as f:
             return f.read ()
 
     @staticmethod
     def write_file (contents, filename) -> None:
-        Logger.info (f"\n\tWriting file: {filename}")
+        Logger.debug (f"\n\tWriting file: {filename}")
         with open (filename, mode="w", encoding="utf-8") as f:
             f.write (contents)
         return

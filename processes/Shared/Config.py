@@ -25,7 +25,7 @@ class Config (ConfigBase):
     def __init__ (self) -> None:    
         if hasattr (Config, 'apiDocumentationDataFileInfo'): # Það síðasta sem __generate_path_variables býr til
             return
-
+            
         Config.__generate_path_variables ()
         self.__print_contents ()
         return
@@ -36,12 +36,16 @@ class Config (ConfigBase):
     @staticmethod
     def __print_contents ():
         Logger.debug (Pretty.assemble ("Config variable values", True, True))
-        attributes = { k:v for (k,v) in Config.__dict__.items() if not k.startswith ('__') and not callable (getattr (Config, k)) }
-        for key, value in attributes.items(): # Skoða að setja í Utils!
+        attributes = Config.get_attributes (Config)
+        for key, value in attributes.items(): 
             Logger.debug (Pretty.assemble (f"\n{key}", False, False, Fore.CYAN))
             Logger.debug (str (value))
         Logger.debug ("\n" + Pretty.Separator + "\n")
         return
+
+    @staticmethod
+    def get_attributes (object):
+        return { k:v for (k,v) in object.__dict__.items() if not k.startswith ('__') and not callable (getattr (object, k)) }
  
     @staticmethod
     def __generate_path_variables () -> None:

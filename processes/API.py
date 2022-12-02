@@ -3,7 +3,6 @@ import shutil
 import logging
 
 from Shared.Config import Config
-from Shared.Utils import Utils
 from Shared.Decorators import output_headers, execution_time
 
 from Latest import Latest
