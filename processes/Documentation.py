@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from Shared.Decorators import output_headers, execution_time
 from Shared.Config import Config
 from Shared.Utils import Utils
+from Shared.Logger import Logger
 from Shared.Json import EnhancedJSONEncoder
 from Shared.DataClasses import CountPercentage
 from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
@@ -60,10 +61,10 @@ class Documentation:
             relationData = enrichedCatalogJson['sources'][relationKey]
             schemaName = relationData['metadata']['schema']
             relationName = relationData['metadata']['name']
-            Utils.print_v (f"\tSchema: {schemaName} - Relation: {relationName}")
+            Logger.debug (f"\tSchema: {schemaName} - Relation: {relationName}")
             
             if not schemaName in Config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
-                Utils.print_v (f"\tNon public schema: {schemaName}")
+                Logger.debug (f"\tNon public schema: {schemaName}")
                 continue
             
             relation = Relation (schemaName, relationName)

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from Shared.Decorators import output_headers, execution_time
 from Shared.Config import Config
 from Shared.Utils import Utils
+from Shared.Logger import Logger
 from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
 from Shared.DataClasses import CountPercentage
@@ -89,12 +90,12 @@ class DataHealthReport: # Main class
         return self._tableNameRegEx.search (filePath).group ()[:-4]
 
     def __get_relation_name_from_test_name (self, testName) -> str:
-        #Utils.print_v (f"project: {self._projectName} - test name: {testName}")
+        # Logger.debug (f"project: {self._projectName} - test name: {testName}")
         tableNameFromTestRegEx = re.compile (f"{self._projectName}\_[a-z\_]+\_v[0-9]+", re.IGNORECASE) # source_is_true_Nustada_bekkur_v1_lokadagur__lokadagur_upphafsdagur
         # ToDo: Búa til mynstur sem höndlar fleiri útgáfur, t.d.: project: Latest - test name: accepted_values_Address_fiber_optic_state_v1_L_apartment_number__MISSING_FROM_SOURCE
         searchResults = tableNameFromTestRegEx.search (testName)
         if searchResults == None:
-                Utils.print_v (f"No relation name found for test name: {testName}")
+                Logger.debug (f"No relation name found for test name: {testName}")
                 return ''
         return searchResults.group ()[len (self._projectName)+1:]
 
@@ -106,10 +107,10 @@ class DataHealthReport: # Main class
             rows = -1
             try:
                 rows = self._databaseConnection.cursor ().execute (f"SELECT COUNT(1) AS fjoldi FROM {self._projectName}.{tableName}").fetchval ()
-                Utils.print_v (f"\tCardinality for table {self._projectName}.{tableName} retrieved - cardinality: {rows}\n")
+                Logger.debug (f"\tCardinality for table {self._projectName}.{tableName} retrieved - cardinality: {rows}\n")
                 
             except Exception as ex:
-                Utils.print_v (f"Failure to retrieve relation cardinality: {ex}")
+                Logger.warning (f"Failure to retrieve relation cardinality: {ex}")
                 
             self._cardinalityMap[tableName] = rows
             return rows
@@ -157,8 +158,8 @@ class DataHealthReport: # Main class
                 fRelativePath = os.path.join (self._projectName, filePath)
                 fPath = os.path.join (Config.workingDirectory, self._projectRelativePath, filePath)
 
-                Utils.print_v (f"\tfRelativePath:\n\t{fRelativePath}")
-                Utils.print_v (f"\tfPath:\n\t{fPath}\n")
+                Logger.debug (f"\tfRelativePath:\n\t{fRelativePath}")
+                Logger.debug (f"\tfPath:\n\t{fPath}\n")
 
                 sql = Utils.get_file_contents (fPath).strip ()
                 noRows = self.__retrieve_relation_cardinality (fPath)
@@ -222,7 +223,6 @@ class DataHealthReport: # Main class
         jsonObject = self.__retrieve_json_object () 
         apiHealth = self.__retrieve_data (jsonObject)
         jsonData = json.dumps (apiHealth, indent=4, cls=Shared.Json.EnhancedJSONEncoder)
-        Utils.print_v (f"\n\tWriting data health report data to: {Config.apiDataHealthReportDataFileInfo.qualified_name}")
         Utils.write_file (jsonData, Config.apiDataHealthReportDataFileInfo.qualified_name)
         return 
 
@@ -247,7 +247,7 @@ class DataHealthReport: # Main class
         
         message = ( f"\tProject name:  {self._projectName}"
                     f"\tRelative path: {self._projectRelativePath}")
-        Utils.print_v (message)
+        Logger.info (message)
 
         self.generate_data ()
         self.generate_report ()

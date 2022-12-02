@@ -6,6 +6,7 @@ from colorama import Fore
 from Shared.Decorators import output_headers, execution_time
 from Shared.Config import Config
 from Shared.Utils import Utils
+from Shared.Logger import Logger
 from Shared.PrettyPrint import Pretty
 from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 
@@ -37,7 +38,7 @@ class Snapshot:
 
     def __init__ (self):
         self._snapshotDateColumnName = Config["history"]["snapshot-date-column"]
-        Utils.print_v (f"Snapshot date colum name: {self._snapshotDateColumnName}")
+        Logger.info (f"Snapshot date colum name: {self._snapshotDateColumnName}")
         self._targetDatabase = TargetDatabaseFactory ().get_target_database ()
         self._databaseConnection = self._targetDatabase.get_connection ()
         return
@@ -49,7 +50,7 @@ class Snapshot:
     def __get_first_column (self, source_schema, source_table):
         """Retrieves the name of the first column in a relation"""
         firstColumn = self._databaseConnection.cursor ().execute("SELECT c.COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ? AND c.ORDINAL_POSITION = 1", source_schema, source_table).fetchval ()
-        Utils.print_v (f"\t\tFirst column for {source_schema}.{source_table}: {firstColumn}")
+        Logger.debug (f"\t\tFirst column for {source_schema}.{source_table}: {firstColumn}")
         return firstColumn
 
     def __get_ordered_column_list (self, source_schema, source_table):
@@ -90,27 +91,28 @@ class Snapshot:
         """Creates missing views for snapshot tables"""
         message = ( f"snapshot_schema: {snapshot_schema}\n"
                     f"history_schema:  {history_schema}\n")
-        Utils.print_v (message)
+        Logger.info (message)
 
         self.__create_schema_if_missing (history_schema)
         print ("Creating initial views. Those need to be updated by hand when new versions are released!")
         allTables = self._databaseConnection.cursor ().execute (Snapshot.tablesAndViewsQuery, snapshot_schema).fetchall ()
         print (f"Checking for views for {len (allTables)} snapshot tables in {snapshot_schema}")
         for row in allTables:
-            Utils.print_v (f"\n\tProcessing - Table: {row.table_name} - View: {row.view_name} - Schema: {snapshot_schema}")
-            print (f"\tChecking for table {row.table_name}", end="")        
+            Logger.debug (f"\n\tProcessing - Table: {row.table_name} - View: {row.view_name} - Schema: {snapshot_schema}")
+            message = f"\tChecking for table {row.table_name}"
             if self._databaseConnection.cursor ().execute("SELECT COUNT(1) FROM INFORMATION_SCHEMA.VIEWS v WHERE v.TABLE_SCHEMA = ? AND v.TABLE_NAME = ?", history_schema, row.view_name).fetchval () == 0:
-                print (f" - Creating view {row.view_name}", end="")
+                message += f" - Creating view {row.view_name}"
                 self.__create_or_alter_view (history_schema, row.view_name, snapshot_schema, row.table_name)
-                print (" - Done")
+                message += " - Done"
             else:
-                print (f" - View existed")
+                message += f" - View existed"
+            Logger.debug (message)
         return
 
     def __add_missing_column (self, source_schema, table_name, column_name, snapshot_schema):
         """Adds missing columns to a snapshot table"""
         columnInfo = self._databaseConnection.cursor ().execute ("SELECT c.IS_NULLABLE, c.DATA_TYPE, c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, COALESCE (c.NUMERIC_SCALE, 0) AS NUMERIC_SCALE, c.DATETIME_PRECISION FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ? AND c.COLUMN_NAME = ?", source_schema, table_name, column_name).fetchone()
-        print(f"\t\tAdding column: {column_name} to {snapshot_schema}.{table_name}")
+        Logger.info(f"\t\tAdding column: {column_name} to {snapshot_schema}.{table_name}")
         #
         alterCommand = f"ALTER TABLE {snapshot_schema}.{table_name} ADD {column_name} "
         if columnInfo.DATA_TYPE in ["date", "datetime", "int", "bigint", "tinyint", "smallint", "bit"]:
@@ -127,42 +129,42 @@ class Snapshot:
         if columnInfo.IS_NULLABLE == 'NO':
             alterCommand += " NOT NULL"
         #
-        Utils.print_v (f"\t\t\tAlter command: {alterCommand}")
+        Logger.debug (f"\t\t\tAlter command: {alterCommand}")
         self._databaseConnection.cursor ().execute (alterCommand)
         # We do not update views when snapshot tables are extended, they might be unions of multiple versions!
 
     def __add_missing_columns (self, source_schema, snapshot_schema):
         """Adding missing columns to snapshot tables missing columns"""
         sourceTables = self.__get_all_source_tables (source_schema)
-        print (f"Checking for missing columns in {len (sourceTables)} source tables")
+        Logger.info (f"Checking for missing columns in {len (sourceTables)} source tables")
         for sourceTable in sourceTables:
             missingColumns = self._databaseConnection.cursor ().execute(Snapshot.missingColumnsQuery, source_schema, sourceTable.Name, snapshot_schema, sourceTable.Name, source_schema).fetchall ()
-            print (f"\t{len(missingColumns)} missing columns in {snapshot_schema}.{sourceTable.Name}")
+            Logger.info (f"\t{len(missingColumns)} missing columns in {snapshot_schema}.{sourceTable.Name}")
             for missingColumn in missingColumns:
                 self.__add_missing_column (source_schema, sourceTable.Name, missingColumn.COLUMN_NAME, snapshot_schema)
 
     @execution_time(tabCount=1)
     def __remove_data_current_date (self, snapshot_schema, table_name, target_date):
         """Removing all data for a single date"""
-        print (f"\tRemoving data from {snapshot_schema}.{table_name} for {self._snapshotDateColumnName} = {target_date}")
+        Logger.info (f"\tRemoving data from {snapshot_schema}.{table_name} for {self._snapshotDateColumnName} = {target_date}")
         deleteCursor = self._databaseConnection.cursor ()
         deleteCursor.execute (f"DELETE {snapshot_schema}.{table_name} WHERE {self._snapshotDateColumnName} = ?", target_date)
-        print (f"\t\t{deleteCursor.rowcount} rows deleted")
+        Logger.info (f"\t\t{deleteCursor.rowcount} rows deleted")
 
     @output_headers
     @execution_time(tabCount=1)
     def __create_snapshot (self, source_schema, table_name, snapshot_schema, target_date):
         """Creating a single snapshot"""
-        print (f"\tTaking a snapshot of {source_schema}.{table_name} and adding it to {snapshot_schema}.{table_name} for {self._snapshotDateColumnName} = {target_date}")
+        Logger.info (f"\tTaking a snapshot of {source_schema}.{table_name} and adding it to {snapshot_schema}.{table_name} for {self._snapshotDateColumnName} = {target_date}")
         firstColumn = self.__get_first_column (source_schema, table_name)
         columnList = self.__get_ordered_column_list (source_schema, table_name)
         insertColumnList = f"{self._snapshotDateColumnName}, {columnList}"
         command = f"INSERT INTO {snapshot_schema}.{table_name} ({insertColumnList}) SELECT '{target_date}', {columnList} FROM {source_schema}.{table_name} WHERE {firstColumn} IS NOT NULL"
-        Utils.print_v (Pretty.assemble ("Executing: ", False, False, Fore.LIGHTMAGENTA_EX, 0, 2))
-        Utils.print_v (command)
+        Logger.debug (Pretty.assemble ("Executing: ", False, False, Fore.LIGHTMAGENTA_EX, 0, 2))
+        Logger.debug (command)
         insertCursor = self._databaseConnection.cursor ()
         insertCursor.execute (command)
-        print (f"\t\t{insertCursor.rowcount} rows inserted")
+        Logger.info (f"\t\t{insertCursor.rowcount} rows inserted")
 
     @output_headers
     @execution_time
@@ -170,7 +172,7 @@ class Snapshot:
         """Creating snapshots for one schema"""
         # Testing the connection
         targetDate = self._databaseConnection.cursor ().execute("SELECT CAST (GETDATE() AS date)").fetchval () # Ensures we always remove and add the same date, even if we cross midnight, also a great connection test!
-        print (f"Snapshot date - {self._snapshotDateColumnName}: {targetDate}")
+        Logger.info (f"Snapshot date - {self._snapshotDateColumnName}: {targetDate}")
         # Create the snapshot schema if it does not exist
         self.__create_schema_if_missing (snapshot_schema)
         self.__create_missing_tables (source_schema, snapshot_schema)
@@ -193,7 +195,7 @@ class Snapshot:
             message = ( f"sourceSchema:   {sourceSchema}\n"
                         f"snapshotSchema: {snapshotSchema}\n"
                         f"publicSchema:   {publicSchema}\n")
-            Utils.print_v (message)
+            Logger.info (message)
 
             self.__create_snapshots (sourceSchema, snapshotSchema, publicSchema)
         return

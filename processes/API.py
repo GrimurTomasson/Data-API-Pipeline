@@ -1,5 +1,6 @@
 from os import path, mkdir
 import shutil
+import logging
 
 from Shared.Config import Config
 from Shared.Utils import Utils
@@ -13,25 +14,23 @@ from MetadataCatalog import MetadataCatalog
 from DefinitionHealthReport import DefinitionHealthReport
 from Documentation import Documentation
 
-class API:
-    def __init__ (self) -> None:
-        self._config = Config ()
-        
+class API:    
     @output_headers
     @execution_time
     def __run_file_cleanup (self):
         """Cleaning up runfiles"""
-        runFileDirectory = self._config.runFileDirectory
+        runFileDirectory = Config.runFileDirectory
         if len (runFileDirectory) < 15: # Við viljum ekki henda hálfu drifi út af mistökum!
-            print (f"The run file directory looks suspicious, no files deleted! Run file directory: {runFileDirectory}")
-            raise
+            message = f"The run file directory looks suspicious, no files deleted! Run file directory: {runFileDirectory}"
+            logging.error (message)
+            raise Exception (message)
 
         if path.exists (runFileDirectory):
             shutil.rmtree (runFileDirectory)
-            Utils.print_v ("\tRun file directory deleted!")
+            logging.info ("\tRun file directory deleted!")
         
         mkdir (runFileDirectory)
-        Utils.print_v (f"\tRun file directory created at: {runFileDirectory}")
+        logging.info (f"\tRun file directory created at: {runFileDirectory}")
         return
 
     @output_headers

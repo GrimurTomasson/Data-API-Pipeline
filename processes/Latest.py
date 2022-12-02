@@ -1,6 +1,7 @@
 from Shared.Decorators import output_headers, execution_time
 from Shared.Config import Config
 from Shared.Utils import Utils
+from Shared.Logger import Logger
 
 class Latest:
     def __init__ (self) -> None:
@@ -20,6 +21,6 @@ class Latest:
         """Running dbt tests"""
         dbtOperation = ["dbt", "--log-format", "json",  "test"]
         output = Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation, True)
-        Utils.print_v (f"\tOutput for dbt test results: {Config.dbtTestOutputFileInfo.qualified_name}")
+        Logger.debug (f"\tOutput for dbt test results: {Config.dbtTestOutputFileInfo.qualified_name}")
         Utils.write_file (output.stdout, Config.dbtTestOutputFileInfo.qualified_name)
         return

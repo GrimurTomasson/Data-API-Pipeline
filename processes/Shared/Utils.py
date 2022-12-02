@@ -2,15 +2,13 @@ import os
 import subprocess
 import json
 from jinja2 import Environment, FileSystemLoader
-
-from Shared.Config import Config
-from Shared.PrettyPrint import Pretty
 from colorama import Fore
 
-class Utils:
-    # Verbose output support 
-    print_v = print if Config["verbose"] else lambda *a, **k: None
+from Shared.Config import Config
+from Shared.Logger import Logger
+from Shared.PrettyPrint import Pretty
 
+class Utils:
     @staticmethod 
     def render_jinja_template (jinjaTemplateFilename, qualifiedJsonFilename, templateDirectory) -> any:
         environment = Environment (loader = FileSystemLoader (templateDirectory))
@@ -33,11 +31,11 @@ class Utils:
                                 "\t\tJson data filename: " + qualifiedDataFilename + "\n"
                                 "\t\tWorking directory:  " + Config.workingDirectory + "\n"
                                 "\t\tTarget filename:    " + targetFilename + "\n")
-        Utils.print_v (message)
-        #
+        Logger.info (message)
+        
         report = Utils.render_jinja_template (templateFilename, qualifiedDataFilename, templateDirectory)
         Utils.write_file (report, os.path.join (Config.workingDirectory, targetFilename))
-        Utils.print_v (f"\tMarkdown document has been generated!")
+        Logger.info (f"\tMarkdown document has been generated!")
         return
 
     @staticmethod
@@ -49,11 +47,13 @@ class Utils:
 
     @staticmethod
     def get_file_contents (filename) -> str:
+        Logger.info (f"\n\tReading file: {filename}")
         with open (filename, mode="r", encoding="utf-8") as f:
             return f.read ()
 
     @staticmethod
     def write_file (contents, filename) -> None:
+        Logger.info (f"\n\tWriting file: {filename}")
         with open (filename, mode="w", encoding="utf-8") as f:
             f.write (contents)
         return
@@ -64,7 +64,7 @@ class Utils:
         message = header + (f"\t\t - Starting location: {startingLocation}\n"
                             f"\t\t - Location:          {location}\n"
                             f"\t\t - Operation:         {operation}\n")
-        Utils.print_v (message)
+        Logger.info (message)
         os.chdir (location)
         output = subprocess.run (operation, capture_output=captureOutput, text=True)
         os.chdir (startingLocation)

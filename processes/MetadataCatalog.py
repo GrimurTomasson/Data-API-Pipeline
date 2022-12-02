@@ -5,6 +5,7 @@ import shutil
 from Shared.Decorators import output_headers, execution_time
 from Shared.Config import Config
 from Shared.Utils import Utils
+from Shared.Logger import Logger
 from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 
 class MetadataCatalog:
@@ -13,29 +14,29 @@ class MetadataCatalog:
         return
 
     def __get_model_description (self, jsonData, modelName) -> str:
-        Utils.print_v(f"\tgetModelDescription - modelName: {modelName}")
+        Logger.debug (f"\tgetModelDescription - modelName: {modelName}")
         if not modelName in jsonData['sources']:
             return 'There is no model for this relation!'
         model = jsonData['sources'][modelName]
         if 'description' in model:
             desc = model['description']
-            Utils.print_v(f"\t\tModel description found: {desc}\n")
+            Logger.debug(f"\t\tModel description found: {desc}\n")
             return desc
         else:
-            Utils.print_v("\t\tNo model description found !!!\n")
+            Logger.warning("\t\tNo model description found !!!\n")
             return ''
 
     def __get_column_description (self, jsonData, modelName, columnName) -> str:
-        Utils.print_v(f"\tgetColumnDescription - modelName: {modelName}, columnName: {columnName}")
+        Logger.debug (f"\tgetColumnDescription - modelName: {modelName}, columnName: {columnName}")
         if not columnName in jsonData['sources'][modelName]['columns']:
             return 'This column is not in the model for this relation!'
         column = jsonData['sources'][modelName]['columns'][columnName]
         if 'description' in column:
             desc = column['description']
             if len (desc) > 0:
-                Utils.print_v(f"\t\tColumn description found: {desc}\n")
+                Logger.debug(f"\t\tColumn description found: {desc}\n")
                 return desc
-        Utils.print_v("\t\tNo column description found !!!\n")
+        Logger.debug("\t\tNo column description found !!!\n")
         return ''
 
     @output_headers
@@ -49,8 +50,8 @@ class MetadataCatalog:
         target_manifest_file = os.path.join (Config.runFileDirectory, "3_dbt_manifest.json")
         target_catalog_file = os.path.join (Config.runFileDirectory, "4_dbt_catalog.json")
 
-        Utils.print_v (f"\tManifest \n\t\tSource: {source_manifest_file} \n\t\tTarget: {target_manifest_file}\n")
-        Utils.print_v (f"\tCatalog \n\t\tSource: {source_catalog_file} \n\t\tTarget: {target_catalog_file}\n")
+        Logger.info (f"\tManifest \n\t\tSource: {source_manifest_file} \n\t\tTarget: {target_manifest_file}\n")
+        Logger.info (f"\tCatalog \n\t\tSource: {source_catalog_file} \n\t\tTarget: {target_catalog_file}\n")
 
         shutil.copy2 (source_manifest_file, target_manifest_file)
         shutil.copy2 (source_catalog_file, target_catalog_file)
@@ -70,7 +71,7 @@ class MetadataCatalog:
                 schemaName = relation['metadata']['schema']
                 tableName = relation['metadata']['name']
                 columnName = column ['name']
-                Utils.print_v(f"\tSchema name: {schemaName} - Table name: {tableName} - Column name: {columnName}")
+                Logger.debug(f"\tSchema name: {schemaName} - Table name: {tableName} - Column name: {columnName}")
                 
                 typeInfoData = self._targetDatabase.get_type_info_column_data (schemaName, tableName, columnName)
                 column['database_info'] = typeInfoData

@@ -2,6 +2,7 @@ import pyodbc
 
 from Shared.Config import Config
 from Shared.Utils import Utils
+from Shared.Logger import Logger
 from TargetDatabase.TargetDatabase import TargetDatabase
 from Shared.Decorators import execution_time
 
@@ -48,7 +49,7 @@ class SQLServer (TargetDatabase):
         return
 
     def get_connection (self) -> pyodbc.Connection:
-        Utils.print_v (f"\tCreating a DB connection to: {self._databaseServer} - {self._databaseName}")
+        Logger.debug (f"\tCreating a DB connection to: {self._databaseServer} - {self._databaseName}")
         conn = pyodbc.connect ('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+self._databaseServer+';DATABASE='+self._databaseName+';Trusted_Connection=yes;')
         conn.autocommit = True # Þetta á við allar útfærslur, koma betur fyrir!
         return conn
@@ -68,7 +69,7 @@ class SQLServer (TargetDatabase):
                 destination[schemaName][tableName] = { }
             info = enrichmentFunction(row)
             destination[schemaName][tableName][columnName] = info
-        Utils.print_v (f"\t\tNumber of items for {what}: {len (rows)}")
+        Logger.debug (f"\t\tNumber of items for {what}: {len (rows)}")
         return
         
     def retrieve_glossary_info (self, row):
