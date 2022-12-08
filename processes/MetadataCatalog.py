@@ -45,6 +45,11 @@ class MetadataCatalog:
     @execution_time
     def enrich (self) -> None:
         """Enriching dbt test result data with Concept Glossary and Data Dicationary data, along with DB type info"""
+
+        # Generate catalog data
+        dbtOperation = ["dbt", "docs", "generate"] #  --fail-fast fjarlægt þar sem dbt rakti dependencies ekki nógu vel
+        Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
+
         dbt_output_path = os.path.join (Config.latestPath, "target")
         source_manifest_file = os.path.join (dbt_output_path, "manifest.json")
         source_catalog_file = os.path.join (dbt_output_path, "catalog.json")

@@ -4,6 +4,7 @@ import logging
 
 from Shared.Config import Config
 from Shared.Decorators import output_headers, execution_time
+from Shared.Utils import Utils
 
 from Latest import Latest
 from Snapshot import Snapshot
@@ -37,6 +38,7 @@ class API:
     def generate (self) -> None:
         """API pipeline run"""
         self.__run_file_cleanup ()
+        Utils.run_operation (Config.workingDirectory, Config.latestPath, ["dbt", "clean"])
         
         Latest ().refresh ()
         Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
