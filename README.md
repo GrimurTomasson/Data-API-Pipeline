@@ -96,6 +96,11 @@ This solution relies on *dbt* to create relations and perform automated testing.
 It also relies on *Python*, minimum version 3.9.11.
 Follow the links for installation instructions for [Python](###InstallingPython) and [dbt](###Installingdbt).
 
+### Databases
+The following dependencies only apply to specific databases.
+#### SQL Server
+[ODBC Driver version 18](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16).
+
 ---
 
 ## Appendices
