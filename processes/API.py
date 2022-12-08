@@ -16,7 +16,6 @@ from Documentation import Documentation
 
 class API:    
     @output_headers
-    @execution_time
     def __run_file_cleanup (self):
         """Cleaning up runfiles"""
         runFileDirectory = Config.runFileDirectory
@@ -35,10 +34,16 @@ class API:
 
     @output_headers
     @execution_time
-    def generate (self) -> None:
-        """API pipeline run"""
+    def clean_up (self) -> None:
+        """Removes temporary (run) files created by the API Pipeline and dbt"""
         self.__run_file_cleanup ()
         Utils.run_operation (Config.workingDirectory, Config.latestPath, ["dbt", "clean"])
+
+    @output_headers
+    @execution_time
+    def generate (self) -> None:
+        """API pipeline run"""
+        self.clean_up ()
         
         Latest ().refresh ()
         Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
