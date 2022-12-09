@@ -125,10 +125,9 @@ class Snapshot:
             alterCommand += f"{columnInfo.DATA_TYPE}({columnInfo.NUMERIC_PRECISION})"
         else: 
             raise Exception(f"\t\tUnsupported type {columnInfo.DATA_TYPE}! Add this column manually.")
-        #
-        if columnInfo.IS_NULLABLE == 'NO':
-            alterCommand += " NOT NULL"
-        #
+        
+        alterCommand += " NULL" # All new columns must be nullable!
+        
         Logger.debug (f"\t\t\tAlter command: {alterCommand}")
         self._databaseConnection.cursor ().execute (alterCommand)
         # We do not update views when snapshot tables are extended, they might be unions of multiple versions!
