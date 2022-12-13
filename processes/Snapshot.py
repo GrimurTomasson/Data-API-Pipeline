@@ -2,6 +2,7 @@
 from logging import NullHandler
 from tkinter import FIRST
 from colorama import Fore
+import re
 
 from Shared.Decorators import output_headers, execution_time
 from Shared.Config import Config
@@ -11,6 +12,7 @@ from Shared.PrettyPrint import Pretty
 from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 
 class Snapshot:
+    # ToDo: Hæði á target grunn, laga!
     missingTablesQuery = """SELECT t.TABLE_NAME FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA = ?
                             EXCEPT
                             SELECT t.TABLE_NAME FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA = ?"""
@@ -23,14 +25,8 @@ class Snapshot:
                             JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_SCHEMA = ? AND c.TABLE_NAME = i.TABLE_NAME AND c.COLUMN_NAME = i.COLUMN_NAME
                             ORDER BY c.ORDINAL_POSITION"""
 
-    tablesAndViewsQuery = """   SELECT i.table_name, SUBSTRING (i.table_name, 0, 1 + LEN(i.table_name) - i.last_u) AS view_name
-                                FROM (
-                                    SELECT i.table_name, i.name_r, CHARINDEX ('_', i.name_r, 0) AS last_u
-                                    FROM (
-                                        SELECT t.table_name, REVERSE (t.table_name) AS name_r FROM INFORMATION_SCHEMA.TABLES t WHERE t.TABLE_SCHEMA = ? AND t.TABLE_TYPE = 'BASE TABLE'
-                                    ) i
-                                ) i
-                                ORDER BY i.TABLE_NAME DESC"""
+    tablesQuery = """   SELECT t.TABLE_NAME FROM INFORMATION_SCHEMA.TABLES t 
+                        WHERE t.TABLE_SCHEMA = ? AND t.TABLE_TYPE = 'BASE TABLE'"""
             
     columnListQuery = """   SELECT STRING_AGG (c.COLUMN_NAME, ', ') WITHIN GROUP (ORDER BY column_name) AS column_list 
                             FROM INFORMATION_SCHEMA.COLUMNS c 
@@ -81,9 +77,21 @@ class Snapshot:
             self._databaseConnection.cursor ().execute (f"SELECT CAST (NULL AS DATE) AS {self._snapshotDateColumnName}, s.* INTO {snapshot_schema}.{row.TABLE_NAME} FROM {source_schema}.{row.TABLE_NAME} s WHERE s.{firstColumn} IS NULL")
             print (" - Done")
 
+    def __drop_view (self, history_schema, view_name):
+        """Drops a view"""
+        self._databaseConnection.cursor ().execute (f"DROP VIEW {history_schema}.{view_name}")
+        return
+
     def __create_or_alter_view (self, history_schema, view_name, snapshot_schema, table_name):
         """Creates or updates a view for a single snapshot"""
+        Logger.debug (f"\t\tCreating view {history_schema}.{view_name} - Selecting from: {snapshot_schema}.{table_name}")
         self._databaseConnection.cursor ().execute (f"CREATE OR ALTER VIEW {history_schema}.{view_name} AS SELECT * FROM {snapshot_schema}.{table_name}")
+        return
+
+    def __get_view_name (self, tableName):
+        if not re.match(".+_v[0-9]+$", tableName, flags=re.IGNORECASE):
+            return tableName
+        return tableName[0:tableName.rindex('_')]
 
     @output_headers
     @execution_time(tabCount=1)
@@ -95,14 +103,16 @@ class Snapshot:
 
         self.__create_schema_if_missing (history_schema)
         print ("Creating initial views. Those need to be updated by hand when new versions are released!")
-        allTables = self._databaseConnection.cursor ().execute (Snapshot.tablesAndViewsQuery, snapshot_schema).fetchall ()
+        allTables = self._databaseConnection.cursor ().execute (Snapshot.tablesQuery, snapshot_schema).fetchall ()
         print (f"Checking for views for {len (allTables)} snapshot tables in {snapshot_schema}")
         for row in allTables:
-            Logger.debug (f"\n\tProcessing - Table: {row.table_name} - View: {row.view_name} - Schema: {snapshot_schema}")
-            message = f"\tChecking for table {row.table_name}"
-            if self._databaseConnection.cursor ().execute("SELECT COUNT(1) FROM INFORMATION_SCHEMA.VIEWS v WHERE v.TABLE_SCHEMA = ? AND v.TABLE_NAME = ?", history_schema, row.view_name).fetchval () == 0:
-                message += f" - Creating view {row.view_name}"
-                self.__create_or_alter_view (history_schema, row.view_name, snapshot_schema, row.table_name)
+            print (f"row: {row}")
+            viewName = self.__get_view_name (row.TABLE_NAME)
+            Logger.debug (f"\n\tProcessing - Table: {row.TABLE_NAME} - View: {viewName} - Schema: {snapshot_schema}")
+            message = f"\tChecking for table {row.TABLE_NAME}"
+            if self._databaseConnection.cursor ().execute("SELECT COUNT(1) FROM INFORMATION_SCHEMA.VIEWS v WHERE v.TABLE_SCHEMA = ? AND v.TABLE_NAME = ?", history_schema, viewName).fetchval () == 0:
+                message += f" - Creating view {viewName}"
+                self.__create_or_alter_view (history_schema, viewName, snapshot_schema, row.TABLE_NAME)
                 message += " - Done"
             else:
                 message += f" - View existed"
@@ -132,7 +142,7 @@ class Snapshot:
         self._databaseConnection.cursor ().execute (alterCommand)
         # We do not update views when snapshot tables are extended, they might be unions of multiple versions!
 
-    def __add_missing_columns (self, source_schema, snapshot_schema):
+    def __add_missing_columns (self, source_schema, snapshot_schema, history_schema):
         """Adding missing columns to snapshot tables missing columns"""
         sourceTables = self.__get_all_source_tables (source_schema)
         Logger.info (f"Checking for missing columns in {len (sourceTables)} source tables")
@@ -141,6 +151,8 @@ class Snapshot:
             Logger.info (f"\t{len(missingColumns)} missing columns in {snapshot_schema}.{sourceTable.Name}")
             for missingColumn in missingColumns:
                 self.__add_missing_column (source_schema, sourceTable.Name, missingColumn.COLUMN_NAME, snapshot_schema)
+            if len (missingColumns) > 0:
+                self.__drop_view (history_schema, sourceTable.Name)
 
     @execution_time(tabCount=1)
     def __remove_data_current_date (self, snapshot_schema, table_name, target_date):
@@ -175,7 +187,7 @@ class Snapshot:
         # Create the snapshot schema if it does not exist
         self.__create_schema_if_missing (snapshot_schema)
         self.__create_missing_tables (source_schema, snapshot_schema)
-        self.__add_missing_columns (source_schema, snapshot_schema)
+        self.__add_missing_columns (source_schema, snapshot_schema, history_schema)
         self.__create_missing_views (snapshot_schema, history_schema)
         for sourceTable in self.__get_all_source_tables (source_schema):
             self.__remove_data_current_date (snapshot_schema, sourceTable.Name, targetDate)
