@@ -1,4 +1,4 @@
-CREATE or alter FUNCTION [dbo].[PartOfName] (@name varchar(200), @part varchar(20)) RETURNS varchar(200)
+CREATE or alter FUNCTION API_Tools.PartOfName (@name varchar(200), @part varchar(20)) RETURNS varchar(200)
 AS BEGIN
 	SET @name = TRIM(@name)
 	DECLARE @firstSpace INT = CHARINDEX (' ', @name)

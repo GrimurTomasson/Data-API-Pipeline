@@ -1,4 +1,4 @@
-CREATE OR ALTER FUNCTION dbo.StringToDate (@dateString VARCHAR(10), @mask VARCHAR(10)) RETURNS DATE
+CREATE OR ALTER FUNCTION API_Tools.StringToDate (@dateString VARCHAR(10), @mask VARCHAR(10)) RETURNS DATE
 AS BEGIN
 	DECLARE @day varchar(2)
 	DECLARE @month varchar(2)
@@ -6,8 +6,8 @@ AS BEGIN
 	DECLARE @retval date = null
 
 	SET @dateString = TRIM(@dateString)
-	IF LEN (@dateString) NOT IN (6, 8) OR LEN (@dateString) != LEN (@mask) -- Óeðlilegt inntak
-		RETURN null -- Loggun í villutöflu væri hentug hér
+	IF LEN (@dateString) NOT IN (6, 8) OR LEN (@dateString) != LEN (@mask) -- ï¿½eï¿½lilegt inntak
+		RETURN null -- Loggun ï¿½ villutï¿½flu vï¿½ri hentug hï¿½r
 
 	SET @day = SUBSTRING (@dateString, CHARINDEX ('DD', @mask), 2)
 	SET @month = SUBSTRING (@dateString, CHARINDEX ('MM', @mask), 2)
