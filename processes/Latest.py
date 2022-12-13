@@ -11,7 +11,7 @@ class Latest:
     @execution_time
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
-        dbtOperation = ["dbt", "run", "--full-refresh"] #  --fail-fast fjarlægt þar sem dbt rakti dependencies ekki nógu vel
+        dbtOperation = ["dbt", "run", "--fail-fast"] #  --fail-fast / --full-refresh
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         return
 
