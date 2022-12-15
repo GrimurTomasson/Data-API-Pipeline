@@ -1,16 +1,89 @@
 from abc import ABC, abstractmethod
+from typing import List
+from dataclasses import dataclass, field
+import copy
+from datetime import date
 import pyodbc
+
+def default_field(obj):
+        return field(default_factory=lambda: copy.copy(obj))
+
+@dataclass
+class Relation:
+    schema:str
+    name:str
+    isView:bool
+    columnNames:List[str] = default_field ([])
+
+@dataclass
+class Relations:
+    list:List[Relation]
+    dictionary:dict
+
+    def __getitem__(self, key):
+        return self.dictionary[key]
 
 class TargetDatabase (ABC):
 
     @abstractmethod
-    def get_connection (self) -> pyodbc.Connection: # All parameters should come from config, makes this flexible
+    def get_connection (self) -> pyodbc.Connection: # All parameters should come from config, makes this flexible. Adding parameters to config to make new DBs working is fine.
+        """Returns an open database connection. Make it auto-committing."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_type_length (self, columnData) -> str: 
+    def get_date (self) -> date:
+        """Returns the current date of the database, without time."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_type_info_column_data (self, schemaName, tableName, columnName) -> dict:
+    def get_type_length (self, columnData) -> str: # ToDo: Skoða hvort við getum losað okkur við þetta!
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_type_info_column_data (self, schemaName:str, tableName:str, columnName:str) -> dict: # ToDo: Passa að þetta sé almennt, ekki sértækt fyrir grunn. Skilagreina dálka í skilagildi, dataclass!
+        raise NotImplementedError
+
+    @abstractmethod
+    def retrieve_relations (self, schemaName:str) -> Relations:
+        """Returns an alphabetically ordered list of relations, including column name in declaration order"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def retrieve_relation_columns (self, schemaName:str, relationName:str) -> List[str]:
+        """Returns a list of column names for one relation, in a declaration order, from the first column in the relation to the last."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def clone_column (self, sourceSchema:str, sourceTable:str, targetSchema:str, targetTable:str, columnName:str) -> None:
+        """Clones a column from the source table to the target table."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def drop_view (self, schemaName:str, viewName:str) -> None:
+        """Drops a view."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def create_schema_if_missing (self, schemaName:str) -> None:
+        """Creates schema if it does not exist."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def create_empty_target_table (self, sourceSchema:str, sourceTable:str, sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str) -> None:
+        """Creates an empty snapshot table which prefixes a date column to the column list of the source table but is otherwise type identical."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def create_or_alter_view (self, viewSchema:str, viewName:str, sourceSchema:str, sourceTable:str) -> None:
+        """Adds or replaces a view which selects all columns from a source table."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_data (self, schemaName:str, tableName:str, comparisonColumn:str, columnValue:any) -> None:
+        """Deletes all rows in a table where the comparison column has a particular value."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def insert_data (self, sourceSchema:str, sourceTable:str, sourceColumns:List[str], sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str, runDate:date) -> None:
+        """Inserts all rows in the source table into the target table and adds a load-date to it."""
         raise NotImplementedError
