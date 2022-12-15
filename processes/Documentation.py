@@ -1,5 +1,4 @@
 import json
-import copy
 from dataclasses import dataclass, field
 
 from Shared.Decorators import output_headers, execution_time
@@ -7,12 +6,8 @@ from Shared.Config import Config
 from Shared.Utils import Utils
 from Shared.Logger import Logger
 from Shared.Json import EnhancedJSONEncoder
-from Shared.DataClasses import CountPercentage
 from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
 from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory
-
-def default_field(obj):
-    return field(default_factory=lambda: copy.copy(obj))
 
 @dataclass
 class ColumnType:
@@ -35,11 +30,11 @@ class Column:
 class Relation:
         schema_name: str = ''
         relation_name: str = ''
-        columns: list[Column] = default_field([])
+        columns: list[Column] = Utils.default_field([])
 
 @dataclass
 class DocumentationData: # Naming collision without the Data postfix
-    relations: list[Relation] = default_field([])
+    relations: list[Relation] = Utils.default_field([])
 
 class Documentation:
 

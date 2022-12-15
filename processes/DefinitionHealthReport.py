@@ -1,6 +1,4 @@
-import os
 import json
-import copy
 from dataclasses import dataclass, field
 
 from Shared.Decorators import output_headers, execution_time
@@ -10,9 +8,6 @@ from Shared.Logger import Logger
 from Shared.Json import EnhancedJSONEncoder
 from Shared.DataClasses import CountPercentage
 from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
-
-def default_field(obj):
-        return field(default_factory=lambda: copy.copy(obj))
 
 @dataclass 
 class StatsTotal:
@@ -38,7 +33,7 @@ class StatsRelation:
 @dataclass
 class Stats:
     total: StatsTotal = StatsTotal()
-    relation: list[StatsRelation] = default_field([])
+    relation: list[StatsRelation] = Utils.default_field([])
 
 @dataclass
 class Concept:
@@ -56,14 +51,14 @@ class Error:
 
 @dataclass
 class Errors:
-    type: list[Error] = default_field([])
-    documentation: list[Error] = default_field([])
+    type: list[Error] = Utils.default_field([])
+    documentation: list[Error] = Utils.default_field([])
 
 @dataclass
 class HealthReport: # Root 
     api_name: str
     stats: Stats = Stats()
-    overwritten_concepts: list[Concept] = default_field([])
+    overwritten_concepts: list[Concept] = Utils.default_field([])
     errors: Errors = Errors()
 
 class DefinitionHealthReport:

@@ -112,10 +112,6 @@ class SQLServer (TargetDatabase):
         Logger.debug (f"Retrieved relations for schema: {schemaName} - list: {len (relations)} - dictionary: {len (relationDict.keys())}")
         return Relations (relations, relationDict)
 
-    def retrieve_relation_columns (self, schemaName:str, relationName:str) -> List[str]:
-        query = "SELECT c.COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ?"
-        return self._connection.cursor ().execute (query, schemaName, relationName).fetchall()
-
     def clone_column (self, sourceSchema:str, sourceTable:str, targetSchema:str, targetTable:str, columnName:str) -> None:
         columnInfo = self._connection.cursor ().execute ("SELECT c.IS_NULLABLE, c.DATA_TYPE, c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, COALESCE (c.NUMERIC_SCALE, 0) AS NUMERIC_SCALE, c.DATETIME_PRECISION FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ? AND c.COLUMN_NAME = ?", sourceSchema, sourceTable, columnName).fetchone()
         Logger.info(f"\t\tAdding column: {columnName} to {targetSchema}.{targetTable}")

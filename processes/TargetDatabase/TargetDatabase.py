@@ -1,19 +1,17 @@
 from abc import ABC, abstractmethod
 from typing import List
-from dataclasses import dataclass, field
-import copy
+from dataclasses import dataclass
 from datetime import date
 import pyodbc
 
-def default_field(obj):
-        return field(default_factory=lambda: copy.copy(obj))
+from Shared.Utils import Utils
 
 @dataclass
 class Relation:
     schema:str
     name:str
     isView:bool
-    columnNames:List[str] = default_field ([])
+    columnNames:List[str] = Utils.default_field ([])
 
 @dataclass
 class Relations:
@@ -36,21 +34,18 @@ class TargetDatabase (ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_type_length (self, columnData) -> str: # ToDo: Skoða hvort við getum losað okkur við þetta!
+    def get_type_length (self, columnData) -> str: 
+        """This function returns the length information for a column. It uses DB specific column data, returned by get_type_info_column_date (), as input."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_type_info_column_data (self, schemaName:str, tableName:str, columnName:str) -> dict: # ToDo: Passa að þetta sé almennt, ekki sértækt fyrir grunn. Skilagreina dálka í skilagildi, dataclass!
+    def get_type_info_column_data (self, schemaName:str, tableName:str, columnName:str) -> dict: 
+        """This function returns DB specific information about column type in a dictionary. This dictionary is used by get_type_length ()."""
         raise NotImplementedError
 
     @abstractmethod
     def retrieve_relations (self, schemaName:str) -> Relations:
-        """Returns an alphabetically ordered list of relations, including column name in declaration order"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def retrieve_relation_columns (self, schemaName:str, relationName:str) -> List[str]:
-        """Returns a list of column names for one relation, in a declaration order, from the first column in the relation to the last."""
+        """Returns an alphabetically ordered list of relations, including column name in declaration order."""
         raise NotImplementedError
 
     @abstractmethod

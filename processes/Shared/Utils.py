@@ -1,8 +1,10 @@
 import os
 import subprocess
 import json
+import copy
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore
+from dataclasses import field
 
 from Shared.Config import Config
 from Shared.Logger import Logger
@@ -69,3 +71,7 @@ class Utils:
         output = subprocess.run (operation, capture_output=captureOutput, text=True)
         os.chdir (startingLocation)
         return output
+
+    @staticmethod
+    def default_field(obj):
+        return field(default_factory=lambda: copy.copy(obj))
