@@ -15,7 +15,7 @@ The following is focused on getting this software running on a development machi
 6. Edit `api_documentation_template.md`, write a high level description of the API.
 
 ### General use
-1. In a *console* at the root directory of your Data API, run `GenerateAPI`, this fetches the current version of **Data-API-Pipeline** and runs the `API` command. Note, if you do not want to update the pipeline version, just run `API`.
+1. In a *console* at the root directory of your Data API, run `API`.
 
 All reports and documentation are written to the root directory of your Data API.
 
