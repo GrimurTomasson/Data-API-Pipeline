@@ -8,14 +8,17 @@ The following is focused on getting this software running on a development machi
 
 ### Setup
 1. Install the [Dependencies](##Dependencies).
-2. Clone this repository, to the same drive as your API repository.
-3. Add the location of `Data-API-Pipeline/processes` to your operating system path.
-4. In a *console* at the root directory of your Data API, run `CreateAPI` to initialize the pipeline.
-5. Edit `api_config.yml`, it contains helpful information in the form of comments.
-6. Edit `api_documentation_template.md`, write a high level description of the API.
+2. In a *console* at the root directory of your API repository, run:  
+   git submodule add https://github.com/GrimurTomasson/Data-API-Pipeline.git  
+    **Or**  
+   Clone this repository, to the same drive as your API repository.  
+4. Add the location of `Data-API-Pipeline/processes` to your operating system path.
+5. In a *console* at the root directory of your Data API, run `CreateAPI` to initialize the pipeline.
+6. Edit `api_config.yml`, it contains helpful information in the form of comments.
+7. Edit `api_documentation_template.md`, write a high level description of the API.
 
 ### General use
-1. In a *console* at the root directory of your Data API, run `GenerateAPI`, this fetches the current version of **Data-API-Pipeline** and runs the `API` command. Note, if you do not want to update the pipeline version, just run `API`.
+1. In a *console* at the root directory of your Data API, run `API`.
 
 All reports and documentation are written to the root directory of your Data API.
 
