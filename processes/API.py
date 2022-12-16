@@ -1,6 +1,9 @@
-from os import path, mkdir
 import shutil
 import logging
+import argparse
+
+from os import path, mkdir
+from sys import argv
 
 from Shared.Config import Config
 from Shared.Decorators import output_headers, execution_time
@@ -8,13 +11,15 @@ from Shared.Utils import Utils
 
 from Latest import Latest
 from Snapshot import Snapshot
-
 from DataHealthReport import DataHealthReport
 from MetadataCatalog import MetadataCatalog
 from DefinitionHealthReport import DefinitionHealthReport
 from Documentation import Documentation
 
-class API:    
+class API:
+    _argParser = argparse.ArgumentParser (prog='API.py', description='Runs a data API creation pipeline.')
+    _argParser.add_argument ('operation', choices=['build', 'clean'])
+
     @output_headers
     def __run_file_cleanup (self):
         """Cleaning up runfiles"""
@@ -34,7 +39,7 @@ class API:
 
     @output_headers
     @execution_time
-    def clean_up (self) -> None:
+    def cleanup (self) -> None:
         """Removes temporary (run) files created by the API Pipeline and dbt"""
         self.__run_file_cleanup ()
         Utils.run_operation (Config.workingDirectory, Config.latestPath, ["dbt", "clean"])
@@ -43,7 +48,7 @@ class API:
     @execution_time
     def generate (self) -> None:
         """API pipeline run"""
-        self.clean_up ()
+        self.cleanup ()
         
         Latest ().refresh ()
         Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
@@ -55,8 +60,11 @@ class API:
         Documentation ().generate () # Skrifar skrá: 7
         return
 
-def main ():
-    return API ().generate ()
+def main (args):
+    options = API._argParser.parse_args (args)
+    if options.operation == 'build':
+        return API ().generate ()
+    return API ().cleanup ()
 
 if __name__ == '__main__':
-    main ()
+    main (argv[1:]) # Getting rid of the filename
