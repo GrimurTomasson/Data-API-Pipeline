@@ -170,6 +170,8 @@ class DataHealthReport: # Main class
                 error.rows_on_error_percentage = Utils.to_percentage (error.rows_on_error, noRows, 4)
                 error.query_path = fRelativePath
                 error.sql = sql
+
+        errorList.sort (key=lambda x: (x.relation_name, x.name))         
         return errorList
 
     @execution_time(tabCount=1)
@@ -213,7 +215,6 @@ class DataHealthReport: # Main class
         # Enrichment
         healthReport.stats.relation = self.__create_relation_stats (testList)
         healthReport.errors = self.__enrich_errors (healthReport.errors, fileMap)
-        
         return healthReport
 
     @output_headers(tabCount=1)

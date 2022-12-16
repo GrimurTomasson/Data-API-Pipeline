@@ -14,6 +14,7 @@ from Shared.Utils import Utils
 from API import API
 
 def refreshPipelineScripts(workingDirectory, pipelineBranch):
+    """Getting the most recent version of the pipeline"""
     scriptDir = f"{workingDirectory}/{pipelineScriptLocation}"
     Utils().print_v(f"Pipeline repo dir: {scriptDir} - Branch: {pipelineBranch}")
     os.chdir(scriptDir)
@@ -27,7 +28,7 @@ def main():
     workingDirectory = os.getcwd()
     Utils().print_v(f"Starting location: {workingDirectory}")
     # Retrieve the most recent version of the pipeline scripts
-    pipelineBranch = Config()["data-api-pipeline"]["git-branch-name"]
+    pipelineBranch = Config["data-api-pipeline"]["git-branch-name"]
     if len (pipelineBranch) > 0:
         refreshPipelineScripts(workingDirectory, pipelineBranch)
     
