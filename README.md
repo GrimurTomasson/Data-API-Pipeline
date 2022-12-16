@@ -20,7 +20,7 @@ The following is focused on getting this software running on a development machi
 ### General use
 1. Install the [Dependencies](##Dependencies).
 2. Add the location of `Data-API-Pipeline/processes` to your operating system path.
-3. In a *console* at the root directory of your Data API, run `API`.
+3. In a *console* at the root directory of your Data API, run `API build`.
 
 All reports and documentation are written to the root directory of your Data API.
 
