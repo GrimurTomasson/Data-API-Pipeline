@@ -71,7 +71,7 @@ class Utils:
         output = subprocess.run (operation, capture_output=captureOutput, text=True)
         os.chdir (startingLocation)
         if output.returncode != 0:
-            raise Exception(f"\nError running:\n{message}")
+            raise Exception(f"\nError:\n\treturn value: {output.returncode}\n\trunning:\n{message}")
         return output
 
     @staticmethod

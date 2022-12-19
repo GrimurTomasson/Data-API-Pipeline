@@ -15,6 +15,14 @@ class Latest:
         
     @output_headers
     @execution_time
+    def update_dependencies (self):
+        """Update dbt dependencies"""
+        dbtOperation = ["dbt", "deps"] 
+        Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
+        return
+
+    @output_headers
+    @execution_time
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
         dbtOperation = ["dbt", "run", "--fail-fast"] #  --fail-fast / --full-refresh
