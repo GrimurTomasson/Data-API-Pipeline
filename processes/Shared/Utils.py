@@ -70,6 +70,8 @@ class Utils:
         os.chdir (location)
         output = subprocess.run (operation, capture_output=captureOutput, text=True)
         os.chdir (startingLocation)
+        if output.returncode != 0:
+            raise Exception(f"\nError running:\n{message}")
         return output
 
     @staticmethod
