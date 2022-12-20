@@ -8,7 +8,7 @@
 -- at http://www.codeproject.com/Articles/13525/Fast-memory-efficient-Levenshtein-algorithm,
 -- with some additional optimizations.
 -- =============================================
-CREATE FUNCTION API_Tools.Levenshtein_distance (
+CREATE OR ALTER FUNCTION API_Tools.Levenshtein_distance (
     @s nvarchar(4000)
   , @t nvarchar(4000)
   , @max int
