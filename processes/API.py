@@ -50,6 +50,7 @@ class API:
         """API pipeline run"""
         self.cleanup ()
         
+        Latest ().update_dependencies ()
         Latest ().refresh ()
         Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
         Latest ().run_tests () # Skrifar skrá: 1

@@ -70,6 +70,8 @@ class Utils:
         os.chdir (location)
         output = subprocess.run (operation, capture_output=captureOutput, text=True)
         os.chdir (startingLocation)
+        if output.returncode != 0 and not captureOutput: # We should not throw if the caller needs output to decide what to do
+            raise Exception(f"\nError:\n\treturn value: {output.returncode}\n\trunning:\n{message}")
         return output
 
     @staticmethod
