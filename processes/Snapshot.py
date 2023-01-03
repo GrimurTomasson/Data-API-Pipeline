@@ -27,19 +27,20 @@ class Snapshot:
         Logger.debug (f"\t\tFirst column for {relations[source_table].schema}.{source_table}: {firstColumn}")
         return firstColumn
 
-    def __create_missing_tables (self, source_schema, snapshot_schema):
+    def __create_missing_tables (self, source_schema, snapshot_schema) -> int:
         """Creates empty snapshot tables if they are missing"""
         missingTables = []
         for table in self._sourceRelations.list:
             if table.name not in self._snapshotRelations.dictionary.keys():
                 missingTables.append (table.name)
-        print (f"Number of missing snapshot tables: {len (missingTables)}\n")
+        noMissingTables = len (missingTables)
+        print (f"Number of missing snapshot tables: {noMissingTables}\n")
         for missingTable in missingTables:
             print (f"\tCreating missing snapshot table: {missingTable}", end="")
             # Our API tables always contain a first column, single column unique id
             firstColumn = self.__get_first_column (self._sourceRelations, missingTable)
             self._targetDatabase.create_empty_target_table (source_schema, missingTable, [firstColumn], snapshot_schema, missingTable, self._snapshotDateColumnName)
-        return
+        return noMissingTables
 
     def __get_view_name (self, tableName):
         if not re.match(".+_v[0-9]+$", tableName, flags=re.IGNORECASE):
@@ -48,7 +49,7 @@ class Snapshot:
 
     @output_headers
     @execution_time(tabCount=1)
-    def __create_missing_views (self, snapshot_schema, history_schema):
+    def __create_missing_views (self, snapshot_schema, history_schema) -> int:
         """Creates missing views for snapshot tables"""
         message = ( f"snapshot_schema: {snapshot_schema}\n"
                     f"history_schema:  {history_schema}\n")
@@ -56,6 +57,7 @@ class Snapshot:
         self._targetDatabase.create_schema_if_missing (history_schema)
         print ("Creating initial views. Those need to be updated by hand when new versions are released!")
         print (f"Checking for views for {len (self._snapshotRelations.list)} snapshot tables in {snapshot_schema}")
+        viewsCreated = 0
         for snapshotTable in self._snapshotRelations.list:
             viewName = self.__get_view_name (snapshotTable.name)
             Logger.debug (f"\n\tProcessing - Table: {snapshotTable.name} - View: {viewName} - Schema: {snapshot_schema}")
@@ -64,10 +66,12 @@ class Snapshot:
                 message += f" - Creating view {viewName}"
                 self._targetDatabase.create_or_alter_view (history_schema, viewName, snapshot_schema, snapshotTable.name)
                 message += " - Done"
+                viewsCreated += 1
             else:
                 message += f" - View existed"
             Logger.debug (message)
-        return
+        Logger.debug (f"\t{viewsCreated} views created.\n")
+        return viewsCreated
 
     def __add_missing_columns (self, source_schema, snapshot_schema):
         """Adding missing columns to snapshot tables missing columns"""
@@ -106,9 +110,16 @@ class Snapshot:
         self._historyRelations = self._targetDatabase.retrieve_relations (history_schema)
 
         self._targetDatabase.create_schema_if_missing (snapshot_schema)
-        self.__create_missing_tables (source_schema, snapshot_schema)
+        self._targetDatabase.create_schema_if_missing (history_schema)
+
+        if self.__create_missing_tables (source_schema, snapshot_schema) > 0: # We created new tables and need to reload snapshot tables
+            self._snapshotRelations = self._targetDatabase.retrieve_relations (snapshot_schema)
+
         self.__add_missing_columns (source_schema, snapshot_schema)
-        self.__create_missing_views (snapshot_schema, history_schema)
+
+        if self.__create_missing_views (snapshot_schema, history_schema) > 0: # Views created, update view info
+            self._historyRelations = self._targetDatabase.retrieve_relations (history_schema)
+            
         for sourceTable in self._sourceRelations.list:
             self._targetDatabase.delete_data (snapshot_schema, sourceTable.name, self._snapshotDateColumnName, targetDate)
             self.__create_snapshot (source_schema, sourceTable.name, snapshot_schema, targetDate)
