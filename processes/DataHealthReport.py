@@ -13,12 +13,6 @@ from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFa
 from Shared.DataClasses import CountPercentage
 import Shared.Json
 
-
-@dataclass 
-class Relation:
-    schema: str
-    name: str
-
 @dataclass
 class HeaderExecution:
     timestamp: str
@@ -54,7 +48,6 @@ class Error:
     name: str
     rows_on_error: int
     sql_filename: str
-    schema_name: str
     relation_name: str
     rows_in_relation: int
     rows_on_error_percentage: int
@@ -81,12 +74,7 @@ class DataHealthReport: # Main class
 
     def __init__ (self) -> None:
         self._reportFilename = "api_data_health_report.md"
-        self._rootTableNameRegEx = re.compile ('(?<=models\\)[a-z\_0-9]+(?=\.yml)', re.IGNORECASE)
-        
-        self._fromClauseRegEx = re.compile ('(?<=from )[a-z\_0-9\"\.@]+', re.IGNORECASE, re.MULTILINE)
-        self._fromClauseRelationNameRegEx = re.compile ('(?<=\.\")[a-z\_0-9\"]+(?=\")', re.IGNORECASE)
-        self._fromClauseSchemaNameRegEx = re.compile ('(?<=\.\")[a-z\_0-9\"@]+(?=\"\.)', re.IGNORECASE)
-        
+        self._tableNameRegEx = re.compile ('[a-z\_0-9]+\.yml', re.IGNORECASE)
         self._cardinalityMap = {}
         
         self._projectName = Config['latest']['name']
@@ -98,34 +86,10 @@ class DataHealthReport: # Main class
         self._targetKnowledgeBase = TargetKnowledgeBaseFactory ().get_target_knowledge_base ()
         return
 
-    def __get_relation (self, filePath, sql) -> Relation:
-        match = self._rootTableNameRegEx.search (filePath)
-        if match != None: # Tafla á rótinni á dbt project, ekki í sér skema
-            relation = match.group ()
-            Logger.debug (f"Relation found in filePath, relation: {relation}\nfilePath: {filePath}")
-            return Relation(self._projectName, relation)
-        Logger.debug (f"Sql: {sql}")
-        fromMatch = self._fromClauseRegEx.search (sql)
-        if fromMatch == None:
-            Logger.error (f"No from clause found in sql: {sql}")
-            return Relation("unknown", "unknown")    
-        fromClause = fromMatch.group ()
-        Logger.debug (f"\tFrom clause: {fromClause}")
-        relationMatch = self._fromClauseRelationNameRegEx.search (fromClause)
-        if relationMatch == None:
-            Logger.error (f"No relation name found in sql: {fromClause}")
-            return Relation("unknown", "unknown")  
-        relationName = relationMatch.group ()  
-        schemaMatch = self._fromClauseSchemaNameRegEx.search (fromClause)
-        if schemaMatch == None:
-            Logger.error (f"No schema name found in sql: {fromClause}")
-            return Relation("unknown", "unknown")  
-        schemaName = schemaMatch.group ()
-        Logger.debug (f"Relation found in sql, relation: {schemaName}.{relationName}")
-        return Relation (schemaName, relationName)
-        # ToDo: Test for existence! 
+    def __get_relation_name (self, filePath) -> str:
+        return self._tableNameRegEx.search (filePath).group ()[:-4]
 
-    def __get_relation_name_from_test_name (self, testName) -> str: # ToDo: Laga, þetta er brotið!
+    def __get_relation_name_from_test_name (self, testName) -> str:
         # Logger.debug (f"project: {self._projectName} - test name: {testName}")
         tableNameFromTestRegEx = re.compile (f"{self._projectName}\_[a-z\_]+\_v[0-9]+", re.IGNORECASE) # source_is_true_Nustada_bekkur_v1_lokadagur__lokadagur_upphafsdagur
         # ToDo: Búa til mynstur sem höndlar fleiri útgáfur, t.d.: project: Latest - test name: accepted_values_Address_fiber_optic_state_v1_L_apartment_number__MISSING_FROM_SOURCE
@@ -135,20 +99,20 @@ class DataHealthReport: # Main class
                 return ''
         return searchResults.group ()[len (self._projectName)+1:]
 
-    def __retrieve_relation_cardinality (self, relation) -> int:
-        relationId = f"{relation.schema}:{relation.name}"
-        if relationId in self._cardinalityMap:
-            return self._cardinalityMap[relationId]
+    def __retrieve_relation_cardinality (self, filePath) -> int:
+        tableName = self.__get_relation_name (filePath)
+        if tableName in self._cardinalityMap:
+            return self._cardinalityMap[tableName]
         else:
             rows = -1
             try:
-                rows = self._databaseConnection.cursor ().execute (f"SELECT COUNT(1) AS fjoldi FROM {relation.schema}.{relation.name}").fetchval () # ToDo: Færa í TargetDatabase!
-                Logger.debug (f"\tCardinality for table {relation.schema}.{relation.name} retrieved - cardinality: {rows}\n")
+                rows = self._databaseConnection.cursor ().execute (f"SELECT COUNT(1) AS fjoldi FROM {self._projectName}.{tableName}").fetchval ()
+                Logger.debug (f"\tCardinality for table {self._projectName}.{tableName} retrieved - cardinality: {rows}\n")
                 
             except Exception as ex:
                 Logger.warning (f"Failure to retrieve relation cardinality: {ex}")
                 
-            self._cardinalityMap[relationId] = rows
+            self._cardinalityMap[tableName] = rows
             return rows
 
     @execution_time(tabCount=1)
@@ -198,11 +162,10 @@ class DataHealthReport: # Main class
                 Logger.debug (f"\tfPath:\n\t{fPath}\n")
 
                 sql = Utils.get_file_contents (fPath).strip ()
-                relation = self.__get_relation (fPath, sql)
-                noRows = self.__retrieve_relation_cardinality (relation)
-                
-                error.schema_name = relation.schema
-                error.relation_name = relation.name
+                noRows = self.__retrieve_relation_cardinality (fPath)
+                relationName = self.__get_relation_name (fPath)
+
+                error.relation_name = relationName 
                 error.rows_in_relation = noRows
                 error.rows_on_error_percentage = Utils.to_percentage (error.rows_on_error, noRows, 4)
                 error.query_path = fRelativePath
@@ -223,7 +186,7 @@ class DataHealthReport: # Main class
                 testList.append (DataHealthReport.TestEntry(entry["data"]["node_info"]["node_name"], 1, 0))
 
             if entry["code"] == "Q011" and entry["level"] == "error": # Errors
-                error = Error ((entry["data"])["name"], (entry["data"])["failures"], ((entry["data"])["node_info"])["node_path"], None, None, None, None, None, None)
+                error = Error ((entry["data"])["name"], (entry["data"])["failures"], ((entry["data"])["node_info"])["node_path"], None, None, None, None, None)
                 healthReport.errors.append (error)
                 
                 testList.append (DataHealthReport.TestEntry(entry["data"]["node_info"]["node_name"], 0, 1))
