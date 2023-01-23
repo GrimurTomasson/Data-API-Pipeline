@@ -8,6 +8,7 @@ data-api-pipeline:
 database:
   name: '?SOME-API' # We require the name of the target database and project folder to be the same. Check if this is still true.
   server: 'some_db' # Including port number if not default
+  connection-string-template: DRIVER={ODBC Driver 18 for SQL Server};SERVER={{database-server}};DATABASE={{database-name}};Trusted_Connection=yes;Encrypt=no;
   type: SQL-Server
 
 concept-glossary:

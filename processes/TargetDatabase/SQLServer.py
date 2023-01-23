@@ -31,12 +31,17 @@ class SQLServer (TargetDatabase):
     def __init__(self):
         self._databaseServer = Config['database']['server']
         self._databaseName = Config['database']['name']
+        
+        self._connectionString = Config['database']['connection-string-template'] # ToDo: Cleanup
+        self._connectionString = self._connectionString.replace('{{database-server}}', self._databaseServer)
+        self._connectionString = self._connectionString.replace('{{database-name}}', self._databaseName)
+        
         self._connection = self.get_connection ()
         return
 
     def get_connection (self) -> pyodbc.Connection:
         Logger.debug (f"\tCreating a DB connection to: {self._databaseServer} - {self._databaseName}")
-        conn = pyodbc.connect ('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+self._databaseServer+';DATABASE='+self._databaseName+';Trusted_Connection=yes;')
+        conn = pyodbc.connect (self._connectionString)
         conn.autocommit = True # Þetta á við allar útfærslur, koma betur fyrir!
         return conn
 
