@@ -32,9 +32,14 @@ public-schemas: # Schemas need to be case-correct
   
 documentation:
     publish-to: 'Confluence' # Only supported target right now!
-    publish:
-        data-health-report: True
-        definition-health-report: True
-        user-documentation: True
+    data-health-report:
+      generate: False
+      publish: False
+    definition-health-report:
+      generate: False
+      publish: False
+    user-documentation:
+      generate: False
+      publish: False
 
 log-level: 'debug' # debug, warning, info, error, critical
