@@ -7,6 +7,8 @@ from Shared.PrettyPrint import Pretty
 class ConfigBase:
     _maxConfigVersion = float (1.99999)
     workingDirectory = os.getcwd ()
+    configFilename = "api_config.yml"
+    qualifiedConfig = os.path.join(workingDirectory, configFilename)
     init () #colorama init, fixes colored output on Windows (Skoða að setja þetta framar í init keðjuna)
 
     @staticmethod
@@ -14,8 +16,7 @@ class ConfigBase:
         """Reading config from disk"""
         Pretty.print (ConfigBase.process_config.__doc__, True, True)
         try:
-            qualifiedConfig = os.path.join(ConfigBase.workingDirectory, "api_config.yml")
-            with open (qualifiedConfig, "r", encoding="utf8") as stream:
+            with open (ConfigBase.qualifiedConfig, "r", encoding="utf8") as stream:
                 config = yaml.safe_load (stream)
             
             if float (config["version"]) > ConfigBase._maxConfigVersion:

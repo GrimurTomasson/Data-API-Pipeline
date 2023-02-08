@@ -9,7 +9,7 @@ class Confluence (TargetKnowledgeBase):
         return
 
     def publish (self, documentName, configParam):
-        if Config['documentation']['publish-to'] != 'Confluence' or Config['documentation']['publish'][configParam] != True:
+        if Config['documentation']['publish-to'] != 'Confluence' or Config['documentation'][configParam]['publish'] != True:
             print (f"{configParam} not published due to config settings!")
             return
         
