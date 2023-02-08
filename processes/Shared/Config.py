@@ -60,10 +60,19 @@ class Config (ConfigBase):
         Config.enrichedDbtCatalogFileInfo = Config.__get_file_info ('5_enriched_dbt_catalog.json', Config.runFileDirectory) # manifest.json = 3, catalog.json = 4
         Config.apiDefinitionHealthReportDataFileInfo = Config.__get_file_info ('6_api_definition_health_report_data.json', Config.runFileDirectory)
         Config.apiDocumentationDataFileInfo = Config.__get_file_info ('7_api_documentation_data.json', Config.runFileDirectory)
+
+        Config.dbtProfilePath = Config.__find_file_location ('profiles.yml', Config.workingDirectory )
         return
 
     @staticmethod
     def __get_file_info (name, path) -> FileInfo:
         return FileInfo (name, path, os.path.join (path, name))
+
+    @staticmethod
+    def __find_file_location(name, path):
+        for root, dirs, files in os.walk(path):
+            if name in files:
+                return root
+        return None
 
 Config() # Initialization
