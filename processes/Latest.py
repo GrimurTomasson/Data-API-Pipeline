@@ -26,7 +26,7 @@ class Latest:
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
         dbtOperation = ["dbt", "run", "--fail-fast"] #  --fail-fast / --full-refresh
-        dbtOperation = self.__add_profile_location (dbtOperation)
+        dbtOperation = Utils.add_dbt_profile_location (dbtOperation)
 
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         return
@@ -36,7 +36,7 @@ class Latest:
     def run_tests (self):
         """Running dbt tests"""
         dbtOperation = ["dbt", "--log-format", "json",  "test"]
-        dbtOperation = self.__add_profile_location (dbtOperation)
+        dbtOperation = Utils.add_dbt_profile_location (dbtOperation)
 
         output = Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation, True)
         # ToDo: Meta hvort við ætlum að stoppa eða ekki, skoða config breytu?
@@ -44,18 +44,14 @@ class Latest:
         Utils.write_file (output.stdout, Config.dbtTestOutputFileInfo.qualified_name)
         return
 
-    def __add_profile_location (self, operation):
-        if Config.dbtProfilePath != None:
-            operation.append (f"--profiles-dir")
-            operation.append (Config.dbtProfilePath)
-        return operation
-
 def main (args):
     options = Latest._argParser.parse_args (args)
     if options.operation == 'build':
         return Latest ().refresh ()
     elif options.operation == 'test':
         return Latest ().run_tests ()
+    elif options.operation == 'deps':
+        return Latest ().update_dependencies ()
 
 if __name__ == '__main__':
     main (sys.argv[1:]) # Getting rid of the filename

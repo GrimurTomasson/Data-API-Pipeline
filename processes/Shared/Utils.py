@@ -77,3 +77,10 @@ class Utils:
     @staticmethod
     def default_field(obj):
         return field(default_factory=lambda: copy.copy(obj))
+    
+    @staticmethod
+    def add_dbt_profile_location (operation):
+        if Config.dbtProfilePath != None:
+            operation.append (f"--profiles-dir")
+            operation.append (Config.dbtProfilePath)
+        return operation
