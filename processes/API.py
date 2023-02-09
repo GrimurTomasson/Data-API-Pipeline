@@ -54,17 +54,10 @@ class API:
         Latest ().refresh ()
         Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
         Latest ().run_tests () # Skrifar skrá: 1
-        
-        if Config['documentation']['data-health-report']['generate'] == True:
-            DataHealthReport ().generate () # Skrifar skrá: 2
-
+        DataHealthReport ().generate () # Skrifar skrá: 2
         MetadataCatalog ().enrich () # Skrifar skrár: 3, 4, 5
-
-        if Config['documentation']['definition-health-report']['generate'] == True:
-            DefinitionHealthReport ().generate () # Skrifar skrá: 6
-
-        if Config['documentation']['user-documentation']['generate'] == True:
-            Documentation ().generate () # Skrifar skrá: 7
+        DefinitionHealthReport ().generate () # Skrifar skrá: 6
+        Documentation ().generate () # Skrifar skrá: 7
         return
 
 def main (args):

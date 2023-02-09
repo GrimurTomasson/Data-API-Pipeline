@@ -102,6 +102,10 @@ class Documentation:
     @execution_time
     def generate (self) -> None:
         """Producing user documentation"""
+
+        if Config['documentation']['user-documentation']['generate'] != True:
+            return
+            
         self.generate_data ()
         self.generate_documentation ()
         self.publish ()

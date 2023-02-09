@@ -245,6 +245,9 @@ class DataHealthReport: # Main class
     @execution_time
     def generate (self) -> None:
         """Producing a data health report"""
+
+        if Config['documentation']['data-health-report']['generate'] != True:
+            return
         
         message = ( f"\tProject name:  {self._projectName}"
                     f"\tRelative path: {self._projectRelativePath}")

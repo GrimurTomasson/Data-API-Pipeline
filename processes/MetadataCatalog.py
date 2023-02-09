@@ -48,6 +48,9 @@ class MetadataCatalog:
 
         # Generate catalog data
         dbtOperation = ["dbt", "docs", "generate"] #  --fail-fast fjarlægt þar sem dbt rakti dependencies ekki nógu vel
+        if Config.dbtProfilePath != None:
+            dbtOperation.append (f"--profiles-dir")
+            dbtOperation.append (Config.dbtProfilePath)
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
 
         dbt_output_path = os.path.join (Config.latestPath, "target")
