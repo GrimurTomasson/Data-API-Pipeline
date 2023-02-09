@@ -8,7 +8,7 @@ from Shared.Logger import Logger
 
 class Latest:
     _argParser = argparse.ArgumentParser (prog='Latest.py', description='Creates new relations and tests them.')
-    _argParser.add_argument ('operation', choices=['build', 'test'])
+    _argParser.add_argument ('operation', choices=['build', 'test', 'deps'])
 
     def __init__ (self) -> None:
         return
