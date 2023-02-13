@@ -155,12 +155,12 @@ class SQLServer (TargetDatabase):
 
     def create_or_alter_view (self, viewSchema:str, viewName:str, sourceSchema:str, sourceTable:str) -> None:
         Logger.debug (f"\t\tCreating view {viewSchema}.{viewName} - Selecting from: {sourceSchema}.{sourceTable}")
-        self._connection.cursor ().execute (f"CREATE OR ALTER VIEW {viewSchema}.{viewName} AS SELECT * FROM {sourceSchema}.{sourceTable}")
+        self._connection.cursor ().execute (f"CREATE OR ALTER VIEW [{viewSchema}].[{viewName}] AS SELECT * FROM [{sourceSchema}].[{sourceTable}]")
         return
 
     def create_empty_target_table (self, sourceSchema:str, sourceTable:str, sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str) -> None:
         predicate = " IS NULL OR ".join (sourceKeyColumns) + " IS NULL"
-        self._connection.cursor ().execute (f"SELECT CAST (NULL AS DATE) AS {dateColumnName}, s.* INTO {targetSchema}.{targetTable} FROM {sourceSchema}.{sourceTable} s WHERE {predicate}")
+        self._connection.cursor ().execute (f"SELECT CAST (NULL AS DATE) AS {dateColumnName}, s.* INTO [{targetSchema}].[{targetTable}] FROM [{sourceSchema}].[{sourceTable}] s WHERE {predicate}")
         return
 
     @output_headers
@@ -168,7 +168,7 @@ class SQLServer (TargetDatabase):
     def delete_data (self, schemaName:str, tableName:str, comparisonColumn:str, columnValue:str) -> None:
         Logger.info (f"\tRemoving data from {schemaName}.{tableName} for {comparisonColumn} = {columnValue}")
         deleteCursor = self._connection.cursor()
-        deleteCursor.execute (f"DELETE {schemaName}.{tableName} WHERE {comparisonColumn} = ?", columnValue)
+        deleteCursor.execute (f"DELETE [{schemaName}].[{tableName}] WHERE {comparisonColumn} = ?", columnValue)
         Logger.info (f"\t\t{deleteCursor.rowcount} rows deleted")
         return
 
@@ -179,7 +179,7 @@ class SQLServer (TargetDatabase):
         selectColumnList = ", ".join (sourceColumns)
         insertColumnList = f"{dateColumnName}, {selectColumnList}"
         predicate = " IS NOT NULL AND ".join (sourceKeyColumns) + " IS NOT NULL"
-        command = f"INSERT INTO {targetSchema}.{targetTable} ({insertColumnList}) SELECT '{runDate}', {selectColumnList} FROM {sourceSchema}.{sourceTable} WHERE {predicate}"
+        command = f"INSERT INTO [{targetSchema}].[{targetTable}] ({insertColumnList}) SELECT '{runDate}', {selectColumnList} FROM [{sourceSchema}].[{sourceTable}] WHERE {predicate}"
         Logger.debug (Pretty.assemble ("Executing: ", False, False, Fore.LIGHTMAGENTA_EX, 0, 2))
         Logger.debug (command)
         # Execution
