@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 import pyodbc
 
-from Shared.Utils import Utils
+from ..Shared.Utils import Utils
 
 @dataclass
 class Relation:

@@ -1,10 +1,10 @@
 import sys
 import argparse
 
-from Shared.Decorators import output_headers, execution_time
-from Shared.Config import Config
-from Shared.Utils import Utils
-from Shared.Logger import Logger
+from .Shared.Decorators import output_headers, execution_time
+from .Shared.Config import Config
+from .Shared.Utils import Utils
+from .Shared.Logger import Logger
 
 class Latest:
     _argParser = argparse.ArgumentParser (prog='Latest.py', description='Creates new relations and tests them.')

@@ -2,7 +2,7 @@ import os
 import yaml
 from colorama import Fore, init
 
-from Shared.PrettyPrint import Pretty
+from .PrettyPrint import Pretty
 
 class ConfigBase:
     _maxConfigVersion = float (1.99999)

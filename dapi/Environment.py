@@ -5,8 +5,8 @@ import argparse
 import yaml
 import re
 
-from Shared.ConfigBase import ConfigBase
-from Shared.Utils import Utils
+from .Shared.ConfigBase import ConfigBase
+from .Shared.Utils import Utils
 
 class Environment:
     _argParser = argparse.ArgumentParser (prog='Environment.py', description='Updates config files for multi-instance APIs.')
@@ -71,14 +71,14 @@ class Environment:
         return
 
 
-def main (args):
-    options = Environment._argParser.parse_args (args)
-    print(options)
+    def run_operation ():
+        options = Environment._argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
+        print(options)
 
-    if options.operation == 'set':
-        Environment ().set (options.database, options.dbtProfile)
-    if options.operation == 'restore':
-            Environment ().restore ()
+        if options.operation == 'set':
+            Environment ().set (options.database, options.dbtProfile)
+        if options.operation == 'restore':
+                Environment ().restore ()
 
 if __name__ == '__main__':
-    main (sys.argv[1:]) # Getting rid of the filename
+    Environment ().run_operation ()

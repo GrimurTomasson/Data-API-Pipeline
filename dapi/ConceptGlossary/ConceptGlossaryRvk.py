@@ -1,8 +1,8 @@
-from ConceptGlossary.ConceptGlossary import ConceptGlossary, ConceptGlossaryDefinition
-from Shared.Logger import Logger
-from Shared.Config import Config
-from Shared.Decorators import execution_time
-from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
+from .ConceptGlossary import ConceptGlossary, ConceptGlossaryDefinition
+from ..Shared.Logger import Logger
+from ..Shared.Config import Config
+from ..Shared.Decorators import execution_time
+from ..TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
 
 class ConceptGlossaryRvk (ConceptGlossary):
     glossaryQuery = """

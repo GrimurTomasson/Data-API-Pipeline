@@ -3,8 +3,8 @@ import time
 import datetime 
 from colorama import Fore
 
-from Shared.Logger import Logger
-from Shared.PrettyPrint import Pretty
+from .Logger import Logger
+from .PrettyPrint import Pretty
 
 def output_headers (_func=None, *, tabCount=0):
     def decorator_output_headers (function):

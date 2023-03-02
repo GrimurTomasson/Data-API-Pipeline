@@ -1,7 +1,7 @@
 import sys
 import logging
 
-from Shared.ConfigBase import ConfigBase
+from .ConfigBase import ConfigBase
 
 class Logger:
     logLevel = ConfigBase.process_config()['log-level']

@@ -4,9 +4,9 @@ import logging
 from os import path, mkdir
 from sys import argv
 
-from Shared.Config import Config
-from Shared.Decorators import output_headers, execution_time
-from Shared.Utils import Utils
+from .Shared.Config import Config
+from .Shared.Decorators import output_headers, execution_time
+from .Shared.Utils import Utils
 
 class Cleanup:
     

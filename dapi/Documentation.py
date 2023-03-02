@@ -1,13 +1,13 @@
 import json
 from dataclasses import dataclass, field
 
-from Shared.Decorators import output_headers, execution_time
-from Shared.Config import Config
-from Shared.Utils import Utils
-from Shared.Logger import Logger
-from Shared.Json import EnhancedJSONEncoder
-from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
-from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory
+from .Shared.Decorators import output_headers, execution_time
+from .Shared.Config import Config
+from .Shared.Utils import Utils
+from .Shared.Logger import Logger
+from .Shared.Json import EnhancedJSONEncoder
+from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
+from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory
 
 @dataclass
 class ColumnType:

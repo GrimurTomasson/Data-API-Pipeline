@@ -1,8 +1,8 @@
 import os
 
-from Shared.Config import Config
-from Shared.Utils import Utils
-from TargetKnowledgeBase.TargetKnowledgeBase import TargetKnowledgeBase
+from ..Shared.Config import Config
+from ..Shared.Utils import Utils
+from .TargetKnowledgeBase import TargetKnowledgeBase
 
 class Confluence (TargetKnowledgeBase):
     def __init__ (self) -> None:

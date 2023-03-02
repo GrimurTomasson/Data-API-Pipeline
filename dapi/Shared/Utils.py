@@ -6,9 +6,9 @@ from jinja2 import Environment, FileSystemLoader
 from colorama import Fore
 from dataclasses import field
 
-from Shared.Config import Config
-from Shared.Logger import Logger
-from Shared.PrettyPrint import Pretty
+from .Config import Config
+from .Logger import Logger
+from .PrettyPrint import Pretty
 
 class Utils:
     @staticmethod 

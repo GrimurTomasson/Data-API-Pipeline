@@ -1,7 +1,7 @@
-from Shared.Config import Config
-from ConceptGlossary.ConceptGlossary import ConceptGlossary
-from ConceptGlossary.ConceptGlossaryRvk import ConceptGlossaryRvk
-from ConceptGlossary.ConceptGlossaryNone import ConceptGlossaryNone
+from ..Shared.Config import Config
+from .ConceptGlossary import ConceptGlossary
+from .ConceptGlossaryRvk import ConceptGlossaryRvk
+from .ConceptGlossaryNone import ConceptGlossaryNone
 
 class ConceptGlossaryFactory:
     _supportedGlossaries = ['Rvk', 'None']

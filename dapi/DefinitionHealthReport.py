@@ -1,13 +1,13 @@
 import json
 from dataclasses import dataclass, field
 
-from Shared.Decorators import output_headers, execution_time
-from Shared.Config import Config
-from Shared.Utils import Utils
-from Shared.Logger import Logger
-from Shared.Json import EnhancedJSONEncoder
-from Shared.DataClasses import CountPercentage
-from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
+from .Shared.Decorators import output_headers, execution_time
+from .Shared.Config import Config
+from .Shared.Utils import Utils
+from .Shared.Logger import Logger
+from .Shared.Json import EnhancedJSONEncoder
+from .Shared.DataClasses import CountPercentage
+from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
 
 @dataclass 
 class StatsTotal:
@@ -186,6 +186,10 @@ class DefinitionHealthReport:
     @execution_time
     def generate (self) -> None:
         """Producing a definition health report"""
+
+        if Config['documentation']['definition-health-report']['generate'] != True:
+            return
+            
         self.generate_data ()
         self.generate_report ()
         self.publish ()

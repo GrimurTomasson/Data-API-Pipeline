@@ -4,14 +4,14 @@ from pkgutil import get_data
 import re
 from dataclasses import dataclass
 
-from Shared.Decorators import output_headers, execution_time
-from Shared.Config import Config
-from Shared.Utils import Utils
-from Shared.Logger import Logger
-from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
-from TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
-from Shared.DataClasses import CountPercentage
-import Shared.Json
+from .Shared.Decorators import output_headers, execution_time
+from .Shared.Config import Config
+from .Shared.Utils import Utils
+from .Shared.Logger import Logger
+from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
+from .Shared.DataClasses import CountPercentage
+from .Shared import Json
 
 @dataclass
 class HeaderExecution:
@@ -223,7 +223,7 @@ class DataHealthReport: # Main class
         """Generating data health report data"""
         jsonObject = self.__retrieve_json_object () 
         apiHealth = self.__retrieve_data (jsonObject)
-        jsonData = json.dumps (apiHealth, indent=4, cls=Shared.Json.EnhancedJSONEncoder)
+        jsonData = json.dumps (apiHealth, indent=4, cls=Json.EnhancedJSONEncoder)
         Utils.write_file (jsonData, Config.apiDataHealthReportDataFileInfo.qualified_name)
         return 
 

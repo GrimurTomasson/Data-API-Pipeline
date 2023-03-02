@@ -1,6 +1,6 @@
-from Shared.Config import Config
-from TargetDatabase.TargetDatabase import TargetDatabase
-from TargetDatabase.SQLServer import SQLServer
+from ..Shared.Config import Config
+from .TargetDatabase import TargetDatabase
+from .SQLServer import SQLServer
 
 class TargetDatabaseFactory:
     _supportedDatabases = ['SQL-Server']

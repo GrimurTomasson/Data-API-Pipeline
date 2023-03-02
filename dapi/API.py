@@ -1,20 +1,19 @@
 import argparse
 
 from sys import argv
-from Shared.Decorators import output_headers, execution_time
 
-from Cleanup import Cleanup
-from Latest import Latest
-from Snapshot import Snapshot
-from DataHealthReport import DataHealthReport
-from MetadataCatalog import MetadataCatalog
-from DefinitionHealthReport import DefinitionHealthReport
-from Documentation import Documentation
+from .Shared.Decorators import output_headers, execution_time
+
+from .Cleanup import Cleanup
+from .Latest import Latest
+from .Snapshot import Snapshot
+from .DataHealthReport import DataHealthReport
+from .MetadataCatalog import MetadataCatalog
+from .DefinitionHealthReport import DefinitionHealthReport
+from .Documentation import Documentation
 
 class API:
-    _argParser = argparse.ArgumentParser (prog='API.py', description='Runs a data API creation pipeline.')
-    _argParser.add_argument ('operation', choices=['build', 'clean'])
-
+    
     @output_headers
     @execution_time
     def generate (self) -> None:
@@ -31,11 +30,7 @@ class API:
         Documentation ().generate () # Skrifar skrá: 7
         return
 
-def main (args):
-    options = API._argParser.parse_args (args)
-    if options.operation == 'build':
-        return API ().generate ()
-    return API ().cleanup ()
-
 if __name__ == '__main__':
-    main (argv[1:]) # Getting rid of the filename
+    API ().generate ()
+
+

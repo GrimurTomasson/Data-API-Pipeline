@@ -5,13 +5,13 @@ from tkinter import FIRST
 from colorama import Fore
 from typing import List
 
-from Shared.Decorators import output_headers, execution_time
-from Shared.Config import Config
-from Shared.Utils import Utils
-from Shared.Logger import Logger
-from Shared.PrettyPrint import Pretty
-from TargetDatabase.TargetDatabase import Relations, Relation
-from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from .Shared.Decorators import output_headers, execution_time
+from .Shared.Config import Config
+from .Shared.Utils import Utils
+from .Shared.Logger import Logger
+from .Shared.PrettyPrint import Pretty
+from .TargetDatabase.TargetDatabase import Relations, Relation
+from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 
 class Snapshot:
 

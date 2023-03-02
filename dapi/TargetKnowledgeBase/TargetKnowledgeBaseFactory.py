@@ -1,6 +1,6 @@
-from Shared.Config import Config
-from TargetKnowledgeBase.TargetKnowledgeBase import TargetKnowledgeBase
-from TargetKnowledgeBase.Confluence import Confluence
+from ..Shared.Config import Config
+from .TargetKnowledgeBase import TargetKnowledgeBase
+from .Confluence import Confluence
 
 class TargetKnowledgeBaseFactory:
     _supportedKnowledgebases = ['Confluence']

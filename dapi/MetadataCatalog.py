@@ -2,12 +2,12 @@ import os
 import json
 import shutil
 
-from Shared.Decorators import output_headers, execution_time
-from Shared.Config import Config
-from Shared.Utils import Utils
-from Shared.Logger import Logger
-from TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
-from ConceptGlossary.ConceptGlossaryFactory import ConceptGlossaryFactory, ConceptGlossary
+from .Shared.Decorators import output_headers, execution_time
+from .Shared.Config import Config
+from .Shared.Utils import Utils
+from .Shared.Logger import Logger
+from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from .ConceptGlossary.ConceptGlossaryFactory import ConceptGlossaryFactory, ConceptGlossary
 
 class MetadataCatalog:
     def __init__ (self) -> None:

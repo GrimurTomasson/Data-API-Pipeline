@@ -2,9 +2,9 @@ import os
 from dataclasses import dataclass
 from colorama import init, Fore, Style 
 
-from Shared.ConfigBase import ConfigBase
-from Shared.PrettyPrint import Pretty
-from Shared.Logger import Logger
+from .ConfigBase import ConfigBase
+from .PrettyPrint import Pretty
+from .Logger import Logger
 
 @dataclass
 class FileInfo:
@@ -51,7 +51,7 @@ class Config (ConfigBase):
     def __generate_path_variables () -> None:
         # Keeping the paths all here simplifies the solution, even if they don't all come from config.
         Config.scriptDirectory = os.path.abspath (os.path.join (os.path.dirname (__file__), '..'))
-        Config.reportTemplateDirectory = os.path.abspath (os.path.join (Config.scriptDirectory, "../shared_report_templates/"))
+        Config.reportTemplateDirectory = os.path.abspath (os.path.join (Config.scriptDirectory, "../dapi/Templates/"))
         Config.runFileDirectory = os.path.abspath (os.path.join (Config.workingDirectory, Config['data-api-pipeline']['data-file-location']))
         Config.latestPath = os.path.abspath (os.path.join (Config.workingDirectory, Config['latest']['relative-path']))
 

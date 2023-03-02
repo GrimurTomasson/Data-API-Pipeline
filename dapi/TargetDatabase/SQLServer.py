@@ -3,11 +3,11 @@ from typing import List
 from datetime import date
 from colorama import Fore
 
-from Shared.Config import Config
-from Shared.Logger import Logger
-from Shared.PrettyPrint import Pretty
-from TargetDatabase.TargetDatabase import TargetDatabase, Relation, Relations
-from Shared.Decorators import execution_time, output_headers
+from ..Shared.Config import Config
+from ..Shared.Logger import Logger
+from ..Shared.PrettyPrint import Pretty
+from .TargetDatabase import TargetDatabase, Relation, Relations
+from ..Shared.Decorators import execution_time, output_headers
 
 class SQLServer (TargetDatabase):
     typeQuery = """
