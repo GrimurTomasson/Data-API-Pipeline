@@ -3,6 +3,7 @@ import argparse
 
 from .API import API
 from .Cleanup import Cleanup
+from .Dependencies import Dependencies
 from .Latest import Latest
 from .Snapshot import Snapshot
 from .DataHealthReport import DataHealthReport
@@ -22,7 +23,7 @@ def main ():
     elif options.operation == 'cleanup':
         Cleanup ().cleanup ()    
     elif options.operation == 'dependencies':
-        Latest ().update_dependencies ()
+        Dependencies ().update_all ()
     elif options.operation == 'refresh':
         Latest ().refresh ()
     elif options.operation == 'test':    

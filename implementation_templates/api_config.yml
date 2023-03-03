@@ -1,14 +1,12 @@
 version: '1.0' # Version number for this config
 
 data-api-pipeline: 
-  relative-location: '?/Data-API-Pipeline/processes' # Should be correct if you created the pipeline using CreateAPI.py
-  git-branch-name: 'main' # We pull the current version of this branch if it is set. 
   data-file-location: API-Pipeline_last_run # no slashes before or after! One directory, not a tree.
 
 database:
-  name: '?SOME-API' # We require the name of the target database and project folder to be the same. Check if this is still true.
-  server: 'some_db' # Including port number if not default
-  connection-string-template: DRIVER={ODBC Driver 18 for SQL Server};SERVER={{database-server}};DATABASE={{database-name}};Trusted_Connection=yes;Encrypt=no;
+  name: '?SOME-API' # We require the name of the target database and project folder to be the same. Check if this is still true. Can be overwritten with an environment variable in data-api-pipeline.env.
+  server: 'some_db' # Including port number if not default. Can be overwritten with an environment variable in data-api-pipeline.env.
+  connection-string-template: DRIVER={ODBC Driver 18 for SQL Server};SERVER={{database-server}};DATABASE={{database-name}};Trusted_Connection=yes;Encrypt=no; # Known variables: database-server, database-name, database-user, database-password
   type: SQL-Server
 
 concept-glossary:
@@ -32,7 +30,7 @@ public-schemas: # Schemas need to be case-correct
   - 'Saga'
   
 documentation:
-    publish-to: 'Confluence' # Only supported target right now!
+    publish-to: 'Confluence' # Only supported target right now! See the data-api-pipeline.env template for variables!
     data-health-report:
       generate: False
       publish: False
