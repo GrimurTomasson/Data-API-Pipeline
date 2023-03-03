@@ -7,24 +7,21 @@ The goal is to make creating and refreshing a **Data API** as simple as running 
 The following is focused on getting this software running on a development machine, writing *CI/CD* pipelines on top of it is not covered. 
 
 ### Setup
-1. Install the [Dependencies](##Dependencies).
-2. In a *console* at the root directory of your API repository, run:  
-   `git submodule add https://github.com/GrimurTomasson/Data-API-Pipeline.git`  
-    **Or**  
-   Clone this repository, to the same drive as your API repository.  
-4. Add the location of `Data-API-Pipeline/processes` to your operating system path.
-5. In a *console* at the root directory of your Data API, run `CreateAPI` to initialize the pipeline.
-6. Edit `api_config.yml`, it contains helpful information in the form of comments.
-7. Edit `api_documentation_template.md`, write a high level description of the API.
+For this to work, you need to have *Python* installed, minimum version 3.9
+1. In a terminal, run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
+
+### API Configuration
+1. In a *console* at the root directory of your Data API, run `dapi create` to initialize the pipeline. <-- Update this!
+2. Edit `api_config.yml`, it contains helpful information in the form of comments.
+3. Edit `api_documentation_template.md`, write a high level description of the API.
+4. Edit `data-api-pipeline.env` if you need to store secrets on development machines.
 
 ### General use
-1. Install the [Dependencies](##Dependencies).
-2. Add the location of `Data-API-Pipeline/processes` to your operating system path.
-3. In a *console* at the root directory of your Data API, run `API build`.
+3. In a *console* at the root directory of your Data API, run `dapi build` to run all the steps or `dapi help` to get the options available.
 
 All reports and documentation are written to the root directory of your Data API.
 
-## Steps
+## Details
 In addition to the following logical steps, we clean up and create a run-file directory where the results from each steps are stored. The run-file directory location is config controlled. All files created by the logical steps are prefixed with a sequence and can be found in the run-file directory.
 Note, all of the following steps are run without parameters but some of them require files from prior steps. Any steps without a defined input can be run in isolation. Note that doing so in production may cause discrepancies, for example if we refresh our current relations without creating history, they will likely not match.
 
@@ -97,7 +94,7 @@ Implemented in: **Documentation.py**
 `api_documentation.md` - The documentation, in *markdown* format.
 
 ## Dependencies
-This solution relies on *dbt* to create relations and perform automated testing. It also uses and enriches *dbt* json files in order to create reports and documentation. Note, it also relies on quite a few *Python* pakcages that *dbt* relies on.
+This solution relies on *dbt* to create relations and perform automated testing. It also uses and enriches *dbt* json files in order to create reports and documentation. Note, it also relies on quite a few *Python* pakcages that *dbt* relies on. Aside from *Python*, everything should be installed as a part of this package. Try installing *dbt* if you are having problems.
 It also relies on *Python*, minimum version 3.9.11.
 Follow the links for installation instructions for [Python](###InstallingPython) and [dbt](###Installingdbt).
 
@@ -116,10 +113,11 @@ Use installer/source from [www.python.org](https://www.python.org/downloads/). C
 
 ### Installing dbt
 The following are *console* operations.
-If one of the core *dbt* databases is your target, run `pip install dbt`.
-If *SQL Server* is your target database, run `pip install dbt-sqlserver` 
+If one of the core *dbt* databases is your target, run `pip install dbt-core==1.3.2`.
+If *SQL Server* is your target database, run `pip install dbt-sqlserver==1.3.0` 
 
 ### Making Python files runnable on Windows
+The following is only needed for development.
 Run the following steps in an *admin console*.
 1. `assoc .py=Python`
 2. `where python` (add it to path if it is not found!)

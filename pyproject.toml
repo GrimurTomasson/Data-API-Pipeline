@@ -3,13 +3,13 @@ requires = ["setuptools >= 61.0.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase", "dapi.TargetKnowledgeBase", "dapi.Templates"]
+packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase", "dapi.TargetKnowledgeBase", "dapi.Templates", "dapi.ImplementationTemplates"]
 
 #[tool.setuptools.packages.find]
 #where = ["dapi"]
 
 [tool.setuptools.package-data]
-"*" = ["*.md"]
+"*" = ["*.md", "*.yml", "*.env"]
 
 [project]
 name = "dapi"
