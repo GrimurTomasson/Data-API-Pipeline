@@ -18,10 +18,10 @@ authors = [ {name = "Grimur Tomasson", email = "grimur@gthugbunadarradgjof.com"}
 description = "Logic to simplify the implementation of data API pipelines built on top of dbt."
 readme = "README.md"
 requires-python = ">= 3.9"
-dependencies = ["dbt-core==1.3.2"]
+dependencies = ["dbt-core==1.3.2", "dbt-sqlserver==1.3.0", "python-dotenv"]
 
-[project.optional-dependencies]
-sqlserver = ["dbt-sqlserver==1.3.0"]
+#[project.optional-dependencies]
+#sqlserver = ["dbt-sqlserver==1.3.0"]
 
 [project.scripts]
 dapi = "dapi.package_cli:main"

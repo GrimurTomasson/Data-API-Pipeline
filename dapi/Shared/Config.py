@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass
 from colorama import init, Fore, Style 
 
+from dotenv import load_dotenv
+
 from .ConfigBase import ConfigBase
 from .PrettyPrint import Pretty
 from .Logger import Logger
@@ -26,7 +28,11 @@ class Config (ConfigBase):
         if hasattr (Config, 'apiDocumentationDataFileInfo'): # Það síðasta sem __generate_path_variables býr til
             return
             
+        load_dotenv (dotenv_path=os.path.join (self.workingDirectory, 'data-api-pipeline.env'), verbose=True) # .env file in working folder!
+
         Config.__generate_path_variables ()
+        Config.__override_values_from_environment ()
+
         self.__print_contents ()
         return
 
@@ -47,6 +53,18 @@ class Config (ConfigBase):
     def get_attributes (object):
         return { k:v for (k,v) in object.__dict__.items() if not k.startswith ('__') and not callable (getattr (object, k)) }
  
+    @staticmethod
+    def __override_values_from_environment () -> None:
+        databaseServer = 'DAPI_DATABASE_SERVER'
+        if os.environ.get(databaseServer) is not None and len (os.environ.get(databaseServer)) > 0:
+            Config['database']['server'] = os.environ.get(databaseServer)
+            Logger.debug (f"Database server overwritten from environment: {Config['database']['server']}")
+        
+        databaseInstance = 'DAPI_DATABASE_INSTANCE'
+        if os.environ.get(databaseInstance) is not None and len (os.environ.get(databaseInstance)) > 0:
+            Config['database']['name'] = os.environ.get(databaseInstance)
+            Logger.debug (f"Database instance overwritten from environment: {Config['database']['name']}")
+
     @staticmethod
     def __generate_path_variables () -> None:
         # Keeping the paths all here simplifies the solution, even if they don't all come from config.

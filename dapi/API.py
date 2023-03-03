@@ -5,6 +5,7 @@ from sys import argv
 from .Shared.Decorators import output_headers, execution_time
 
 from .Cleanup import Cleanup
+from .Dependencies import Dependencies
 from .Latest import Latest
 from .Snapshot import Snapshot
 from .DataHealthReport import DataHealthReport
@@ -20,7 +21,7 @@ class API:
         """API pipeline run"""
         
         Cleanup ().cleanup ()
-        Latest ().update_dependencies ()
+        Dependencies ().update_all ()
         Latest ().refresh ()
         Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
         Latest ().run_tests () # Skrifar skrá: 1

@@ -1,4 +1,6 @@
+import os
 import pyodbc
+
 from typing import List
 from datetime import date
 from colorama import Fore
@@ -35,6 +37,14 @@ class SQLServer (TargetDatabase):
         self._connectionString = Config['database']['connection-string-template'] # ToDo: Cleanup
         self._connectionString = self._connectionString.replace('{{database-server}}', self._databaseServer)
         self._connectionString = self._connectionString.replace('{{database-name}}', self._databaseName)
+
+        # user/pass support - Only from environment variables.
+        user = 'DAPI_DATABASE_USER'
+        if os.environ.get(user) is not None and len (os.environ.get(user)) > 0:
+            self._connectionString = self._connectionString.replace('{{database-user}}', os.environ.get(user))
+        pwd = 'DAPI_DATABASE_PASSWORD'
+        if os.environ.get(pwd) is not None and len (os.environ.get(pwd)) > 0:
+            self._connectionString = self._connectionString.replace('{{database-password}}', os.environ.get(pwd))
         
         self._connection = self.get_connection ()
         return

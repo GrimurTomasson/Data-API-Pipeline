@@ -8,19 +8,11 @@ from .Shared.Logger import Logger
 
 class Latest:
     _argParser = argparse.ArgumentParser (prog='Latest.py', description='Creates new relations and tests them.')
-    _argParser.add_argument ('operation', choices=['build', 'test', 'deps'])
+    _argParser.add_argument ('operation', choices=['build', 'test'])
 
     def __init__ (self) -> None:
         return
         
-    @output_headers
-    @execution_time
-    def update_dependencies (self):
-        """Update dbt dependencies"""
-        dbtOperation = ["dbt", "deps"] 
-        Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
-        return
-
     @output_headers
     @execution_time
     def refresh (self):
@@ -50,8 +42,8 @@ def main (args):
         return Latest ().refresh ()
     elif options.operation == 'test':
         return Latest ().run_tests ()
-    elif options.operation == 'deps':
-        return Latest ().update_dependencies ()
+    else:
+        Latest._argParser.print_help ()
 
 if __name__ == '__main__':
     main (sys.argv[1:]) # Getting rid of the filename
