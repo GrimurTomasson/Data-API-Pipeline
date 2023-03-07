@@ -1,10 +1,10 @@
 -- Create schema if missing
-DECLARE @apiTools varchar(30) = 'API_Tools'
-IF (SELECT COUNT(1) FROM INFORMATION_SCHEMA.SCHEMATA WHERE schema_name = @apiTools) = 0
-	EXECUTE( 'CREATE SCHEMA ' + @apiTools)
+DECLARE @dapiSchema varchar(30) = 'dapi'
+IF (SELECT COUNT(1) FROM INFORMATION_SCHEMA.SCHEMATA WHERE schema_name = @dapiSchema) = 0
+	EXECUTE( 'CREATE SCHEMA ' + @dapiSchema)
 GO
 
-CREATE OR ALTER FUNCTION API_Tools.ConstructIdOne (@part1 varchar(250)) RETURNS VARCHAR(MAX)
+CREATE OR ALTER FUNCTION dapi.ConstructIdOne (@part1 varchar(250)) RETURNS VARCHAR(MAX)
 AS BEGIN
 	RETURN TRANSLATE (
 				COALESCE (UPPER (@part1), 'NULL')
@@ -14,7 +14,7 @@ END
 
 GO
 
-CREATE OR ALTER FUNCTION API_Tools.ConstructIdTwo (@part1 varchar(250), @part2 varchar(250)) RETURNS VARCHAR(MAX)
+CREATE OR ALTER FUNCTION dapi.ConstructIdTwo (@part1 varchar(250), @part2 varchar(250)) RETURNS VARCHAR(MAX)
 AS BEGIN
 	RETURN TRANSLATE (
 				COALESCE (UPPER (@part1), 'NULL') 
@@ -25,7 +25,7 @@ END
 
 GO
 
-CREATE OR ALTER FUNCTION API_Tools.ConstructIdThree (@part1 varchar(250), @part2 varchar(250), @part3 varchar(250)) RETURNS VARCHAR(MAX)
+CREATE OR ALTER FUNCTION dapi.ConstructIdThree (@part1 varchar(250), @part2 varchar(250), @part3 varchar(250)) RETURNS VARCHAR(MAX)
 AS BEGIN
 	RETURN TRANSLATE (
 				COALESCE (UPPER (@part1), 'NULL') 
@@ -37,7 +37,7 @@ END
 
 GO
 
-CREATE OR ALTER FUNCTION API_Tools.ConstructIdFour (@part1 varchar(250), @part2 varchar(250), @part3 varchar(250), @part4 varchar(250)) RETURNS VARCHAR(MAX)
+CREATE OR ALTER FUNCTION dapi.ConstructIdFour (@part1 varchar(250), @part2 varchar(250), @part3 varchar(250), @part4 varchar(250)) RETURNS VARCHAR(MAX)
 AS BEGIN
 	RETURN TRANSLATE (
 				COALESCE (UPPER (@part1), 'NULL') 
@@ -50,7 +50,7 @@ END
 
 GO
 
-CREATE OR ALTER FUNCTION API_Tools.ConstructIdFive (@part1 varchar(250), @part2 varchar(250), @part3 varchar(250), @part4 varchar(250), @part5 varchar(250)) RETURNS VARCHAR(MAX)
+CREATE OR ALTER FUNCTION dapi.ConstructIdFive (@part1 varchar(250), @part2 varchar(250), @part3 varchar(250), @part4 varchar(250), @part5 varchar(250)) RETURNS VARCHAR(MAX)
 AS BEGIN
 	RETURN TRANSLATE (
 				COALESCE (UPPER (@part1), 'NULL') 

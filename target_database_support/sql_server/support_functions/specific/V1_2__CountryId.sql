@@ -1,5 +1,5 @@
 
-CREATE or ALTER FUNCTION API_Tools.CountryId (@postalCode VARCHAR(3), @communityCode VARCHAR(4), @address VARCHAR(50)) RETURNS VARCHAR(250)
+CREATE or ALTER FUNCTION dapi_specific.CountryId (@postalCode VARCHAR(3), @communityCode VARCHAR(4), @address VARCHAR(50)) RETURNS VARCHAR(250)
 AS BEGIN
 	
 	IF LEN (@postalCode) = 3
