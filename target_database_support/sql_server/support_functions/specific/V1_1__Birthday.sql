@@ -1,5 +1,5 @@
 
-CREATE OR ALTER FUNCTION API_Tools.Birthday (@kt varchar(10)) RETURNS VARCHAR(10)
+CREATE OR ALTER FUNCTION dapi_specific.Birthday (@kt varchar(10)) RETURNS VARCHAR(10)
 AS BEGIN
 	DECLARE @dayOfMonth VARCHAR(2)
 	DECLARE @month VARCHAR(2)

@@ -28,7 +28,7 @@ class Config (ConfigBase):
         if hasattr (Config, 'apiDocumentationDataFileInfo'): # Það síðasta sem __generate_path_variables býr til
             return
             
-        load_dotenv (dotenv_path=os.path.join (self.workingDirectory, 'data-api-pipeline.env'), verbose=True) # .env file in working folder!
+        load_dotenv (dotenv_path=os.path.join (self.workingDirectory, 'data-api-pipeline.env'), verbose=True, override=True) # .env file in working folder!
 
         Config.__generate_path_variables ()
         Config.__override_values_from_environment ()
