@@ -1,5 +1,5 @@
 -- https://en.wikipedia.org/wiki/MSISDN
-CREATE OR ALTER FUNCTION API_Tools.PhonenumberToMsisdn (@phoneNumber nvarchar(100), @countryCode nvarchar(3) = '354') RETURNS nvarchar(15) 
+CREATE OR ALTER FUNCTION dapi_generic.PhonenumberToMsisdn (@phoneNumber nvarchar(100), @countryCode nvarchar(3) = '354') RETURNS nvarchar(15) 
 AS BEGIN
 	SET @phoneNumber = REPLACE (TRANSLATE (@phoneNumber, '- ', '  '), ' ', '') -- + merkið fær að halda sér, hefð.
 	IF @phoneNumber IS NULL

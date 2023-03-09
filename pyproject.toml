@@ -27,5 +27,6 @@ dependencies = ["dbt-core==1.3.2", "dbt-sqlserver==1.3.0", "python-dotenv"]
 dapi = "dapi.package_cli:main"
 create-dapi = "dapi.CreateAPI:main"
 
+# pip install build
 # python -m build .
 # pipx install 'dapi[sqlserver]' --force --include-deps

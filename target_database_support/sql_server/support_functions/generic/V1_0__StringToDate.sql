@@ -1,4 +1,10 @@
-ALTER   FUNCTION [API_Tools].[StringToDate] (@dateString VARCHAR(30), @mask VARCHAR(30)) RETURNS DATE
+-- Create schema if missing
+DECLARE @dapiSchema varchar(30) = 'dapi_generic'
+IF (SELECT COUNT(1) FROM INFORMATION_SCHEMA.SCHEMATA WHERE schema_name = @dapiSchema) = 0
+	EXECUTE( 'CREATE SCHEMA ' + @dapiSchema)
+GO
+
+CREATE OR ALTER FUNCTION [dapi_generic].[StringToDate] (@dateString VARCHAR(30), @mask VARCHAR(30)) RETURNS DATE
 AS BEGIN
 	DECLARE @day varchar(2)
 	DECLARE @month varchar(2)

@@ -1,4 +1,4 @@
-CREATE OR ALTER FUNCTION API_Tools.StringToTime (@timeString nvarchar(20), @defaultValue nvarchar(20), @separator nvarchar(1) = ':') RETURNS TIME AS 
+CREATE OR ALTER FUNCTION dapi_generic.StringToTime (@timeString nvarchar(20), @defaultValue nvarchar(20), @separator nvarchar(1) = ':') RETURNS TIME AS 
 BEGIN
 	DECLARE @retVal time
 

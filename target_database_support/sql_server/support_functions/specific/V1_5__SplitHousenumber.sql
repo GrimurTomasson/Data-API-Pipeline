@@ -1,4 +1,4 @@
-CREATE OR ALTER FUNCTION API_Tools.SplitHousenumber(@housenumber varchar(100), @type varchar(10)) RETURNS INT
+CREATE OR ALTER FUNCTION dapi_specific.SplitHousenumber(@housenumber varchar(100), @type varchar(10)) RETURNS INT
 AS BEGIN
 	IF LEN (COALESCE (@housenumber, '')) = 0
 		RETURN NULL
