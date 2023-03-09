@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 
@@ -17,9 +18,7 @@ class Latest:
     @execution_time
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
-        dbtOperation = ["dbt", "run", "--fail-fast"] #  --fail-fast / --full-refresh
-        dbtOperation = Utils.add_dbt_profile_location (dbtOperation)
-
+        dbtOperation = Utils.add_dbt_profile_location (["dbt", "run", "--fail-fast"]) #  --fail-fast / --full-refresh
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         return
 
@@ -27,9 +26,7 @@ class Latest:
     @execution_time
     def run_tests (self):
         """Running dbt tests"""
-        dbtOperation = ["dbt", "--log-format", "json",  "test"]
-        dbtOperation = Utils.add_dbt_profile_location (dbtOperation)
-
+        dbtOperation = Utils.add_dbt_profile_location (["dbt", "--log-format", "json",  "test"])
         output = Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation, True)
         # ToDo: Meta hvort við ætlum að stoppa eða ekki, skoða config breytu?
         Logger.debug (f"\tOutput for dbt test results: {Config.dbtTestOutputFileInfo.qualified_name}")

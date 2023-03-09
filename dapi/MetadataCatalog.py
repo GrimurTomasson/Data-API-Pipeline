@@ -47,8 +47,7 @@ class MetadataCatalog:
         """Enriching dbt test result data with Concept Glossary and Data Dicationary data, along with DB type info"""
 
         # Generate catalog data
-        dbtOperation = ["dbt", "docs", "generate"] #  --fail-fast fjarlægt þar sem dbt rakti dependencies ekki nógu vel
-        dbtOperation = Utils.add_dbt_profile_location (dbtOperation)
+        dbtOperation = Utils.add_dbt_profile_location (["dbt", "docs", "generate"]) #  --fail-fast fjarlægt þar sem dbt rakti dependencies ekki nógu vel
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
 
         dbt_output_path = os.path.join (Config.latestPath, "target")

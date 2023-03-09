@@ -5,6 +5,7 @@ from typing import List
 from datetime import date
 from colorama import Fore
 
+from ..Shared.Environment import Environment
 from ..Shared.Config import Config
 from ..Shared.Logger import Logger
 from ..Shared.PrettyPrint import Pretty
@@ -33,18 +34,28 @@ class SQLServer (TargetDatabase):
     def __init__(self):
         self._databaseServer = Config['database']['server']
         self._databaseName = Config['database']['name']
+
+        if os.environ.get(Environment.databaseServer) is not None and len (os.environ.get(Environment.databaseServer)) > 0:
+            self._databaseServer = os.environ.get(Environment.databaseServer)
+            Logger.debug (f"Database server overwritten from environment: {self._databaseServer}")
         
+        if os.environ.get(Environment.databaseName) is not None and len (os.environ.get(Environment.databaseName)) > 0:
+            self._databaseName = os.environ.get(Environment.databaseName)
+            Logger.debug (f"Database instance overwritten from environment: {self._databaseName}")
+        
+        if os.environ.get(Environment.databasePort) is not None and len (os.environ.get(Environment.databasePort)) > 0:
+            self._databaseServer += "," + os.environ.get(Environment.databasePort)
+
         self._connectionString = Config['database']['connection-string-template'] # ToDo: Cleanup
         self._connectionString = self._connectionString.replace('{{database-server}}', self._databaseServer)
         self._connectionString = self._connectionString.replace('{{database-name}}', self._databaseName)
 
         # user/pass support - Only from environment variables.
-        user = 'DAPI_DATABASE_USER'
-        if os.environ.get(user) is not None and len (os.environ.get(user)) > 0:
-            self._connectionString = self._connectionString.replace('{{database-user}}', os.environ.get(user))
-        pwd = 'DAPI_DATABASE_PASSWORD'
-        if os.environ.get(pwd) is not None and len (os.environ.get(pwd)) > 0:
-            self._connectionString = self._connectionString.replace('{{database-password}}', os.environ.get(pwd))
+        if os.environ.get(Environment.databaseUser) is not None and len (os.environ.get(Environment.databaseUser)) > 0:
+            self._connectionString = self._connectionString.replace('{{database-user}}', os.environ.get(Environment.databaseUser))
+
+        if os.environ.get(Environment.databasePassword) is not None and len (os.environ.get(Environment.databasePassword)) > 0:
+            self._connectionString = self._connectionString.replace('{{database-password}}', os.environ.get(Environment.databasePassword))
         
         self._connection = self.get_connection ()
         return

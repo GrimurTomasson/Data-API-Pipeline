@@ -20,15 +20,26 @@ class API:
     def generate (self) -> None:
         """API pipeline run"""
         
-        Cleanup ().cleanup ()
-        Dependencies ().update_all ()
-        Latest ().refresh ()
-        Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
+        self.generate_data_only ()
+        
         Latest ().run_tests () # Skrifar skrá: 1
         DataHealthReport ().generate () # Skrifar skrá: 2
         MetadataCatalog ().enrich () # Skrifar skrár: 3, 4, 5
         DefinitionHealthReport ().generate () # Skrifar skrá: 6
         Documentation ().generate () # Skrifar skrá: 7
+        return
+    
+
+    @output_headers
+    @execution_time
+    def generate_data_only (self) -> None:
+        """API pipeline run, limited to only creating data (useful for multi-instance api)"""
+        
+        Cleanup ().cleanup ()
+        Dependencies ().update_all ()
+        Dependencies ().test_all ()
+        Latest ().refresh ()
+        Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
         return
 
 if __name__ == '__main__':

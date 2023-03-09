@@ -11,7 +11,7 @@ For this to work, you need to have *Python* installed, minimum version 3.9
 1. In a terminal, run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 
 ### API Configuration
-1. In a *console* at the root directory of your Data API, run `dapi create` to initialize the pipeline. <-- Update this!
+1. In a *console* at the root directory of your Data API, run `create-dapi` to initialize the pipeline.
 2. Edit `api_config.yml`, it contains helpful information in the form of comments.
 3. Edit `api_documentation_template.md`, write a high level description of the API.
 4. Edit `data-api-pipeline.env` if you need to store secrets on development machines.
@@ -20,6 +20,9 @@ For this to work, you need to have *Python* installed, minimum version 3.9
 3. In a *console* at the root directory of your Data API, run `dapi build` to run all the steps or `dapi help` to get the options available.
 
 All reports and documentation are written to the root directory of your Data API.
+
+### Multi-environment API
+For usecases where there are separate API for online- and analytical use, we support running the same models with different target databases
 
 ## Details
 In addition to the following logical steps, we clean up and create a run-file directory where the results from each steps are stored. The run-file directory location is config controlled. All files created by the logical steps are prefixed with a sequence and can be found in the run-file directory.
