@@ -8,21 +8,36 @@ The following is focused on getting this software running on a development machi
 
 ### Setup
 For this to work, you need to have *Python* installed, minimum version 3.9
-1. In a terminal, run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
+In a terminal, run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 
 ### API Configuration
-1. In a *console* at the root directory of your Data API, run `create-dapi` to initialize the pipeline.
-2. Edit `api_config.yml`, it contains helpful information in the form of comments.
-3. Edit `api_documentation_template.md`, write a high level description of the API.
-4. Edit `data-api-pipeline.env` if you need to store secrets on development machines.
+1. Create a `dbt` project in a subfolder of the root directory of your Data API.
+2. In a *console* at the root directory of your Data API, run `create-dapi` to initialize the pipeline.
+3. Consider using the `profiles.yml` file as the base for your `dbt` profiles, it supports environment variables quite well.
+4. Edit `api_config.yml`, it contains helpful information in the form of comments.
+5. Edit `api_documentation_template.md`, write a high level description of the API.
+6. Edit `dapi.env` if you need to store secrets on development machines.
+
+#### Example folder structure
+Here, *reference* is the concept we are working with as well as a folder, *data_api* and *current* are subfolders. 
+```
+reference  
+    data_api -> contains api_config.yml, api_documentation_template.md and optionally dapi.env  
+        current -> contains the dbt project and optionally profiles.yml  
+```
 
 ### General use
-3. In a *console* at the root directory of your Data API, run `dapi build` to run all the steps or `dapi help` to get the options available.
+In a *console* at the root directory of your Data API, run `dapi build` to run all the steps.
+
+#### Multi-instance API
+This is highly useful if you seperate your analytical- and online api, which have very different SLAs. 
+In a *console* at the root directory of your Data API, run  
+`dapi build -e instance_environment.env`  
+or   
+`dapi build-data -e instance_environment.env` if you don't want documentation or testing (not needed after the first instance).
 
 All reports and documentation are written to the root directory of your Data API.
 
-### Multi-environment API
-For usecases where there are separate API for online- and analytical use, we support running the same models with different target databases
 
 ## Details
 In addition to the following logical steps, we clean up and create a run-file directory where the results from each steps are stored. The run-file directory location is config controlled. All files created by the logical steps are prefixed with a sequence and can be found in the run-file directory.
