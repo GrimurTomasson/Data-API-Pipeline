@@ -20,15 +20,28 @@ class Dependencies:
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         return
     
+    @output_headers
+    @execution_time
+    def test_dbt (self):
+        """Test dbt setup"""
+        operation = Utils.add_dbt_profile_location (['dbt', 'debug'])
+        Utils.run_operation (Config.workingDirectory, Config.latestPath, operation)
+        return
+    
     def update_all (self):
         self.update_dbt ()
+
+    def test_all (self):
+        self.test_dbt ()
     
 def main ():
     options = Dependencies._argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
     if options.operation == 'dbt':
-        return Dependencies ().update_dbt ()
+        Dependencies ().update_dbt ()
+        Dependencies ().test_dbt ()
     else:
         Dependencies ().update_all ()
+        Dependencies ().test_all ()
 
 if __name__ == '__main__':
     main () 

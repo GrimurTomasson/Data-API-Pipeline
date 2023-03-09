@@ -1,6 +1,8 @@
 import sys
 import argparse
 
+from .Shared.Environment import Environment
+
 from .API import API
 from .Cleanup import Cleanup
 from .Dependencies import Dependencies
@@ -11,19 +13,29 @@ from .MetadataCatalog import MetadataCatalog
 from .DefinitionHealthReport import DefinitionHealthReport
 from .Documentation import Documentation
 
-from .Environment import Environment
+argParser = argparse.ArgumentParser (
+    prog='dapi', 
+    description='Data API pipeline.')
 
-argParser = argparse.ArgumentParser (prog='command_line.py', description='API pipeline command line interface.')
-argParser.add_argument ('operation', choices=['build', 'cleanup', 'dependencies', 'refresh', 'test', 'history', 'data-health-report', 'enrich-metadata', 'definition-health-report', 'documentation'])
+argParser.add_argument ('operation', choices=['build', 'build-data', 'cleanup', 'dependencies', 'refresh', 'test', 'history', 'data-health-report', 'enrich-metadata', 'definition-health-report', 'documentation'])
+argParser.add_argument ('-e', '--environment', required=False)
 
 def main ():
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
+
+    # Overriding the environment, multi-instance support
+    if options.environment != None and len (options.environment) > 0:
+        Environment.load (envFilename=options.environment)
+
     if options.operation == 'build':
         API ().generate ()
+    elif options.operation == 'build-data':
+        API ().generate_data_only ()
     elif options.operation == 'cleanup':
         Cleanup ().cleanup ()    
     elif options.operation == 'dependencies':
         Dependencies ().update_all ()
+        Dependencies ().test_all ()
     elif options.operation == 'refresh':
         Latest ().refresh ()
     elif options.operation == 'test':    
@@ -40,6 +52,3 @@ def main ():
         Documentation ().generate () # Skrifar skrá: 7
     else:
         argParser.print_help()
-
-def environment ():
-    Environment ().run_operation ()
