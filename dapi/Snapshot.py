@@ -129,6 +129,10 @@ class Snapshot:
     @execution_time
     def create (self) -> None:
         """Taking snapshots for the Latest models"""
+        if Config["history"]["projects"] == None:
+            Logger.debug ("No snapshots defined!")
+            return
+
         for item in Config["history"]["projects"]:
             sourceSchema = item["project"]["source-schema"]
             snapshotSchema = item["project"]["snapshot-schema"]

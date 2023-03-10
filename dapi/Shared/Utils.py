@@ -85,3 +85,21 @@ class Utils:
             operation.append (f"--profiles-dir")
             operation.append ('.')
         return operation
+    
+    @staticmethod
+    def retrieve_variable (description, envVarName, configRoot, configVarName):
+        if os.environ.get(envVarName) is not None and len (os.environ.get(envVarName)) > 0:
+            value = os.environ.get(envVarName)
+            if not envVarName.find("PASSWORD"):
+                Logger.debug (f"{description} overwritten from environment: {value}")
+            return value
+        
+        if configVarName in configRoot.keys():
+            return configRoot[configVarName]    
+        
+        raise (f"{description} value was neither found in environment variables nor config!")
+    
+    @staticmethod
+    def environment_variable_with_value (envVarName) -> bool:
+        return os.environ.get(envVarName) is not None and len (os.environ.get(envVarName)) > 0
+            
