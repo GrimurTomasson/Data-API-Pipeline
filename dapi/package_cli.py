@@ -24,8 +24,8 @@ def main ():
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
 
     # Overriding the environment, multi-instance support
-    if options.environment != None and len (options.environment) > 0:
-        Environment.load (envFilename=options.environment)
+    envFile = options.environment if options.environment != None and len (options.environment) > 0 else Environment.environmentVariableFilename
+    Environment.load (envFilename=envFile)
 
     if options.operation == 'build':
         API ().generate ()
