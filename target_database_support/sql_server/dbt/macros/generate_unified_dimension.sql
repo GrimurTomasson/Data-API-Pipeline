@@ -14,7 +14,7 @@ SELECT DISTINCT
 {%- endif %}
     FIRST_VALUE(s.{{ col.name }}) OVER (PARTITION BY s.{{ key_column_name }} ORDER BY s.{{ history_date_column_name }} DESC) AS {{ col.name }}
 {%- endfor %}
-    ,FIRST_VALUE(s.{{ history_date_column_name }}) OVER (PARTITION BY s.{{ key_column_name }} ORDER BY s.{{ history_date_column_name }} DESC) AS last_updated
+    ,FIRST_VALUE(s.{{ history_date_column_name }}) OVER (PARTITION BY s.{{ key_column_name }} ORDER BY s.{{ history_date_column_name }} DESC) AS {{ history_date_column_name }}
 FROM
     {{ source_table }} s
 
