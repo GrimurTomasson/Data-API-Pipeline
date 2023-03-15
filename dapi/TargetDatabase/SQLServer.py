@@ -48,13 +48,17 @@ class SQLServer (TargetDatabase):
         if Utils.environment_variable_with_value (Environment.databaseUser):
             self._connectionString = self._connectionString.replace('{{database-user}}', os.environ.get(Environment.databaseUser))
 
+        self._loggableConnectionString = self._connectionString
+
         if Utils.environment_variable_with_value (Environment.databasePassword):
             self._connectionString = self._connectionString.replace('{{database-password}}', os.environ.get(Environment.databasePassword))
-        
+            self._loggableConnectionString = self._connectionString.replace('{{database-password}}', '**********')
+
         self._connection = self.get_connection ()
         return
 
     def get_connection (self) -> pyodbc.Connection:
+        Logger.debug (f"\tConnection string: {self._loggableConnectionString}")
         Logger.debug (f"\tCreating a DB connection to: {self._databaseServer} - {self._databaseName}")
         conn = pyodbc.connect (self._connectionString)
         conn.autocommit = True # Þetta á við allar útfærslur, koma betur fyrir!
