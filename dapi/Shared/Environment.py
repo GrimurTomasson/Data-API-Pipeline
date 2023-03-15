@@ -28,12 +28,10 @@ class Environment:
 
         if not os.path.isfile (qualifiedName):
             print (f"Environment file not found, qualified name: {qualifiedName}")
-            return
-
-        loadType = "" if relativePath == None and envFilename == None else "overridden"
-        Logger.debug (Pretty.assemble (f"\nLoading {loadType} environment variables - {qualifiedName}\n", False, False, Fore.CYAN))
-
-        load_dotenv (dotenv_path=qualifiedName, verbose=True, override=True) 
+        else:
+            loadType = "" if relativePath == None and envFilename == None else "overridden"
+            Logger.debug (Pretty.assemble (f"\nLoading {loadType} environment variables - {qualifiedName}\n", False, False, Fore.CYAN))
+            load_dotenv (dotenv_path=qualifiedName, verbose=True, override=True) 
 
         dapiEnvVarKeys = [x for x in os.environ.keys() if x.startswith('DAPI_') and x.find("PASSWORD") == -1]
         for e in dapiEnvVarKeys:
