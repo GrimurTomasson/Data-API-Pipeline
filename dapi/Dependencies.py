@@ -4,6 +4,8 @@ import argparse
 from .Shared.Decorators import output_headers, execution_time
 from .Shared.Config import Config
 from .Shared.Utils import Utils
+from .TargetDatabase.TargetDatabase import Relations, Relation
+from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 
 class Dependencies:
     _argParser = argparse.ArgumentParser (prog='Dependencies.py', description='Updates dependencies.')
@@ -28,11 +30,19 @@ class Dependencies:
         Utils.run_operation (Config.workingDirectory, Config.latestPath, operation)
         return
     
+    @output_headers
+    @execution_time
+    def test_db_connection (self):
+        """Test db connection"""
+        TargetDatabaseFactory ().get_target_database ()
+        return
+    
     def update_all (self):
         self.update_dbt ()
 
     def test_all (self):
         self.test_dbt ()
+        self.test_db_connection ()
     
 def main ():
     options = Dependencies._argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
