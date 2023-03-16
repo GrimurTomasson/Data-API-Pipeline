@@ -83,8 +83,11 @@ class MetadataCatalog:
                 typeInfoData = self._targetDatabase.get_type_info_column_data (schemaName, tableName, columnName)
                 column['database_info'] = typeInfoData
                 
-                glossaryData = self._conceptGlossary.get_glossary_column_data (schemaName, tableName, columnName).as_dictionary()
-                column['glossary_info'] = glossaryData
+                try:
+                    glossaryData = self._conceptGlossary.get_glossary_column_data (schemaName, tableName, columnName).as_dictionary()
+                    column['glossary_info'] = glossaryData
+                except Exception as error:
+                    Logger.error (f"Error while retrieving glossary information for column: {schemaName}-{tableName}-{columnName}. Error message: {error}")
         
         jsonData = json.dumps(catalogJson, indent=4)
         Utils.write_file (jsonData, Config.enrichedDbtCatalogFileInfo.qualified_name)
