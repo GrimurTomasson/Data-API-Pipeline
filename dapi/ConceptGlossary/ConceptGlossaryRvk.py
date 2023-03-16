@@ -1,4 +1,6 @@
 from .ConceptGlossary import ConceptGlossary, ConceptGlossaryDefinition
+from ..Shared.Environment import Environment
+from ..Shared.Utils import Utils
 from ..Shared.Logger import Logger
 from ..Shared.Config import Config
 from ..Shared.Decorators import execution_time
@@ -25,7 +27,7 @@ class ConceptGlossaryRvk (ConceptGlossary):
     """
 
     def __init__ (self):
-        self._databaseName = Config['database']['name']
+        self._databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
 
     @execution_time
     def load_glossary_data (self):
