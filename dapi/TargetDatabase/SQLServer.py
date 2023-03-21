@@ -180,6 +180,7 @@ class SQLServer (TargetDatabase):
     def create_empty_target_table (self, sourceSchema:str, sourceTable:str, sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str) -> None:
         predicate = " IS NULL OR ".join (sourceKeyColumns) + " IS NULL"
         self._connection.cursor ().execute (f"SELECT CAST (NULL AS DATE) AS {dateColumnName}, s.* INTO [{targetSchema}].[{targetTable}] FROM [{sourceSchema}].[{sourceTable}] s WHERE {predicate}")
+        self._connection.cursor ().execute (f"CREATE CLUSTERED COLUMNSTORE INDEX {targetSchema.lower()}_{targetTable.lower()}_cci ON [{targetSchema}].[{targetTable}]")
         return
 
     @output_headers
