@@ -196,7 +196,7 @@ class SQLServer (TargetDatabase):
     @execution_time(tabCount=2)
     def insert_data (self, sourceSchema:str, sourceTable:str, sourceColumns:List[str], sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str, runDate:date) -> None:
         # Command building
-        selectColumnList = ", ".join (sourceColumns)
+        selectColumnList = "[" + "],[".join (sourceColumns) + "]" 
         insertColumnList = f"{dateColumnName}, {selectColumnList}"
         predicate = " IS NOT NULL AND ".join (sourceKeyColumns) + " IS NOT NULL"
         command = f"INSERT INTO [{targetSchema}].[{targetTable}] ({insertColumnList}) SELECT '{runDate}', {selectColumnList} FROM [{sourceSchema}].[{sourceTable}] WHERE {predicate}"
