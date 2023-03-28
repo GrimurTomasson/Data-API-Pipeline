@@ -4,17 +4,35 @@
     pre_hook="SET DATEFIRST 1, DATEFORMAT ymd, LANGUAGE US_ENGLISH") 
 }}
 
-WITH dates AS (
-	SELECT i.date_key FROM (
-        SELECT 
-            CAST (DATEADD(DAY, i.sequence_number, CONVERT (date, '01-01-2010', 105)) AS date) AS date_key -- Start date
-        FROM (  
-            SELECT ROW_NUMBER() OVER (ORDER BY (SELECT 1)) - 1 AS sequence_number
-            FROM   [master].[sys].[columns] sc1 -- Just to get a large number
-            CROSS JOIN [master].[sys].[columns] sc2) i
-    ) i 
-    WHERE 
-        i.date_key <= CONVERT (date, '31-12-2040', 105) -- End date
+WITH decimal_base AS (
+	SELECT 
+		number
+	FROM 
+		( VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9)) value_range (number)
+),
+number_sequence AS (
+	SELECT 
+		zero.number + 10 * one.number + 100 * two.number + 1000 * three.number + 10000 * four.number AS number
+	FROM
+		decimal_base four -- Decimal, location four, right to left
+		INNER REMOTE JOIN decimal_base three ON 1=1 -- Remote hint tells the optimizer to start with the right hand side
+		INNER REMOTE JOIN decimal_base two ON 1=1
+		INNER REMOTE JOIN decimal_base one ON 1=1
+		INNER REMOTE JOIN decimal_base zero ON 1=1
+),
+date_sequence AS (
+	SELECT 
+		CAST (DATEADD(DAY, i.number, CONVERT (date, '01-01-2010', 105)) AS date) AS date_key -- Start date
+	FROM
+		number_sequence i
+),
+dates AS (
+	SELECT
+		s.date_key
+	FROM
+		date_sequence s
+	WHERE
+		s.date_key <= CONVERT (date, '31-12-2040', 105) -- End date
 ),
 manudur_map AS (
 	SELECT * FROM ( VALUES
@@ -87,6 +105,7 @@ an_fridaga AS (
 		,s.manudur_upphafsdagsetning
 		,MAX (s.id) OVER (PARTITION BY s.ar, s.manudur) AS manudur_lokadagsetning
 		,s.manudur_heiti
+		,LEFT (s.manudur_heiti, 3) AS manudur_heiti_3
 		,DATEADD (MONTH, 1, s.manudur_upphafsdagsetning) AS upphafsdagsetning_naesta_manudar
 		,DATEADD (DAY, -1, DATEADD (MONTH, 2, s.manudur_upphafsdagsetning)) AS lokadagsetning_naesta_manudar
 		-- Ársfjórðungur
