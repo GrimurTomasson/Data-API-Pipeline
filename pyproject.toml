@@ -13,7 +13,7 @@ packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase"
 
 [project]
 name = "dapi"
-version = "1.01"
+version = "1.02"
 authors = [ {name = "Grimur Tomasson", email = "grimur@gthugbunadarradgjof.com"} ]
 description = "Logic to simplify the implementation of data API pipelines built on top of dbt."
 readme = "README.md"

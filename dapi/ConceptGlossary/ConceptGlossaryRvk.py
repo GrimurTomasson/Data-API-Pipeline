@@ -18,8 +18,8 @@ class ConceptGlossaryRvk (ConceptGlossary):
             ,COALESCE (dd.hamarkslengd, -1) AS max_length
         FROM
             INFORMATION_SCHEMA.COLUMNS c
-            LEFT JOIN [RVK-DATA-MASTER-API].Nustada@Hugtak.hugtak_utfaersla dd ON dd.gagnaform_id = 'SQL_SERVER' AND dd.heiti = c.COLUMN_NAME
-            LEFT JOIN [RVK-DATA-MASTER-API].Nustada@Hugtak.hugtak bg ON bg.id = dd.hugtak_id
+            LEFT JOIN [MASTER-API].Nustada@Hugtak.hugtak_utfaersla dd ON dd.gagnaform_id = 'SQL_SERVER' AND dd.heiti = c.COLUMN_NAME
+            LEFT JOIN [MASTER-API].Nustada@Hugtak.hugtak bg ON bg.id = dd.hugtak_id
         WHERE
             c.TABLE_CATALOG = ?
         ORDER BY 
