@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from .Shared.Decorators import output_headers, execution_time
 from .Shared.Config import Config
+from .Shared.Environment import Environment
 from .Shared.Utils import Utils
 from .Shared.Logger import Logger
 from .Shared.Json import EnhancedJSONEncoder
@@ -92,7 +93,7 @@ class DefinitionHealthReport:
         return None
 
     def __generate_health_data (self, enrichedCatalogJson) -> HealthReport:
-        apiHealth = HealthReport (api_name = Config['database']['name'])
+        apiHealth = HealthReport (api_name = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name'))
         relationsTotal = 0 
         columnsTotal = 0
         okColumnsTotal = 0
