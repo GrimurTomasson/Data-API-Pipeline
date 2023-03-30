@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from .Shared.Decorators import output_headers, execution_time
 from .Shared.Config import Config
+from .Shared.Environment import Environment
 from .Shared.Utils import Utils
 from .Shared.Logger import Logger
 from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
@@ -205,7 +206,8 @@ class DataHealthReport: # Main class
 
             if entry["code"] == "A001": # Header
                 headerExecution = HeaderExecution (entry["ts"], entry["invocation_id"])
-                healthReport.header = Header (Config['database']['name'], (entry["data"])["v"].replace ("=", ""), headerExecution)     
+                databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
+                healthReport.header = Header (databaseName, (entry["data"])["v"].replace ("=", ""), headerExecution)     
 
             if entry["code"] == "Z026": # File map
                 sqlPath = (entry["data"])["path"]
