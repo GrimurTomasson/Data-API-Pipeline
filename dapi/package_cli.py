@@ -15,10 +15,28 @@ from .Documentation import Documentation
 
 argParser = argparse.ArgumentParser (
     prog='dapi', 
-    description='Data API pipeline.')
+    description='Data API pipeline.',
+    formatter_class=argparse.RawTextHelpFormatter)
 
-argParser.add_argument ('operation', choices=['build', 'build-data', 'cleanup', 'dependencies', 'refresh', 'test', 'history', 'data-health-report', 'enrich-metadata', 'definition-health-report', 'documentation'])
-argParser.add_argument ('-e', '--environment', required=False)
+argParser.add_argument ('operation', 
+                        choices=['build', 'build-data', 'cleanup', 'dependencies', 'refresh', 'test', 'history', 'data-health-report', 'enrich-metadata', 'definition-health-report', 'documentation'], 
+                        help='''
+Aside from build & cleanup, the following steps require that previous steps, from cleanup forward have been run. 
+The steps generate data files, so a single step can be run multiple times as long as those files exist.
+The only parameter for operations is en environment file, which is optional.
+                        
+0. build                        Runs the following steps.
+1. cleanup                      Removes run files from previous runs.
+2. dependencies                 Makes sure we have dbt plugins installed and a connection to the DB.
+3. refresh                      Creates relations (tables & views) from the dbt models.
+4. history                      Creates a history snapshot of the results from refresh.
+5. test                         Runs dbt tests.
+6. data-health-report           Generates a markdown data health report and publishes it.
+7. enrich-metadata              Enriches metadata using a concept glossary and target database metadata.
+8. definition-health-report     Generates a markdown API definition health report, using the enriched metadata and publishes it.
+9. documentation                Generates markdown end-user documentation and publishes it.
+                                ''')
+argParser.add_argument ('-e', '--environment', required=False, help='Select an environment file to load.')
 
 def main ():
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
@@ -32,7 +50,7 @@ def main ():
     elif options.operation == 'build-data':
         API ().generate_data_only ()
     elif options.operation == 'cleanup':
-        Cleanup ().cleanup ()    
+        Cleanup ().cleanup ()
     elif options.operation == 'dependencies':
         Dependencies ().update_all ()
         Dependencies ().test_all ()

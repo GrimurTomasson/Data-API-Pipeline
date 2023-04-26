@@ -14,7 +14,7 @@ concept-glossary:
 
 latest:
     name: 'Nustada'
-    relative-path: 'dbt/nustada' # No slashes before or after!
+    relative-path: 'Nustada' # No slashes before or after!
 
 history:
   snapshot-date-column: 'sogu_dagur'
