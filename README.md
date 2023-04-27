@@ -7,7 +7,7 @@ The goal is to make creating and refreshing a **Data API** as simple as running 
 The following is focused on getting this software running on a development machine, writing *CI/CD* pipelines on top of it is not covered. 
 
 ### Setup
-Make sure you have the [dependencies](##Dependencies) covered.
+Make sure you have the [dependencies](##Dependencies) covered.  
 In a terminal, run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 
 ### API Configuration
