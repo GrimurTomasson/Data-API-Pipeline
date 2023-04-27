@@ -4,8 +4,9 @@ data-api-pipeline:
   data-file-location: API-Pipeline_last_run # no slashes before or after! One directory, not a tree.
 
 database:
-  name: '?SOME-API' # We require the name of the target database and project folder to be the same. Check if this is still true. Can be overwritten with an environment variable in data-api-pipeline.env.
-  server: 'some_db' # Including port number if not default. Can be overwritten with an environment variable in data-api-pipeline.env.
+  name: '?DATABASE_NAME' # We require the name of the target database and project folder to be the same. Check if this is still true. Can be overwritten with an environment variable in data-api-pipeline.env.
+  server: '?DATABASE_SERVER' # Can be overwritten with an environment variable in data-api-pipeline.env.
+  port: ?DATABASE_PORT # If not default. Can be overwritten with an environment variable in data-api-pipeline.env.
   connection-string-template: DRIVER={ODBC Driver 18 for SQL Server};SERVER={{database-server}};DATABASE={{database-name}};Trusted_Connection=yes;Encrypt=no; # Known variables: database-server, database-name, database-user, database-password
   type: SQL-Server
 
@@ -14,7 +15,7 @@ concept-glossary:
 
 latest:
     name: 'Nustada'
-    relative-path: 'dbt/nustada' # No slashes before or after!
+    relative-path: 'DataAPI' # No slashes before or after!
 
 history:
   snapshot-date-column: 'sogu_dagur'

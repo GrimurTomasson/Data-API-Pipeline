@@ -80,10 +80,10 @@ class Utils:
     
     @staticmethod
     def add_dbt_profile_location (operation):
-        profileFile = os.path.join (Config.latestPath, 'profiles.yml')
+        profileFile = os.path.join (Config.workingDirectory, 'profiles.yml')
         if os.path.isfile (profileFile):
             operation.append (f"--profiles-dir")
-            operation.append ('.')
+            operation.append (Config.workingDirectory)
         return operation
     
     @staticmethod
