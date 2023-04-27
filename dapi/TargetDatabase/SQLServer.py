@@ -143,7 +143,7 @@ class SQLServer (TargetDatabase):
         Logger.info(f"\t\tAdding column: {columnName} to {targetSchema}.{targetTable}")
         
         alterCommand = f"ALTER TABLE {targetSchema}.{targetTable} ADD {columnName} "
-        if columnInfo.DATA_TYPE in ["date", "datetime", "int", "bigint", "tinyint", "smallint", "bit"]:
+        if columnInfo.DATA_TYPE in ["date", "datetime", "datetime2", "int", "bigint", "tinyint", "smallint", "bit"]:
             alterCommand += str(columnInfo.DATA_TYPE)
         elif columnInfo.DATA_TYPE in ["char", "varchar", "nvarchar"]:
             alterCommand += f"{columnInfo.DATA_TYPE}({columnInfo.CHARACTER_MAXIMUM_LENGTH})"
