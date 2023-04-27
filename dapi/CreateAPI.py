@@ -1,4 +1,6 @@
 import os
+import sys
+import argparse
 import shutil
 import subprocess
 
@@ -32,7 +34,7 @@ class CreateApi:
             print (f"\t{template} copied to {self._workingDir}")
         return
 
-    def __process_config (self) -> None:
+    def __process_config (self, databaseName, databaseServer, databasePort) -> None:
         print (f"\nEditing {self._configName}")
         qualifiedConfig = os.path.join (self._workingDir, self._configName)
 
@@ -40,18 +42,25 @@ class CreateApi:
             config = f.read ()
 
         # Við breytum þessu með strengjaleikfimi frekar en yml til þess að tapa ekki athugasemdum í config!
-        config = config.replace ('?SOME-API', self._workingDirName)
-        print (f"\tDatabase name: {self._workingDirName}")
+        config = config.replace ('?DATABASE_NAME', databaseName)
+        print (f"\tDatabase name: {databaseName}")
 
+        config = config.replace ('?DATABASE_SERVER', databaseServer)
+        print (f"\tDatabase server: {databaseServer}")
+
+        if databasePort is None:
+            databasePort = ''
+        config = config.replace ('?DATABASE_PORT', databasePort)
+        print (f"\tDatabase server port: {databasePort}")
+        
         targetConfig = os.path.join (os.getcwd (), self._configName)
         with open (targetConfig, mode="w", encoding="utf-8") as f:
             f.write (config)
         print ("\nUpdated config written")
         return
         
-    def generate (self) -> None:
+    def generate (self, databaseName, databaseServer, databasePort) -> None:
         print (f"\nWorking directory: {self._workingDir}")
-        print (f"Working directory-, API-, Database name -> {self._workingDirName}")
 
         print (f"\nLooking for the {self._packageName} package location")
         pipelineLocation = self.__find_package ()
@@ -64,13 +73,19 @@ class CreateApi:
         print (f"Template directory: {self._templateDir}\n")
 
         self.__copy_templates ()
-        self.__process_config ()
+        self.__process_config (databaseName, databaseServer, databasePort)
 
         print ("\nAll done! Remember to edit the config!\n")
         return
 
 def main():
-    CreateApi ().generate ()
+    argParser = argparse.ArgumentParser (prog='dapi', description='Data API pipeline creation.', formatter_class=argparse.RawTextHelpFormatter)
+    argParser.add_argument ('-d', '--databaseName', required=True, help='Database name.')
+    argParser.add_argument ('-s', '--databaseServer', required=True, help='Database server.')
+    argParser.add_argument ('-p', '--databasePort', required=False, help='Database port, if not default.')
+    options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
+
+    CreateApi ().generate (options.databaseName, options.databaseServer, options.databasePort)
 
 if __name__ == '__main__':
     main ()
