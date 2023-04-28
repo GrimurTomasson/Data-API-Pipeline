@@ -35,7 +35,7 @@ class SQLServer (TargetDatabase):
     def __init__(self):
         # Environment variables trump config ones.
         self._databaseServer = Utils.retrieve_variable ('Database server', Environment.databaseServer, Config['database'], 'server')
-        self._databasePort = Utils.retrieve_variable ('Database server port', Environment.databasePort, Config['database'], 'port')
+        self._databasePort = Utils.retrieve_variable ('Database server port', Environment.databasePort, Config['database'], 'port', True) # Optional
         self._databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
 
         if self._databasePort is not None and len(self._databasePort) > 0: # Þetta á ekki við um default port!

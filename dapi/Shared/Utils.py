@@ -87,7 +87,7 @@ class Utils:
         return operation
     
     @staticmethod
-    def retrieve_variable (description, envVarName, configRoot, configVarName):
+    def retrieve_variable (description, envVarName, configRoot, configVarName, optional=False):
         if os.environ.get(envVarName) is not None and len (os.environ.get(envVarName)) > 0:
             value = os.environ.get(envVarName)
             if not envVarName.find("PASSWORD"):
@@ -96,6 +96,9 @@ class Utils:
         
         if configVarName in configRoot.keys():
             return configRoot[configVarName]    
+        
+        if optional is True:
+            return str('') # None endar sem strengur í environment ofl.
         
         raise (f"{description} value was neither found in environment variables nor config!")
     

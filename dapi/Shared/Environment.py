@@ -6,6 +6,7 @@ from colorama import init, Fore
 from .PrettyPrint import Pretty
 from .Logger import Logger
 from .Config import Config
+from .Utils import Utils
 
 class Environment:
     # From config or environment file
@@ -38,10 +39,10 @@ class Environment:
             Logger.debug (Pretty.assemble (f"\nLoading {loadType} environment variables - {qualifiedName}\n", False, False, Fore.CYAN))
             load_dotenv (dotenv_path=qualifiedName, verbose=True, override=True) 
 
-        # We make sure the variables used by dbt profiles are set!
-        os.environ[Environment.databaseServer] = Config['database']['server']
-        os.environ[Environment.databasePort] = str (Config['database']['port'])
-        os.environ[Environment.databaseName] = Config['database']['name']
+        # We make sure the variables used by dbt profiles are set, port is optional.
+        os.environ[Environment.databaseServer] = Utils.retrieve_variable ('Database server', Environment.databaseServer, Config['database'], 'server')
+        os.environ[Environment.databasePort] = str (Utils.retrieve_variable ('Database server port', Environment.databasePort, Config['database'], 'port', True))
+        os.environ[Environment.databaseName] = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
 
         dapiEnvVarKeys = [x for x in os.environ.keys() if x.startswith('DAPI_') and x.find("PASSWORD") == -1]
         for e in dapiEnvVarKeys:
