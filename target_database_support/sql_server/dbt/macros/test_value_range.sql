@@ -5,6 +5,6 @@ SELECT
 FROM 
     {{ model }} 
 WHERE 
-    {{ column_name }} NOT BETWEEN {{ from }} AND {{ to }}
+    [{{ column_name }}] NOT BETWEEN {{ from }} AND {{ to }}
 
 {% endtest %}
