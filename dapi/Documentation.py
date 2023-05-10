@@ -52,8 +52,8 @@ class Documentation:
 
     def __generate_documentation (self, enrichedCatalogJson) -> DocumentationData:
         docs = DocumentationData()
-        for relationKey in enrichedCatalogJson['sources']:
-            relationData = enrichedCatalogJson['sources'][relationKey]
+        for relationKey in enrichedCatalogJson['nodes']:
+            relationData = enrichedCatalogJson['nodes'][relationKey]
             schemaName = relationData['metadata']['schema']
             relationName = relationData['metadata']['name']
             Logger.debug (f"\tSchema: {schemaName} - Relation: {relationName}")

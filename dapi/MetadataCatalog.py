@@ -17,9 +17,9 @@ class MetadataCatalog:
 
     def __get_model_description (self, jsonData, modelName) -> str:
         Logger.debug (f"\tgetModelDescription - modelName: {modelName}")
-        if not modelName in jsonData['sources']:
+        if not modelName in jsonData['nodes']:
             return 'There is no model for this relation!'
-        model = jsonData['sources'][modelName]
+        model = jsonData['nodes'][modelName]
         if 'description' in model:
             desc = model['description']
             Logger.debug(f"\t\tModel description found: {desc}\n")
@@ -30,9 +30,9 @@ class MetadataCatalog:
 
     def __get_column_description (self, jsonData, modelName, columnName) -> str:
         Logger.debug (f"\tgetColumnDescription - modelName: {modelName}, columnName: {columnName}")
-        if not columnName in jsonData['sources'][modelName]['columns']:
+        if not columnName in jsonData['nodes'][modelName]['columns']:
             return 'This column is not in the model for this relation!'
-        column = jsonData['sources'][modelName]['columns'][columnName]
+        column = jsonData['nodes'][modelName]['columns'][columnName]
         if 'description' in column:
             desc = column['description']
             if len (desc) > 0:
@@ -69,8 +69,8 @@ class MetadataCatalog:
         with open (target_manifest_file, encoding="utf-8") as json_file:
             manifestJson = json.load (json_file)
         #
-        for relationKey in catalogJson['sources']:
-            relation = catalogJson['sources'][relationKey]
+        for relationKey in catalogJson['nodes']:
+            relation = catalogJson['nodes'][relationKey]
             relation['metadata']['description'] = self.__get_model_description(manifestJson, relationKey)
             for columnKey in relation['columns']:
                 column = relation['columns'][columnKey]
