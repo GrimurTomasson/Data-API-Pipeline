@@ -35,7 +35,7 @@ class SQLServer (TargetDatabase):
     def __init__(self):
         # Environment variables trump config ones.
         self._databaseServer = Utils.retrieve_variable ('Database server', Environment.databaseServer, Config['database'], 'server')
-        self._databasePort = Utils.retrieve_variable ('Database server port', Environment.databasePort, Config['database'], 'port')
+        self._databasePort = Utils.retrieve_variable ('Database server port', Environment.databasePort, Config['database'], 'port', True) # Optional
         self._databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
 
         if self._databasePort is not None and len(self._databasePort) > 0: # Þetta á ekki við um default port!
@@ -143,7 +143,7 @@ class SQLServer (TargetDatabase):
         Logger.info(f"\t\tAdding column: {columnName} to {targetSchema}.{targetTable}")
         
         alterCommand = f"ALTER TABLE {targetSchema}.{targetTable} ADD {columnName} "
-        if columnInfo.DATA_TYPE in ["date", "datetime", "int", "bigint", "tinyint", "smallint", "bit"]:
+        if columnInfo.DATA_TYPE in ["date", "datetime", "datetime2", "int", "bigint", "tinyint", "smallint", "bit"]:
             alterCommand += str(columnInfo.DATA_TYPE)
         elif columnInfo.DATA_TYPE in ["char", "varchar", "nvarchar"]:
             alterCommand += f"{columnInfo.DATA_TYPE}({columnInfo.CHARACTER_MAXIMUM_LENGTH})"

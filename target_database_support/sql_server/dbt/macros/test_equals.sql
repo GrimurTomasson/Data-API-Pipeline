@@ -5,6 +5,6 @@ SELECT
 FROM 
     {{ model }} 
 WHERE 
-    {{ column_name }} != {{ predicate }}
+    [{{ column_name }}] != {{ predicate }}
 
 {% endtest %}

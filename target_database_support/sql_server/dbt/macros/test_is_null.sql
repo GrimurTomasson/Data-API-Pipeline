@@ -5,7 +5,7 @@ SELECT
 FROM 
 	{{ model }} 
 WHERE 
-	{{ column_name }} IS NOT NULL
+	[{{ column_name }}] IS NOT NULL
 	AND {{ filter }}
 
 {% endtest %}

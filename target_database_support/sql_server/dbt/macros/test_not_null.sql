@@ -5,7 +5,7 @@ SELECT
 FROM 
 	{{ model }} 
 WHERE 
-	{{ column_name }} IS NULL
+	[{{ column_name }}] IS NULL
 	AND {{ filter }}
 
 {% endtest %}

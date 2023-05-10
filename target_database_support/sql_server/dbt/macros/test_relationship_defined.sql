@@ -5,9 +5,9 @@ SELECT
 FROM 
     {{ model }} 
 WHERE 
-    {{ column_name }} {{ existence }} IN (
+    [{{ column_name }}] {{ existence }} IN (
         SELECT 
-            {{ to_column }} 
+            [{{ to_column }}]
         FROM 
             {{ to_model }}
     )

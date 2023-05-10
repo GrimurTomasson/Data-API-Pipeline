@@ -7,7 +7,7 @@ The goal is to make creating and refreshing a **Data API** as simple as running 
 The following is focused on getting this software running on a development machine, writing *CI/CD* pipelines on top of it is not covered. 
 
 ### Setup
-For this to work, you need to have *Python* installed, minimum version 3.9
+Make sure you have the [dependencies](##Dependencies) covered.  
 In a terminal, run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 
 ### API Configuration
@@ -112,7 +112,7 @@ Implemented in: **Documentation.py**
 `api_documentation.md` - The documentation, in *markdown* format.
 
 ## Dependencies
-This solution relies on *dbt* to create relations and perform automated testing. It also uses and enriches *dbt* json files in order to create reports and documentation. Note, it also relies on quite a few *Python* pakcages that *dbt* relies on. Aside from *Python*, everything should be installed as a part of this package. Try installing *dbt* if you are having problems.
+This solution relies on *dbt* to create relations and perform automated testing. It also uses and enriches *dbt* json files in order to create reports and documentation. Note, it relies on quite a few *Python* pakcages that *dbt* relies on. Aside from *Python* and database specific dependencies, everything should be installed as a part of this package. Try installing *dbt* if you are having problems.
 It also relies on *Python*, minimum version 3.9.11.
 Follow the links for installation instructions for [Python](###InstallingPython) and [dbt](###Installingdbt).
 

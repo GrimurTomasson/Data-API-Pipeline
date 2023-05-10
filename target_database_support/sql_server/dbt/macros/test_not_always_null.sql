@@ -9,7 +9,7 @@ FROM
 	FROM 
 		{{ model }} 
 	WHERE 
-		{{ column_name }} IS NULL
+		[{{ column_name }}] IS NULL
 ) no_value
 CROSS JOIN 
 (
