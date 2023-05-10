@@ -98,8 +98,8 @@ class DefinitionHealthReport:
         columnsTotal = 0
         okColumnsTotal = 0
         
-        for relationKey in enrichedCatalogJson['sources']:
-            relation = enrichedCatalogJson['sources'][relationKey]
+        for relationKey in enrichedCatalogJson['nodes']:
+            relation = enrichedCatalogJson['nodes'][relationKey]
             schemaName = relation['metadata']['schema']
             relationName = relation['metadata']['name']
             Logger.debug (f"\tSchema: {schemaName} - Relation: {relationName}")
