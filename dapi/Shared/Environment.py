@@ -24,6 +24,9 @@ class Environment:
     markPassword = str("DAPI_MARK_PASSWORD")
     markBaseUri = str("DAPI_MARK_BASE_URI")
 
+    # Internal flow control, flags set in cli
+    dbtRunParameters = str("DAPI_DBT_RUN_PARAMETERS")
+
     environmentVariableFilename = str("dapi.env") # Default value
 
     @staticmethod 

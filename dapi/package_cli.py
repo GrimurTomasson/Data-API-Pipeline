@@ -1,4 +1,5 @@
 import sys
+import os
 import argparse
 
 from .Shared.Environment import Environment
@@ -37,6 +38,7 @@ The only parameter for operations is en environment file, which is optional.
 9. documentation                Generates markdown end-user documentation and publishes it.
                                 ''')
 argParser.add_argument ('-e', '--environment', required=False, help='Select an environment file to load.')
+argParser.add_argument('-d', '--dbt_run_parameters', required=False, type=str, help='Add any dbt parameters for the run command.')
 
 def main ():
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
@@ -44,6 +46,8 @@ def main ():
     # Overriding the environment, multi-instance support
     envFile = options.environment if options.environment != None and len (options.environment) > 0 else Environment.environmentVariableFilename
     Environment.load (envFilename=envFile)
+
+    os.environ[Environment.dbtRunParameters] = options.dbt_run_parameters if options.dbt_run_parameters != None else ''
 
     if options.operation == 'build':
         API ().generate ()

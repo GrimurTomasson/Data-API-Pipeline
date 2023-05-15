@@ -6,6 +6,7 @@ from .Shared.Decorators import output_headers, execution_time
 from .Shared.Config import Config
 from .Shared.Utils import Utils
 from .Shared.Logger import Logger
+from .Shared.Environment import Environment
 
 class Latest:
     _argParser = argparse.ArgumentParser (prog='Latest.py', description='Creates new relations and tests them.')
@@ -18,7 +19,11 @@ class Latest:
     @execution_time
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
-        dbtOperation = Utils.add_dbt_profile_location (["dbt", "run", "--fail-fast"]) #  --fail-fast / --full-refresh
+        operation = ["dbt", "run", "--fail-fast"]
+        if os.environ[Environment.dbtRunParameters] != None and len (os.environ[Environment.dbtRunParameters]) > 0:
+            operation.append(os.environ[Environment.dbtRunParameters])
+
+        dbtOperation = Utils.add_dbt_profile_location (operation) 
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         return
 
