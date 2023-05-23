@@ -42,7 +42,7 @@ pytimeparse==1.1.8
 pytz==2022.6
 pywin32==305
 PyYAML==6.0
-requests==2.28.1
+requests==2.31.0
 six==1.16.0
 sqlparse==0.4.4
 text-unidecode==1.3
