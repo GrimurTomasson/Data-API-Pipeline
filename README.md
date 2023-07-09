@@ -8,6 +8,8 @@ The following is focused on getting this software running on a development machi
 
 ### Setup
 Make sure you have the [dependencies](##Dependencies) covered.  
+Create a [virtual environment for Python](https://docs.python.org/3/library/venv.html). For example, on a *Windows* machine we could run `python -m venv c:\src\someRepo\pyEnv`  
+Enable the virtual environment by running the *activate* script in `c:\src\someRepo\pyEnv\Scripts`  
 In a terminal, run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 
 ### API Configuration
