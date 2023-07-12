@@ -10,7 +10,7 @@ The following is focused on getting this software running on a development machi
 Make sure you have the [dependencies](##Dependencies) covered.  
 - Create a [virtual environment for Python](https://docs.python.org/3/library/venv.html). For example, on a *Windows* machine we could run `python -m venv .\pyEnv`  
 - Enable the virtual environment by running `.\pyEnv\Scripts\activate`  
-- Run `pip install git+https://github.com/GrimurTomasson/Data-API-Pipeline`
+- Run `pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 
 ### API Configuration
 1. Create a `dbt` project in a subfolder of the root directory of your Data API.
