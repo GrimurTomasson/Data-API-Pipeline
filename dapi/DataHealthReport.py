@@ -28,6 +28,7 @@ class Header:
 @dataclass
 class StatsTotal:
     error: CountPercentage
+    warning: CountPercentage
     ok: CountPercentage
     skipped: CountPercentage
     total: CountPercentage
@@ -183,33 +184,36 @@ class DataHealthReport: # Main class
         testList = [] #list[TestEntry]
         
         for entry in jsonObject['entries']:
-            if entry["code"] == "Q009": # OK
-                testList.append (DataHealthReport.TestEntry(entry["data"]["node_info"]["node_name"], 1, 0))
+            if entry["info"]["code"] == "Q007":
+                if entry["data"]["status"] == "pass": # OK
+                    testList.append (DataHealthReport.TestEntry(entry["data"]["node_info"]["node_name"], 1, 0))
 
-            if entry["code"] == "Q011" and entry["level"] == "error": # Errors
-                error = Error ((entry["data"])["name"], (entry["data"])["failures"], ((entry["data"])["node_info"])["node_path"], None, None, None, None, None)
-                healthReport.errors.append (error)
+                if entry["data"]["status"] == "fail": # Errors
+                    error = Error ((entry["data"])["name"], (entry["data"])["num_failures"], ((entry["data"])["node_info"])["node_path"], None, None, None, None, None)
+                    healthReport.errors.append (error)
                 
                 testList.append (DataHealthReport.TestEntry(entry["data"]["node_info"]["node_name"], 0, 1))
 
-            if entry["code"] == "Z023": # Stats
+            if entry["info"]["code"] == "Z023": # Stats
                 error = ((entry["data"])["stats"])["error"]
+                warning = ((entry["data"])["stats"])["warn"]
                 ok = ((entry["data"])["stats"])["pass"]
                 skipped = ((entry["data"])["stats"])["skip"]
                 total = ((entry["data"])["stats"])["total"]
                 
                 errorStats = CountPercentage (error, Utils.to_percentage (error, total, 2))
+                warningStats = CountPercentage (warning, Utils.to_percentage (warning, total, 2))
                 okStats = CountPercentage (ok, Utils.to_percentage (ok, total, 2))
                 skippedStats = CountPercentage (skipped, Utils.to_percentage (skipped, total, 2))
                 totalStats = CountPercentage (total, 100)
-                healthReport.stats.total = StatsTotal (errorStats, okStats, skippedStats, totalStats)
+                healthReport.stats.total = StatsTotal (errorStats, warningStats, okStats, skippedStats, totalStats)
 
-            if entry["code"] == "A001": # Header
-                headerExecution = HeaderExecution (entry["ts"], entry["invocation_id"])
+            if entry["info"]["code"] == "A001": # Header
+                headerExecution = HeaderExecution (entry["info"]["ts"], entry["info"]["invocation_id"])
                 databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
-                healthReport.header = Header (databaseName, (entry["data"])["v"].replace ("=", ""), headerExecution)     
+                healthReport.header = Header (databaseName, (entry["data"])["version"].replace ("=", ""), headerExecution)     
 
-            if entry["code"] == "Z026": # File map
+            if entry["info"]["code"] == "Z026": # File map
                 sqlPath = (entry["data"])["path"]
                 sqlFile = sqlPath[-(len (sqlPath) - (sqlPath.rindex ("\\") + 1)):] # Heldur þetta ef kóðinn keyrir á nix?
                 fileMap[sqlFile] = sqlPath
