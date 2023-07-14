@@ -54,19 +54,16 @@ class MetadataCatalog:
         source_manifest_file = os.path.join (dbt_output_path, "manifest.json")
         source_catalog_file = os.path.join (dbt_output_path, "catalog.json")
 
-        target_manifest_file = os.path.join (Config.runFileDirectory, "3_dbt_manifest.json")
-        target_catalog_file = os.path.join (Config.runFileDirectory, "4_dbt_catalog.json")
+        Logger.info (f"\tManifest \n\t\tSource: {source_manifest_file} \n\t\tTarget: {Config.dbtManifestFileInfo.qualified_name}\n")
+        Logger.info (f"\tCatalog \n\t\tSource: {source_catalog_file} \n\t\tTarget: {Config.dbtCatalogFileInfo.qualified_name}\n")
 
-        Logger.info (f"\tManifest \n\t\tSource: {source_manifest_file} \n\t\tTarget: {target_manifest_file}\n")
-        Logger.info (f"\tCatalog \n\t\tSource: {source_catalog_file} \n\t\tTarget: {target_catalog_file}\n")
-
-        shutil.copy2 (source_manifest_file, target_manifest_file)
-        shutil.copy2 (source_catalog_file, target_catalog_file)
+        shutil.copy2 (source_manifest_file, Config.dbtManifestFileInfo.qualified_name)
+        shutil.copy2 (source_catalog_file, Config.dbtCatalogFileInfo.qualified_name)
         
-        with open (target_catalog_file, encoding="utf-8") as json_file:
+        with open (Config.dbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
             catalogJson = json.load (json_file)
         #
-        with open (target_manifest_file, encoding="utf-8") as json_file:
+        with open (Config.dbtManifestFileInfo.qualified_name, encoding="utf-8") as json_file:
             manifestJson = json.load (json_file)
         #
         for relationKey in catalogJson['nodes']:
