@@ -56,8 +56,10 @@ class Config (ConfigBase):
         Config.latestPath = os.path.abspath (os.path.join (Config.workingDirectory, Config['latest']['relative-path']))
 
         Config.dbtTestOutputFileInfo = Config.__get_file_info ('1_dbt_test_output.json', Config.runFileDirectory)
-        Config.apiDataHealthReportDataFileInfo = Config.__get_file_info ('2_api_data_health_report_data.json', Config.runFileDirectory)
-        Config.enrichedDbtCatalogFileInfo = Config.__get_file_info ('5_enriched_dbt_catalog.json', Config.runFileDirectory) # manifest.json = 3, catalog.json = 4
+        Config.dbtManifestFileInfo = Config.__get_file_info ('2_dbt_manifest.json', Config.runFileDirectory)
+        Config.dbtCatalogFileInfo = Config.__get_file_info ('3_dbt_catalog.json', Config.runFileDirectory)
+        Config.enrichedDbtCatalogFileInfo = Config.__get_file_info ('4_enriched_dbt_catalog.json', Config.runFileDirectory) # manifest.json = 2, catalog.json = 3
+        Config.apiDataHealthReportDataFileInfo = Config.__get_file_info ('5_api_data_health_report_data.json', Config.runFileDirectory)
         Config.apiDefinitionHealthReportDataFileInfo = Config.__get_file_info ('6_api_definition_health_report_data.json', Config.runFileDirectory)
         Config.apiDocumentationDataFileInfo = Config.__get_file_info ('7_api_documentation_data.json', Config.runFileDirectory)
         return

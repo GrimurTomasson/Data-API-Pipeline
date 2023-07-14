@@ -23,8 +23,8 @@ class API:
         self.generate_data_only ()
         
         Latest ().run_tests () # Skrifar skrá: 1
-        DataHealthReport ().generate () # Skrifar skrá: 2
-        MetadataCatalog ().enrich () # Skrifar skrár: 3, 4, 5
+        MetadataCatalog ().enrich () # Skrifar skrár: 2, 3, 4
+        DataHealthReport ().generate () # Skrifar skrá: 5
         DefinitionHealthReport ().generate () # Skrifar skrá: 6
         Documentation ().generate () # Skrifar skrá: 7
         return

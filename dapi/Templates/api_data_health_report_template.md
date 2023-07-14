@@ -13,6 +13,7 @@
 |               | Fjöldi prófana     | Prósenta   |
 | :------------ | -----------------: | ---------: |
 | Villur | {{ stats.total.error.count }} | {{ stats.total.error.percentage }} |
+| Viðvaranir | {{ stats.total.warning.count }} | {{ stats.total.warning.percentage }} |
 | Í lagi | {{ stats.total.ok.count }} | {{ stats.total.ok.percentage }} |
 | Sleppt | {{ stats.total.skipped.count }} | {{ stats.total.skipped.percentage }} |
 | **Samtals** | **{{ stats.total.total.count }}** | **{{ stats.total.total.percentage }}** |

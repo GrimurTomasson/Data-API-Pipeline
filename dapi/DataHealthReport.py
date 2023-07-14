@@ -35,8 +35,11 @@ class StatsTotal:
 
 @dataclass
 class RelationStats:
+    database_name: str
+    schema_name: str
     name: str
     ok: CountPercentage
+    warning: CountPercentage
     error: CountPercentage
     total: int
 
@@ -47,10 +50,13 @@ class Stats:
 
 @dataclass
 class Error:
-    name: str
-    rows_on_error: int
+    test_name: str
+    unique_id: str
     sql_filename: str
+    database_name: str
+    schema_name: str
     relation_name: str
+    rows_on_error: int
     rows_in_relation: int
     rows_on_error_percentage: int
     query_path: str
@@ -65,18 +71,35 @@ class HealthReport:
 class DataHealthReport: # Main class
     @dataclass
     class TestEntry:
-        testName: str
+        database_name: str
+        schema_name: str
+        relation_name: str
+        test_name: str
+        unique_id: str
         ok: int
+        warning: int
         error: int
 
     @dataclass
     class StatsEntry:
+        database_name: set
+        schema_name: str
+        relation_name: str
         ok: int
+        warning: int
         error: int
+
+    @dataclass
+    class ManifestEntry:
+        database: str
+        schema: str
+        relation: str
+        sql_filename: str
+        query_path: str
+        sql: str
 
     def __init__ (self) -> None:
         self._reportFilename = "api_data_health_report.md"
-        self._tableNameRegEx = re.compile ('[a-z\_0-9]+\.yml', re.IGNORECASE)
         self._cardinalityMap = {}
         
         self._projectName = Config['latest']['name']
@@ -88,33 +111,22 @@ class DataHealthReport: # Main class
         self._targetKnowledgeBase = TargetKnowledgeBaseFactory ().get_target_knowledge_base ()
         return
 
-    def __get_relation_name (self, filePath) -> str:
-        return self._tableNameRegEx.search (filePath).group ()[:-4]
-
-    def __get_relation_name_from_test_name (self, testName) -> str:
-        # Logger.debug (f"project: {self._projectName} - test name: {testName}")
-        tableNameFromTestRegEx = re.compile (f"{self._projectName}\_[a-z\_]+\_v[0-9]+", re.IGNORECASE) # source_is_true_Nustada_bekkur_v1_lokadagur__lokadagur_upphafsdagur
-        # ToDo: Búa til mynstur sem höndlar fleiri útgáfur, t.d.: project: Latest - test name: accepted_values_Address_fiber_optic_state_v1_L_apartment_number__MISSING_FROM_SOURCE
-        searchResults = tableNameFromTestRegEx.search (testName)
-        if searchResults == None:
-                Logger.debug (f"No relation name found for test name: {testName}")
-                return ''
-        return searchResults.group ()[len (self._projectName)+1:]
-
-    def __retrieve_relation_cardinality (self, filePath) -> int:
-        tableName = self.__get_relation_name (filePath)
-        if tableName in self._cardinalityMap:
-            return self._cardinalityMap[tableName]
+    def __retrieve_relation_cardinality (self, databaseName, schemaName, tableName) -> int:
+        key = f"{databaseName}.{schemaName}.{tableName}"
+        if key in self._cardinalityMap:
+            return self._cardinalityMap[key]
         else:
             rows = -1
             try:
-                rows = self._databaseConnection.cursor ().execute (f"SELECT COUNT(1) AS fjoldi FROM {self._projectName}.{tableName}").fetchval ()
-                Logger.debug (f"\tCardinality for table {self._projectName}.{tableName} retrieved - cardinality: {rows}\n")
+                query = f"SELECT COUNT(1) AS fjoldi FROM [{databaseName}].[{schemaName}].[{tableName}]"
+                Logger.debug (f"Cardinality query: {query}")
+                rows = self._databaseConnection.cursor ().execute (query).fetchval ()
+                Logger.debug (f"\tCardinality for table {databaseName}.{schemaName}.{tableName} retrieved - cardinality: {rows}\n")
                 
             except Exception as ex:
                 Logger.warning (f"Failure to retrieve relation cardinality: {ex}")
                 
-            self._cardinalityMap[tableName] = rows
+            self._cardinalityMap[key] = rows
             return rows
 
     @execution_time(tabCount=1)
@@ -131,70 +143,112 @@ class DataHealthReport: # Main class
         relationStatMap = {}
         # Aggregating results
         for test in testList:
-            relation = self.__get_relation_name_from_test_name (test.testName)
-            if relation in relationStatMap:
-                relationStatMap[relation] = DataHealthReport.StatsEntry (relationStatMap[relation].ok + test.ok, relationStatMap[relation].error + test.error)
+            key = f"{test.database_name}.{test.schema_name}.{test.relation_name}"
+            if key in relationStatMap:
+                current = relationStatMap[key]
+                relationStatMap[key] = DataHealthReport.StatsEntry (test.database_name, test.schema_name, test.relation_name, current.ok + test.ok, current.warning + test.warning, current.error + test.error)
             else:
-                relationStatMap[relation] = DataHealthReport.StatsEntry (test.ok, test.error)
+                relationStatMap[key] = DataHealthReport.StatsEntry (test.database_name, test.schema_name, test.relation_name, test.ok, test.warning, test.error)
 
         # Creating a relation stats list
         stats = [] #list[DataHealthClasses.RelationStats]
         for key in sorted (relationStatMap):
             ok = relationStatMap[key].ok
+            warning = relationStatMap[key].warning
             error = relationStatMap[key].error
-            total = ok + error     
+            total = ok + warning + error     
 
             okStats = CountPercentage (ok, Utils.to_percentage (ok, total, 2))
+            warningStats = CountPercentage (warning, Utils.to_percentage (warning, total, 2))
             errorStats = CountPercentage (error, Utils.to_percentage (error, total, 2))
-            relStats = RelationStats (name = key, ok = okStats, error = errorStats, total = total)
+            relStats = RelationStats (database_name=relationStatMap[key].database_name, schema_name=relationStatMap[key].schema_name, name = relationStatMap[key].relation_name, ok = okStats, warning = warningStats, error = errorStats, total = total)
 
             stats.append (relStats)
         #print(f"Relation stats: {stats}")
         return stats
 
-    def __enrich_errors (self, errorList, fileMap) -> list[Error]:
+    def __enrich_errors (self, errorList) -> list[Error]:
         for error in errorList:
-            noRows = 0
-            filePath = fileMap[error.sql_filename]
-            if len (filePath) > 0:
-                fRelativePath = os.path.join (self._projectName, filePath)
-                fPath = os.path.join (Config.workingDirectory, self._projectRelativePath, filePath)
+            noRows = self.__retrieve_relation_cardinality (error.database_name, error.schema_name, error.relation_name)
+            error.rows_in_relation = noRows
+            error.rows_on_error_percentage = Utils.to_percentage (error.rows_on_error, noRows, 4)
 
-                Logger.debug (f"\tfRelativePath:\n\t{fRelativePath}")
-                Logger.debug (f"\tfPath:\n\t{fPath}\n")
-
-                sql = Utils.get_file_contents (fPath).strip ()
-                noRows = self.__retrieve_relation_cardinality (fPath)
-                relationName = self.__get_relation_name (fPath)
-
-                error.relation_name = relationName 
-                error.rows_in_relation = noRows
-                error.rows_on_error_percentage = Utils.to_percentage (error.rows_on_error, noRows, 4)
-                error.query_path = fRelativePath
-                error.sql = sql
-
-        errorList.sort (key=lambda x: (x.relation_name, x.name))         
+        errorList.sort (key=lambda x: (x.database_name, x.schema_name, x.relation_name, x.test_name))         
         return errorList
+    
+    def __get_parent_manifest_node (self, manifestJson, nodeKey):
+        file_key_name = manifestJson['nodes'][nodeKey]["file_key_name"]
+        model_name = file_key_name.partition ('.')[2]
+        depends_on_nodes = manifestJson['nodes'][nodeKey]["depends_on"]["nodes"]
+        
+        for dependsOn in depends_on_nodes:
+            if model_name in dependsOn:
+                return manifestJson['nodes'][dependsOn]
+        
+        Logger.error (f"No manifest parent node found unique_id: {manifestJson['nodes'][nodeKey]['unique_id']}")
+        return None
+
+    def __create_manifest_map (self):
+        with open (Config.dbtManifestFileInfo.qualified_name, encoding="utf-8") as json_file:
+            manifestJson = json.load (json_file)
+        manifest = {}
+        
+        testNodes = [x for x in manifestJson['nodes'] if manifestJson['nodes'][x]['resource_type'] == 'test']
+        for nodeKey in testNodes:
+            unique_id = manifestJson['nodes'][nodeKey]["unique_id"]
+            database = manifestJson['nodes'][nodeKey]["database"]
+            sql_filename = manifestJson['nodes'][nodeKey]["path"]            
+            query_path = manifestJson['nodes'][nodeKey]["compiled_path"]
+
+            if 'compiled_code' in manifestJson['nodes'][nodeKey]:
+                sql = manifestJson['nodes'][nodeKey]["compiled_code"]
+            else:
+                Logger.error (f"No SQL found for test with unique_id: {unique_id}")
+            parentNode = self.__get_parent_manifest_node (manifestJson, nodeKey)
+            schema = parentNode["schema"]
+            relation = parentNode["name"]
+            
+            #Logger.debug (f"{unique_id} - {database}.{schema}.{relation} - {sql_filename} - {query_path}")
+            
+            manifest[unique_id] = DataHealthReport.ManifestEntry (database, schema, relation, sql_filename, query_path, sql)
+        return manifest
+
 
     @execution_time(tabCount=1)
     def __retrieve_data(self, jsonObject) -> HealthReport:
         """Extraction of relevant data from dbt testing json"""
         healthReport = HealthReport (None, Stats(None, list[RelationStats]), list[Error]())
-        fileMap = {}
         testList = [] #list[TestEntry]
         
+        manifestMap = self.__create_manifest_map ()
+        Logger.debug (f"Number of nodes in manifestMap: {len (manifestMap)}")
+
         for entry in jsonObject['entries']:
-            if entry["info"]["code"] == "Q007":
-                if entry["data"]["status"] == "pass": # OK
-                    testList.append (DataHealthReport.TestEntry(entry["data"]["node_info"]["node_name"], 1, 0))
+            if entry["info"]["name"] == "LogTestResult":
+                ok = warning = error = 0
+                test_name = entry["data"]["node_info"]["node_name"]
+                unique_id = entry["data"]["node_info"]["unique_id"]
+                sql_filename = entry["data"]["node_info"]["node_path"]
+                query_path = manifestMap[unique_id].sql_filename
+                relation_name = manifestMap[unique_id].relation
+                database_name = manifestMap[unique_id].database
+                schema_name = manifestMap[unique_id].schema
+                sql = manifestMap[unique_id].sql
 
+                if entry["data"]["status"] == "pass":
+                    ok = 1
+                if entry["data"]["status"] == "warning": # Er þetta réttur strengur?
+                    warning = 1
                 if entry["data"]["status"] == "fail": # Errors
-                    error = Error ((entry["data"])["name"], (entry["data"])["num_failures"], ((entry["data"])["node_info"])["node_path"], None, None, None, None, None)
-                    healthReport.errors.append (error)
-                
-                testList.append (DataHealthReport.TestEntry(entry["data"]["node_info"]["node_name"], 0, 1))
+                    error = 1
+                    
+                    healthReport.errors.append (Error (test_name, unique_id, sql_filename, database_name, schema_name, relation_name, entry["data"]["num_failures"], None, None, query_path, sql))
+                    
+                testEntry = DataHealthReport.TestEntry(database_name, schema_name, relation_name, test_name, unique_id, ok, warning, error)
+                # Logger.debug(f"Test entry: {testEntry}")
+                testList.append (testEntry)
 
-            if entry["info"]["code"] == "Z023": # Stats
+            if entry["info"]["name"] == "StatsLine": # Stats
                 error = ((entry["data"])["stats"])["error"]
                 warning = ((entry["data"])["stats"])["warn"]
                 ok = ((entry["data"])["stats"])["pass"]
@@ -208,19 +262,15 @@ class DataHealthReport: # Main class
                 totalStats = CountPercentage (total, 100)
                 healthReport.stats.total = StatsTotal (errorStats, warningStats, okStats, skippedStats, totalStats)
 
-            if entry["info"]["code"] == "A001": # Header
+            if entry["info"]["name"] == "MainReportVersion": 
                 headerExecution = HeaderExecution (entry["info"]["ts"], entry["info"]["invocation_id"])
                 databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
                 healthReport.header = Header (databaseName, (entry["data"])["version"].replace ("=", ""), headerExecution)     
 
-            if entry["info"]["code"] == "Z026": # File map
-                sqlPath = (entry["data"])["path"]
-                sqlFile = sqlPath[-(len (sqlPath) - (sqlPath.rindex ("\\") + 1)):] # Heldur þetta ef kóðinn keyrir á nix?
-                fileMap[sqlFile] = sqlPath
-
+            
         # Enrichment
         healthReport.stats.relation = self.__create_relation_stats (testList)
-        healthReport.errors = self.__enrich_errors (healthReport.errors, fileMap)
+        healthReport.errors = self.__enrich_errors (healthReport.errors)
         return healthReport
 
     @output_headers(tabCount=1)
