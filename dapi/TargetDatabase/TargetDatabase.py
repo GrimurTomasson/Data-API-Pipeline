@@ -82,3 +82,8 @@ class TargetDatabase (ABC):
     def insert_data (self, sourceSchema:str, sourceTable:str, sourceColumns:List[str], sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str, runDate:date) -> None:
         """Inserts all rows in the source table into the target table and adds a load-date to it."""
         raise NotImplementedError
+    
+    @abstractmethod
+    def retrieve_cardinality (self, schemaName:str, tableName:str) -> int:
+        """Retrieves the cardinality of a relation."""
+        raise NotImplementedError

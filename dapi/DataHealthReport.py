@@ -118,11 +118,7 @@ class DataHealthReport: # Main class
         else:
             rows = -1
             try:
-                query = f"SELECT COUNT(1) AS fjoldi FROM [{databaseName}].[{schemaName}].[{tableName}]"
-                Logger.debug (f"Cardinality query: {query}")
-                rows = self._databaseConnection.cursor ().execute (query).fetchval ()
-                Logger.debug (f"\tCardinality for table {databaseName}.{schemaName}.{tableName} retrieved - cardinality: {rows}\n")
-                
+                rows = self._targetDatabase.retrieve_cardinality (schemaName, tableName)    
             except Exception as ex:
                 Logger.warning (f"Failure to retrieve relation cardinality: {ex}")
                 
