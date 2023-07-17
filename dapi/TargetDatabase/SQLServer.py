@@ -53,8 +53,9 @@ class SQLServer (TargetDatabase):
         self._loggableConnectionString = self._connectionString
 
         if Utils.environment_variable_with_value (Environment.databasePassword):
+            parameterizedConnectionString = self._connectionString # For logging without passwords!
             self._connectionString = self._connectionString.replace('{{database-password}}', os.environ.get(Environment.databasePassword))
-            self._loggableConnectionString = self._connectionString.replace('{{database-password}}', '**********')
+            self._loggableConnectionString = parameterizedConnectionString.replace('{{database-password}}', '**********')
 
         self._connection = self.get_connection ()
         return
@@ -209,3 +210,11 @@ class SQLServer (TargetDatabase):
         insertCursor.execute (command)
         Logger.info (Pretty.assemble (f"{insertCursor.rowcount} rows inserted", False, False, Fore.WHITE, 0 ,3))
         return
+    
+    @output_headers
+    @execution_time(tabCount=2)
+    def retrieve_cardinality (self, schemaName:str, tableName:str) -> int:
+        query = f"SELECT COUNT(1) AS fjoldi FROM [{schemaName}].[{tableName}]"
+        rows = self._databaseConnection.cursor ().execute (query).fetchval ()
+        Logger.debug (f"\tCardinality for table {schemaName}.{tableName} retrieved - cardinality: {rows}\n")
+        return rows
