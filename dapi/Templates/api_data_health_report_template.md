@@ -19,22 +19,26 @@
 | **Samtals** | **{{ stats.total.total.count }}** | **{{ stats.total.total.percentage }}** |
 
 ### Vensl
-| Vensl                                | Villur | Prósent á villu | OK     | Heildarfjöldi prófana    |
-| :----------------------------------- | -----: | --------------: | -----: | -----------------------: |
+| Gagnagrunnur | Skema     | Vensl                                | Villur | Prósent á villu | OK     | Heildarfjöldi prófana    |
+| :----------- | :-------- | :----------------------------------- | -----: | --------------: | -----: | -----------------------: |
 {% for relation in stats.relation -%} 
-| {{ relation.name }} | {{ relation.error.count }} | {{ relation.error.percentage }} | {{ relation.ok.count }} | {{ relation.total }} | 
+| {{ relation.database_name }} | {{ relation.schema_name }} | {{ relation.name }} | {{ relation.error.count }} | {{ relation.error.percentage }} | {{ relation.ok.count }} | {{ relation.total }} | 
 {% endfor %}
 ---
 ## Villur
 | Vensl                 | Prófun                                     | Raðir á villu  | Prósent raða á villu | Raðir        |
 | :-------------------- |:------------------------------------------ | -------------: | -------------------: | -----------: |
 {% for error in errors -%}    
-| {{ error.relation_name }} | [{{ error.name }}](#{{ error.name }}) | {{ error.rows_on_error }} | {{ error.rows_on_error_percentage }} | {{ error.rows_in_relation }} |
+| {{ error.relation_name }} | [{{ error.test_name }}](#{{ error.unique_id }}) | {{ error.rows_on_error }} | {{ error.rows_on_error_percentage }} | {{ error.rows_in_relation }} |
 {% endfor %}
 ---
 ## Villu fyrirspurnir
 {% for error in errors %}
-### {{ error.name }}
+### {{ error.unique_id }}
+Gagnagrunnur: `{{ error.database_name }}`  
+Skema: `{{ error.schema_name }}`  
+Vensl: `{{ error.relation_name }}`  
+Heiti prófunar: `{{ error.test_name }}`  
 Slóð á SQL fyrirspurn: `{{ error.query_path }}`
 ```
 {{ error.sql }}

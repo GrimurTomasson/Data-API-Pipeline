@@ -106,8 +106,6 @@ class DataHealthReport: # Main class
         self._projectRelativePath = Config['latest']['relative-path']
 
         self._targetDatabase = TargetDatabaseFactory ().get_target_database ()
-        self._databaseConnection = self._targetDatabase.get_connection ()
-        
         self._targetKnowledgeBase = TargetKnowledgeBaseFactory ().get_target_knowledge_base ()
         return
 

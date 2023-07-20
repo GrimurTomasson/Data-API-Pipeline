@@ -215,6 +215,6 @@ class SQLServer (TargetDatabase):
     @execution_time(tabCount=2)
     def retrieve_cardinality (self, schemaName:str, tableName:str) -> int:
         query = f"SELECT COUNT(1) AS fjoldi FROM [{schemaName}].[{tableName}]"
-        rows = self._databaseConnection.cursor ().execute (query).fetchval ()
+        rows = self._connection.cursor ().execute (query).fetchval ()
         Logger.debug (f"\tCardinality for table {schemaName}.{tableName} retrieved - cardinality: {rows}\n")
         return rows
