@@ -2,46 +2,77 @@
 <!-- Parent: Skjölun -->
 <!-- Title: {{ header.api_name }} - Gagnagæði -->
 # Gagna heilbrigði {{ header.api_name }}
+
 |               |            |
 | :------------ | :--------- |
 | Keyrslutími | {{ header.execution.timestamp }} |
 | DBT útgáfa | {{ header.dbt_version }} |
 | Keyrslu auðkenni | {{ header.execution.id }} |
----
-## Tölfræði 
-### Heild
-|               | Fjöldi prófana     | Prósenta   |
-| :------------ | -----------------: | ---------: |
-| Villur | {{ stats.total.error.count }} | {{ stats.total.error.percentage }} |
-| Viðvaranir | {{ stats.total.warning.count }} | {{ stats.total.warning.percentage }} |
-| Í lagi | {{ stats.total.ok.count }} | {{ stats.total.ok.percentage }} |
-| Sleppt | {{ stats.total.skipped.count }} | {{ stats.total.skipped.percentage }} |
-| **Samtals** | **{{ stats.total.total.count }}** | **{{ stats.total.total.percentage }}** |
 
-### Vensl
-| Gagnagrunnur | Skema     | Vensl                                | Villur | Prósent á villu | OK     | Heildarfjöldi prófana    |
-| :----------- | :-------- | :----------------------------------- | -----: | --------------: | -----: | -----------------------: |
-{% for relation in stats.relation -%} 
-| {{ relation.database_name }} | {{ relation.schema_name }} | {{ relation.name }} | {{ relation.error.count }} | {{ relation.error.percentage }} | {{ relation.ok.count }} | {{ relation.total }} | 
-{% endfor %}
+## Tölfræði prófana  
+
 ---
+
+### Heild  
+
+| Villur |    % | Viðvaranir |    % |    OK |    % |   Prófanir  |
+| -----: | ---: | ---------: | ---: | ----: | ---: | ----------: |
+| {{ stats.summary.error.count }} | {{ stats.summary.error.percentage }} | {{ stats.summary.warning.count }} | {{ stats.summary.warning.percentage }} | {{ stats.summary.ok.count }} | {{ stats.summary.ok.percentage }} | {{ stats.summary.total.count }} |
+
+{% for db in stats.databases %}
+
+#### {{ db.name }}
+
+| Villur |    % | Viðvaranir |    % |    OK |    % | Prófanir    |
+| -----: | ---: | ---------: | ---: | ----: | ---: | ----------: |
+| {{ db.summary.error.count }} | {{ db.summary.error.percentage }} | {{ db.summary.warning.count }} | {{ db.summary.warning.percentage }} | {{ db.summary.ok.count }} | {{ db.summary.ok.percentage }} | {{ db.summary.total.count }} |
+
+{% for sc in db.schemas %}
+
+#### {{ db.name }} -> {{ sc.name }}  
+
+| Villur |    % | Viðvaranir |    % |    OK |    % | Prófanir    |
+| -----: | ---: | ---------: | ---: | ----: | ---: | ----------: |
+| {{ sc.summary.error.count }} | {{ sc.summary.error.percentage }} | {{ sc.summary.warning.count }} | {{ sc.summary.warning.percentage }} | {{ sc.summary.ok.count }} | {{ sc.summary.ok.percentage }} | {{ sc.summary.total.count }} |
+
+#### {{ db.name }} -> {{ sc.name }} -> Vensl  
+
+| Vensl                                | Villur |    % | Viðvaranir |    % |    OK |    % | Prófanir    |
+| :----------------------------------- | -----: | ---: | ---------: | ---: | ----: | ---: | ----------: |
+{% for re in sc.relations -%}
+| {{ re.name }} | {{ re.summary.error.count }} | {{ re.summary.error.percentage }} | {{ re.summary.warning.count }} | {{ re.summary.warning.percentage }} | {{ re.summary.ok.count }} | {{ re.summary.ok.percentage }} | {{ re.summary.total.count }} |
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+---
+
 ## Villur
+
 | Vensl                 | Prófun                                     | Raðir á villu  | Prósent raða á villu | Raðir        |
 | :-------------------- |:------------------------------------------ | -------------: | -------------------: | -----------: |
-{% for error in errors -%}    
-| {{ error.relation_name }} | [{{ error.test_name }}](#{{ error.unique_id }}) | {{ error.rows_on_error }} | {{ error.rows_on_error_percentage }} | {{ error.rows_in_relation }} |
+{% for error in errors -%}
+| {{error.database_name}}.{{error.schema_name}}.{{ error.relation_name }} | [{{ error.test_name }}](#{{ error.unique_id }}) | {{ error.rows_on_error.count }} | {{ error.rows_on_error.percentage }} | {{ error.rows_in_relation }} |
 {% endfor %}
+
 ---
+
 ## Villu fyrirspurnir
+
 {% for error in errors %}
+
 ### {{ error.unique_id }}
-Gagnagrunnur: `{{ error.database_name }}`  
-Skema: `{{ error.schema_name }}`  
-Vensl: `{{ error.relation_name }}`  
-Heiti prófunar: `{{ error.test_name }}`  
+
+Gagnagrunnur: `{{ error.database_name }}`
+Skema: `{{ error.schema_name }}`
+Vensl: `{{ error.relation_name }}`
+Heiti prófunar: `{{ error.test_name }}`
 Slóð á SQL fyrirspurn: `{{ error.query_path }}`
-```
+
+```sql
 {{ error.sql }}
 ```
+
 {% endfor %}
+
 ---

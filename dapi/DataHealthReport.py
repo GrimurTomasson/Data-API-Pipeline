@@ -1,8 +1,7 @@
-import os
 import json
 from pkgutil import get_data
-import re
 from dataclasses import dataclass
+import duckdb
 
 from .Shared.Decorators import output_headers, execution_time
 from .Shared.Config import Config
@@ -13,6 +12,119 @@ from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetD
 from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
 from .Shared.DataClasses import CountPercentage
 from .Shared import Json
+
+relationStatsQuery = """
+            WITH baseline AS (
+                SELECT 
+                    database_name
+                    ,schema_name
+                    ,relation_name
+                    ,COUNT(result) FILTER (result = 'pass') AS ok_count
+                    ,COUNT(result) FILTER (result = 'warning') AS warning_count
+                    ,COUNT(result) FILTER (result = 'fail') AS fail_count
+                FROM
+                    test_entry
+                GROUP BY 
+                    ALL
+            ), counted AS (
+            SELECT 
+                *, ok_count + warning_count + fail_count AS total_count
+            FROM
+                baseline
+            )
+            SELECT
+                database_name
+                ,schema_name
+                ,relation_name
+                ,ok_count
+                ,round((ok_count * 100) / total_count, 2) AS ok_percentage
+                ,warning_count
+                ,round((warning_count * 100) / total_count, 2) AS warning_percentage
+                ,fail_count
+                ,round((fail_count * 100) / total_count, 2) AS fail_percentage
+                ,total_count
+            FROM
+                counted
+        """
+
+statsSummaryQuery = """
+            WITH baseline AS (
+                SELECT 
+                    SUM(ok_count) AS ok_count
+                    ,SUM(warning_count) AS warning_count
+                    ,SUM(fail_count) AS fail_count
+                    ,SUM(total_count) AS total_count 
+                FROM 
+                    relation_stat
+            ) 
+            SELECT
+                ok_count
+                ,round((ok_count * 100) / total_count, 2) AS ok_percentage
+                ,warning_count
+                ,round((warning_count * 100) / total_count, 2) AS warning_percentage
+                ,fail_count
+                ,round((fail_count * 100) / total_count, 2) AS fail_percentage
+                ,total_count
+            FROM
+                baseline
+        """
+
+databaseStatsQuery = """
+            WITH baseline AS (
+                SELECT 
+                    database_name
+                    ,SUM(ok_count) AS ok_count
+                    ,SUM(warning_count) AS warning_count
+                    ,SUM(fail_count) AS fail_count
+                    ,SUM(total_count) AS total_count 
+                FROM 
+                    relation_stat 
+                GROUP BY 
+                    database_name
+            )
+            SELECT
+                database_name
+                ,ok_count
+                ,round((ok_count * 100) / total_count, 2) AS ok_percentage
+                ,warning_count
+                ,round((warning_count * 100) / total_count, 2) AS warning_percentage
+                ,fail_count
+                ,round((fail_count * 100) / total_count, 2) AS fail_percentage
+                ,total_count
+            FROM
+                baseline
+            ORDER BY 
+                database_name
+        """
+
+schemaSummaryQuery = """
+            WITH baseline AS (
+                SELECT 
+                    database_name
+                    ,schema_name
+                    ,SUM(ok_count) AS ok_count
+                    ,SUM(warning_count) AS warning_count
+                    ,SUM(fail_count) AS fail_count
+                    ,SUM(total_count) AS total_count 
+                FROM 
+                    relation_stat
+                GROUP BY
+                    ALL
+            ) 
+            SELECT
+                schema_name
+                ,ok_count
+                ,round((ok_count * 100) / total_count, 2) AS ok_percentage
+                ,warning_count
+                ,round((warning_count * 100) / total_count, 2) AS warning_percentage
+                ,fail_count
+                ,round((fail_count * 100) / total_count, 2) AS fail_percentage
+                ,total_count
+            FROM
+                baseline
+            WHERE
+                database_name =
+        """
 
 @dataclass
 class HeaderExecution:
@@ -26,11 +138,10 @@ class Header:
     execution: HeaderExecution
 
 @dataclass
-class StatsTotal:
-    error: CountPercentage
-    warning: CountPercentage
+class StatsSummary:
     ok: CountPercentage
-    skipped: CountPercentage
+    warning: CountPercentage
+    error: CountPercentage
     total: CountPercentage
 
 @dataclass
@@ -38,27 +149,36 @@ class RelationStats:
     database_name: str
     schema_name: str
     name: str
-    ok: CountPercentage
-    warning: CountPercentage
-    error: CountPercentage
-    total: int
+    summary: StatsSummary
+
+@dataclass
+class SchemaStats:
+    database_name: str
+    name: str
+    summary: StatsSummary
+    relations: list[RelationStats]
+
+@dataclass
+class DatabaseStats:
+    name: str
+    summary: StatsSummary
+    schemas: list[SchemaStats]
 
 @dataclass
 class Stats:
-    total: StatsTotal
-    relation: list[RelationStats]
+    summary: StatsSummary
+    databases: list[DatabaseStats]
 
 @dataclass
 class Error:
-    test_name: str
-    unique_id: str
-    sql_filename: str
     database_name: str
     schema_name: str
     relation_name: str
-    rows_on_error: int
+    test_name: str
+    unique_id: str
+    sql_filename: str
+    rows_on_error: CountPercentage
     rows_in_relation: int
-    rows_on_error_percentage: int
     query_path: str
     sql: str
 
@@ -69,26 +189,7 @@ class HealthReport:
     errors: list[Error]
 
 class DataHealthReport: # Main class
-    @dataclass
-    class TestEntry:
-        database_name: str
-        schema_name: str
-        relation_name: str
-        test_name: str
-        unique_id: str
-        ok: int
-        warning: int
-        error: int
-
-    @dataclass
-    class StatsEntry:
-        database_name: set
-        schema_name: str
-        relation_name: str
-        ok: int
-        warning: int
-        error: int
-
+    
     @dataclass
     class ManifestEntry:
         database: str
@@ -132,43 +233,43 @@ class DataHealthReport: # Main class
         testLog = "{\"entries\": [" + testLog.replace ("}{", "},{") + "]}"
         jsonObject = json.loads (testLog)
         return jsonObject
-
-    def __create_relation_stats (self, testList: list[TestEntry]) -> list[RelationStats]:
-        relationStatMap = {}
-        # Aggregating results
-        for test in testList:
-            key = f"{test.database_name}.{test.schema_name}.{test.relation_name}"
-            if key in relationStatMap:
-                current = relationStatMap[key]
-                relationStatMap[key] = DataHealthReport.StatsEntry (test.database_name, test.schema_name, test.relation_name, current.ok + test.ok, current.warning + test.warning, current.error + test.error)
-            else:
-                relationStatMap[key] = DataHealthReport.StatsEntry (test.database_name, test.schema_name, test.relation_name, test.ok, test.warning, test.error)
-
-        # Creating a relation stats list
-        stats = [] #list[DataHealthClasses.RelationStats]
-        for key in sorted (relationStatMap):
-            ok = relationStatMap[key].ok
-            warning = relationStatMap[key].warning
-            error = relationStatMap[key].error
-            total = ok + warning + error     
-
-            okStats = CountPercentage (ok, Utils.to_percentage (ok, total, 2))
-            warningStats = CountPercentage (warning, Utils.to_percentage (warning, total, 2))
-            errorStats = CountPercentage (error, Utils.to_percentage (error, total, 2))
-            relStats = RelationStats (database_name=relationStatMap[key].database_name, schema_name=relationStatMap[key].schema_name, name = relationStatMap[key].relation_name, ok = okStats, warning = warningStats, error = errorStats, total = total)
-
-            stats.append (relStats)
-        #print(f"Relation stats: {stats}")
+    
+    def __create_relation_stats (self, database_name, schema_name) -> list[RelationStats]:
+        relStats = duckdb.sql(f"SELECT * FROM relation_stat WHERE database_name = '{database_name}' AND schema_name = '{schema_name}' ORDER BY relation_name").fetchall()
+        Logger.debug (f"\t\tNumber of relations in {database_name}.{schema_name} in stats data: {len (relStats)}")
+        stats = []
+        for entry in relStats:
+            stats.append (RelationStats (entry[0], entry[1], entry[2], StatsSummary (CountPercentage (entry[3], entry[4]), CountPercentage (entry[5], entry[6]), CountPercentage (entry[7], entry[8]), CountPercentage (entry[9], 100))))
         return stats
-
-    def __enrich_errors (self, errorList) -> list[Error]:
-        for error in errorList:
-            noRows = self.__retrieve_relation_cardinality (error.database_name, error.schema_name, error.relation_name)
-            error.rows_in_relation = noRows
-            error.rows_on_error_percentage = Utils.to_percentage (error.rows_on_error, noRows, 4)
-
-        errorList.sort (key=lambda x: (x.database_name, x.schema_name, x.relation_name, x.test_name))         
-        return errorList
+    
+    def __create_schema_stats (self, database_name) -> list[SchemaStats]:
+        schemaStatsList = duckdb.sql (f"{schemaSummaryQuery} '{database_name}'").fetchall ()
+        Logger.debug (f"\tNumber of schemas in {database_name} in stats data: {len (schemaStatsList)}")
+        schemas = []
+        for entry in schemaStatsList:
+            Logger.debug (f"\tStarting work on schema: {entry}")
+            schemaStats = SchemaStats (database_name, entry[0], StatsSummary (CountPercentage (entry[1], entry[2]), CountPercentage (entry[3], entry[4]), CountPercentage (entry[5], entry[6]), CountPercentage (entry[7], 100)), None)
+            schemaStats.relations = self.__create_relation_stats (database_name, entry[0])
+            schemas.append (schemaStats)
+        return schemas
+    
+    def __create_stats (self) -> Stats:
+        # Create the source data
+        duckdb.sql(f"CREATE TABLE relation_stat AS {relationStatsQuery}")
+        #duckdb.execute (f"EXPORT DATABASE '{Config.workingDirectory}'")
+        statsSummary = duckdb.sql (statsSummaryQuery).fetchone ()
+        summary = StatsSummary (CountPercentage (statsSummary[0], statsSummary[1]), CountPercentage (statsSummary[2], statsSummary[3]), CountPercentage (statsSummary[4], statsSummary[5]), CountPercentage (statsSummary[6], 100))
+        Logger.debug (f"Stats summary: \n\n{summary}\n")
+        stats = Stats (summary, [])
+        
+        databaseStatsList = duckdb.sql (databaseStatsQuery).fetchall ()
+        Logger.debug (f"Number of databases in stats data: {len (databaseStatsList)}")
+        for database in databaseStatsList:
+            Logger.debug (f"\nStarting work on database stats for: {database}")
+            databaseStats = DatabaseStats (database[0], StatsSummary (CountPercentage (database[1], database[2]), CountPercentage (database[3], database[4]), CountPercentage (database[5], database[6]), CountPercentage (database[7], 100)), None)
+            databaseStats.schemas = self.__create_schema_stats (databaseStats.name)
+            stats.databases.append (databaseStats)
+        return stats
     
     def __get_parent_manifest_node (self, manifestJson, nodeKey):
         file_key_name = manifestJson['nodes'][nodeKey]["file_key_name"]
@@ -211,61 +312,45 @@ class DataHealthReport: # Main class
     @execution_time(tabCount=1)
     def __retrieve_data(self, jsonObject) -> HealthReport:
         """Extraction of relevant data from dbt testing json"""
-        healthReport = HealthReport (None, Stats(None, list[RelationStats]), list[Error]())
-        testList = [] #list[TestEntry]
+        healthReport = HealthReport (None, Stats(None, list[DatabaseStats]), list[Error]())
         
         manifestMap = self.__create_manifest_map ()
         Logger.debug (f"Number of nodes in manifestMap: {len (manifestMap)}")
 
+        duckdb.sql("create table test_entry(database_name varchar, schema_name varchar, relation_name varchar, test_name varchar, unique_id varchar, result varchar)")
+        duckdb.sql("create table error(database_name varchar, schema_name varchar, relation_name varchar, test_name varchar, unique_id varchar, sql_filename varchar, rows_on_error integer, rows_in_relation integer, query_path varchar, sql varchar)")
+
         for entry in jsonObject['entries']:
             if entry["info"]["name"] == "LogTestResult":
-                ok = warning = error = 0
                 test_name = entry["data"]["node_info"]["node_name"]
                 unique_id = entry["data"]["node_info"]["unique_id"]
                 sql_filename = entry["data"]["node_info"]["node_path"]
-                query_path = manifestMap[unique_id].sql_filename
+                query_path = manifestMap[unique_id].query_path
                 relation_name = manifestMap[unique_id].relation
                 database_name = manifestMap[unique_id].database
                 schema_name = manifestMap[unique_id].schema
                 sql = manifestMap[unique_id].sql
+                result = entry["data"]["status"]
 
-                if entry["data"]["status"] == "pass":
-                    ok = 1
-                if entry["data"]["status"] == "warning": # Er þetta réttur strengur?
-                    warning = 1
-                if entry["data"]["status"] == "fail": # Errors
-                    error = 1
-                    
-                    healthReport.errors.append (Error (test_name, unique_id, sql_filename, database_name, schema_name, relation_name, entry["data"]["num_failures"], None, None, query_path, sql))
-                    
-                testEntry = DataHealthReport.TestEntry(database_name, schema_name, relation_name, test_name, unique_id, ok, warning, error)
-                # Logger.debug(f"Test entry: {testEntry}")
-                testList.append (testEntry)
-
-            if entry["info"]["name"] == "StatsLine": # Stats
-                error = ((entry["data"])["stats"])["error"]
-                warning = ((entry["data"])["stats"])["warn"]
-                ok = ((entry["data"])["stats"])["pass"]
-                skipped = ((entry["data"])["stats"])["skip"]
-                total = ((entry["data"])["stats"])["total"]
+                duckdb.sql(f"insert into test_entry values ('{database_name}', '{schema_name}', '{relation_name}', '{test_name}', '{unique_id}', '{result}')")
                 
-                errorStats = CountPercentage (error, Utils.to_percentage (error, total, 2))
-                warningStats = CountPercentage (warning, Utils.to_percentage (warning, total, 2))
-                okStats = CountPercentage (ok, Utils.to_percentage (ok, total, 2))
-                skippedStats = CountPercentage (skipped, Utils.to_percentage (skipped, total, 2))
-                totalStats = CountPercentage (total, 100)
-                healthReport.stats.total = StatsTotal (errorStats, warningStats, okStats, skippedStats, totalStats)
+                if result == "fail": # Error -> Skoða að hafa bara eina töflu fyrir bæði, mismunandi select upp en annars eins
+                    errors = entry["data"]["num_failures"]
+                    rowsInRelation = self.__retrieve_relation_cardinality (database_name, schema_name, relation_name)
+                    duckdb.sql(f"insert into error values ('{database_name}', '{schema_name}', '{relation_name}', '{test_name}', '{unique_id}', '{sql_filename}', {errors}, {rowsInRelation}, '{query_path}', '{sql}')")
 
             if entry["info"]["name"] == "MainReportVersion": 
                 headerExecution = HeaderExecution (entry["info"]["ts"], entry["info"]["invocation_id"])
                 databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
                 healthReport.header = Header (databaseName, (entry["data"])["version"].replace ("=", ""), headerExecution)     
 
-            
-        # Enrichment
-        healthReport.stats.relation = self.__create_relation_stats (testList)
-        healthReport.errors = self.__enrich_errors (healthReport.errors)
         return healthReport
+    
+    def __generate_errors (self) -> list[Error]:
+        errors = []
+        for e in duckdb.sql ("SELECT database_name, schema_name, relation_name, test_name, unique_id, sql_filename, rows_on_error, round ((rows_on_error * 100) / rows_in_relation, 4), rows_in_relation, query_path, sql FROM error ORDER BY database_name, schema_name, relation_name, test_name").fetchall ():
+            errors.append (Error (e[0], e[1], e[2], e[3], e[4], e[5], CountPercentage(e[6], e[7]), e[8], e[9], e[10]))
+        return errors
 
     @output_headers(tabCount=1)
     @execution_time(tabCount=1)
@@ -273,6 +358,12 @@ class DataHealthReport: # Main class
         """Generating data health report data"""
         jsonObject = self.__retrieve_json_object () 
         apiHealth = self.__retrieve_data (jsonObject)
+ 
+        apiHealth.stats = self.__create_stats ()
+        apiHealth.errors = self.__generate_errors ()
+
+        Logger.debug (f"\n\nHealth Report: \n{apiHealth}")
+
         jsonData = json.dumps (apiHealth, indent=4, cls=Json.EnhancedJSONEncoder)
         Utils.write_file (jsonData, Config.apiDataHealthReportDataFileInfo.qualified_name)
         return 
