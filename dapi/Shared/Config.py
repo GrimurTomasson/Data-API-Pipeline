@@ -34,6 +34,10 @@ class Config (ConfigBase):
         return Config._config[key]
 
     @staticmethod
+    def add (key, value):
+        Config._config[key] = value
+
+    @staticmethod
     def __print_contents ():
         Logger.debug (Pretty.assemble ("Config variable values", True, True))
         attributes = Config.get_attributes (Config)
