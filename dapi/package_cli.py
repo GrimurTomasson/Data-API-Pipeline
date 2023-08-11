@@ -3,6 +3,7 @@ import os
 import argparse
 
 from .Shared.Environment import Environment
+from .Shared.Config import Config
 
 from .API import API
 from .Cleanup import Cleanup
@@ -47,7 +48,9 @@ def main ():
     envFile = options.environment if options.environment != None and len (options.environment) > 0 else Environment.environmentVariableFilename
     Environment.load (envFilename=envFile)
 
-    os.environ[Environment.dbtRunParameters] = options.dbt_run_parameters if options.dbt_run_parameters != None else ''
+    #os.environ[Environment.dbtRunParameters] = options.dbt_run_parameters if options.dbt_run_parameters != None else []
+    #Config[Environment.dbtRunParameters] = ['1', '2']
+    Config.add(Environment.dbtRunParameters, options.dbt_run_parameters.split(' ') if options.dbt_run_parameters != None else [])
 
     if options.operation == 'build':
         API ().generate ()

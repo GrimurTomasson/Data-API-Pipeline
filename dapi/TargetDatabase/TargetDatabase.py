@@ -24,8 +24,18 @@ class Relations:
 class TargetDatabase (ABC):
 
     @abstractmethod
-    def get_connection (self) -> pyodbc.Connection: # All parameters should come from config, makes this flexible. Adding parameters to config to make new DBs working is fine.
-        """Returns an open database connection. Make it auto-committing."""
+    def set_connection (self, databaseName):
+        """Sets a connection, using a connection string. Make it auto-committing."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_connection (self) -> pyodbc.Connection: 
+        """Returns an open database connection."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_database_name (self) -> str:
+        """Returns the name of the database, can change due to set_connection."""
         raise NotImplementedError
 
     @abstractmethod
@@ -49,7 +59,7 @@ class TargetDatabase (ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def clone_column (self, sourceSchema:str, sourceTable:str, targetSchema:str, targetTable:str, columnName:str) -> None:
+    def clone_column (self, sourceSchema:str, sourceTable:str, targetDatabase:str, targetSchema:str, targetTable:str, columnName:str) -> None:
         """Clones a column from the source table to the target table."""
         raise NotImplementedError
 
@@ -64,12 +74,12 @@ class TargetDatabase (ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def create_empty_target_table (self, sourceSchema:str, sourceTable:str, sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str) -> None:
+    def create_empty_target_table (self, sourceDatabase:str, sourceSchema:str, sourceTable:str, sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str) -> None:
         """Creates an empty snapshot table which prefixes a date column to the column list of the source table but is otherwise type identical."""
         raise NotImplementedError
 
     @abstractmethod
-    def create_or_alter_view (self, viewSchema:str, viewName:str, sourceSchema:str, sourceTable:str) -> None:
+    def create_or_alter_view (self, viewSchema:str, viewName:str, sourceDatabase:str, sourceSchema:str, sourceTable:str) -> None:
         """Adds or replaces a view which selects all columns from a source table."""
         raise NotImplementedError
 
@@ -79,7 +89,7 @@ class TargetDatabase (ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def insert_data (self, sourceSchema:str, sourceTable:str, sourceColumns:List[str], sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str, runDate:date) -> None:
+    def insert_data (self, sourceDatabase:str, sourceSchema:str, sourceTable:str, sourceColumns:List[str], sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str, runDate:date) -> None:
         """Inserts all rows in the source table into the target table and adds a load-date to it."""
         raise NotImplementedError
     

@@ -20,8 +20,9 @@ class Latest:
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
         operation = ["dbt", "run", "--fail-fast"]
-        if os.environ[Environment.dbtRunParameters] != None and len (os.environ[Environment.dbtRunParameters]) > 0:
-            operation.append(os.environ[Environment.dbtRunParameters])
+        #if os.environ[Environment.dbtRunParameters] != None and len (os.environ[Environment.dbtRunParameters]) > 0:
+        #    operation.append(os.environ[Environment.dbtRunParameters])
+        operation.extend (Config[Environment.dbtRunParameters])
 
         dbtOperation = Utils.add_dbt_profile_location (operation) 
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
