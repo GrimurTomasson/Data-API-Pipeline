@@ -11,6 +11,10 @@ from .ConceptGlossary.ConceptGlossaryFactory import ConceptGlossaryFactory, Conc
 
 class MetadataCatalog:
     def __init__ (self) -> None:
+        self._enabled = True if Config['documentation']['data-health-report']['generate'] == True or Config['documentation']['definition-health-report']['generate'] == True or Config['documentation']['user-documentation']['generate'] == True else False
+        if self._enabled == False:
+            return
+        
         self._targetDatabase = TargetDatabaseFactory ().get_target_database()
         self._conceptGlossary = ConceptGlossaryFactory ().get_concept_glossary()
         return
@@ -45,6 +49,10 @@ class MetadataCatalog:
     @execution_time
     def enrich (self) -> None:
         """Enriching dbt test result data with Concept Glossary and Data Dicationary data, along with DB type info"""
+
+        if self._enabled == False:
+            Logger.info ("No documentation is enabled so metadata enrichment is not performed.")
+            return
 
         # Generate catalog data
         dbtOperation = Utils.add_dbt_profile_location (["dbt", "docs", "generate"]) #  --fail-fast fjarlægt þar sem dbt rakti dependencies ekki nógu vel

@@ -11,25 +11,25 @@ from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseF
 
 @dataclass
 class ColumnType:
-    name: str = ''
-    length: str = ''
+    name: str = Utils.default_field ('')
+    length: str = Utils.default_field ('')
 
 @dataclass
 class ColumnDescription:
-    text: str = ''
-    origin: str = ''
-    missing: bool = False
+    text: str = Utils.default_field ('')
+    origin: str = Utils.default_field ('')
+    missing: bool = Utils.default_field (False)
 
 @dataclass
 class Column:
-    name: str = ''
-    type: ColumnType = ColumnType()
-    description: ColumnDescription = ColumnDescription()
+    name: str = Utils.default_field ('')
+    type: ColumnType = Utils.default_field (ColumnType ())
+    description: ColumnDescription = Utils.default_field (ColumnDescription ())
 
 @dataclass 
 class Relation:
-        schema_name: str = ''
-        relation_name: str = ''
+        schema_name: str = Utils.default_field ('')
+        relation_name: str = Utils.default_field ('')
         columns: list[Column] = Utils.default_field([])
 
 @dataclass

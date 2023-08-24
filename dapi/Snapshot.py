@@ -17,6 +17,10 @@ from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetD
 class Snapshot:
 
     def __init__ (self):
+        self._enabled = Config['history']['enabled'] if 'enabled' in Config['history'] else True
+        if self._enabled == False:
+            return
+        
         self._snapshotDateColumnName = Config["history"]["snapshot-date-column"]
         Logger.info (f"Snapshot date colum name: {self._snapshotDateColumnName}")
         
@@ -143,6 +147,10 @@ class Snapshot:
     @execution_time
     def create (self) -> None:
         """Taking snapshots for the Latest models"""
+        if self._enabled == False:
+                Logger.info ("History snapshots have been disabled!")
+                return
+        
         if Config["history"]["projects"] == None:
             Logger.debug ("No snapshots defined!")
             return

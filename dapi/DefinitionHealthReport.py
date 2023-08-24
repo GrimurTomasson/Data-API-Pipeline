@@ -12,9 +12,9 @@ from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseF
 
 @dataclass 
 class StatsTotal:
-    number_of_relations: int = 0
+    number_of_relations: int = Utils.default_field (0)
     overwritten_concepts: CountPercentage = None
-    number_of_columns: int = 0
+    number_of_columns: int = Utils.default_field (0)
     ok_columns: CountPercentage = None
     errors: CountPercentage = None
     type_errors: CountPercentage = None
@@ -33,8 +33,8 @@ class StatsRelation:
 
 @dataclass
 class Stats:
-    total: StatsTotal = StatsTotal()
-    relation: list[StatsRelation] = Utils.default_field([])
+    total: StatsTotal = Utils.default_field (StatsTotal ())
+    relation: list[StatsRelation] = Utils.default_field ([])
 
 @dataclass
 class Concept:
@@ -52,15 +52,15 @@ class Error:
 
 @dataclass
 class Errors:
-    type: list[Error] = Utils.default_field([])
-    documentation: list[Error] = Utils.default_field([])
+    type: list[Error] = Utils.default_field ([])
+    documentation: list[Error] = Utils.default_field ([])
 
 @dataclass
 class HealthReport: # Root 
     api_name: str
-    stats: Stats = Stats()
+    stats: Stats = Utils.default_field (Stats ())
     overwritten_concepts: list[Concept] = Utils.default_field([])
-    errors: Errors = Errors()
+    errors: Errors = Utils.default_field (Errors ())
 
 class DefinitionHealthReport:
 
