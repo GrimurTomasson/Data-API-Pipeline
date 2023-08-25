@@ -20,30 +20,38 @@ class MetadataCatalog:
         return
 
     def __get_model_description (self, jsonData, modelName) -> str:
-        Logger.debug (f"\tgetModelDescription - modelName: {modelName}")
-        if not modelName in jsonData['nodes']:
-            return 'There is no model for this relation!'
-        model = jsonData['nodes'][modelName]
-        if 'description' in model:
-            desc = model['description']
-            Logger.debug(f"\t\tModel description found: {desc}\n")
-            return desc
-        else:
-            Logger.warning("\t\tNo model description found !!!\n")
-            return ''
+        message = f"\tgetModelDescription - {modelName} - "
+        try:
+            if not modelName in jsonData['nodes']:
+                return 'There is no model for this relation!'
+            model = jsonData['nodes'][modelName]
+            if 'description' in model:
+                desc = model['description']
+                Logger.debug (f"{message}Yes")
+                return desc
+            else:
+                Logger.warning (f"{message}No")
+                return ''
+        except Exception as error:
+            Logger.error (f"Error while retrieving model information for model: {modelName}. Error message: {error}")
+            raise
 
     def __get_column_description (self, jsonData, modelName, columnName) -> str:
-        Logger.debug (f"\tgetColumnDescription - modelName: {modelName}, columnName: {columnName}")
-        if not columnName in jsonData['nodes'][modelName]['columns']:
-            return 'This column is not in the model for this relation!'
-        column = jsonData['nodes'][modelName]['columns'][columnName]
-        if 'description' in column:
-            desc = column['description']
-            if len (desc) > 0:
-                Logger.debug(f"\t\tColumn description found: {desc}\n")
-                return desc
-        Logger.debug("\t\tNo column description found !!!\n")
-        return ''
+        message = f" - {modelName}.{columnName}"
+        try:
+            if not columnName in jsonData['nodes'][modelName]['columns']:
+                return 'This column is not in the model for this relation!'
+            column = jsonData['nodes'][modelName]['columns'][columnName]
+            if 'description' in column:
+                desc = column['description']
+                if len (desc) > 0:
+                    Logger.debug(f"\t\tYes{message}")
+                    return desc
+            Logger.debug(f"\t\tNo{message}")
+            return ''
+        except Exception as error:
+            Logger.error (f"Error while retrieving model information for {modelName}.{columnName}. Error message: {error}")
+            raise
 
     @output_headers
     @execution_time
@@ -79,20 +87,22 @@ class MetadataCatalog:
             relation['metadata']['description'] = self.__get_model_description(manifestJson, relationKey)
             for columnKey in relation['columns']:
                 column = relation['columns'][columnKey]
+                Logger.debug("\tColumn description")
                 column['description'] = self.__get_column_description(manifestJson, relationKey, columnKey)
                 schemaName = relation['metadata']['schema']
                 tableName = relation['metadata']['name']
                 columnName = column ['name']
-                Logger.debug(f"\tSchema name: {schemaName} - Table name: {tableName} - Column name: {columnName}")
                 
                 typeInfoData = self._targetDatabase.get_type_info_column_data (schemaName, tableName, columnName)
                 column['database_info'] = typeInfoData
                 
+                message = f" - {schemaName}.{tableName}.{columnName}"
                 try:
                     glossaryData = self._conceptGlossary.get_glossary_column_data (schemaName, tableName, columnName).as_dictionary()
                     column['glossary_info'] = glossaryData
+                    Logger.debug(f"\t\tYes{message}")
                 except Exception as error:
-                    Logger.error (f"Error while retrieving glossary information for column: {schemaName}-{tableName}-{columnName}. Error message: {error}")
+                    Logger.debug(f"\t\tNo{message}") # villan er svæfð!
         
         jsonData = json.dumps(catalogJson, indent=4)
         Utils.write_file (jsonData, Config.enrichedDbtCatalogFileInfo.qualified_name)
