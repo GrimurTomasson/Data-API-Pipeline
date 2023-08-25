@@ -44,10 +44,10 @@ class Documentation:
         self._docFilename = "api_documentation.md"
 
     def __get_column_description (self, columnData) -> ColumnDescription:
+        if len (columnData['description']) > 0: # Yfirskrifar skilgreiningar.
+            return ColumnDescription (columnData['description'], "Athugasemd við dálk")
         if len (columnData['glossary_info']['description']) > 0:
             return ColumnDescription (columnData['glossary_info']['description'], "Hugtök")
-        if len (columnData['description']) > 0:
-            return ColumnDescription (columnData['description'], "Athugasemd við dálk")
         return ColumnDescription (None, None, True)
 
     def __generate_documentation (self, enrichedCatalogJson) -> DocumentationData:
