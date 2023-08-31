@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 import pyodbc
 
 from ..Shared.Utils import Utils
@@ -20,6 +20,38 @@ class Relations:
 
     def __getitem__(self, key):
         return self.dictionary[key]
+    
+# Auditing 
+@dataclass
+class dapi_invocation:
+    id:str
+    database:str
+    operation:str
+    execution_time_in_seconds:float
+    version:str
+    user:str
+    host:str
+    start_time:datetime
+
+@dataclass
+class dbt_invocation:
+    id:str
+    dapi_invocation_id:str
+    operation:str
+    execution_time_in_seconds:float
+    parameters:str
+    version:str
+    start_time:datetime
+    
+@dataclass
+class dbt_action:
+    invocation_id:str
+    unique_id:str
+    relation_name:str
+    status:str
+    execution_time_in_seconds:float
+    rows_affected:int   
+    thread_id:str
 
 class TargetDatabase (ABC):
 
@@ -31,6 +63,11 @@ class TargetDatabase (ABC):
     @abstractmethod
     def get_connection (self) -> pyodbc.Connection: 
         """Returns an open database connection."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_database_type (self, pythonType) -> str:
+        """Returns a database type for a Python type."""
         raise NotImplementedError
     
     @abstractmethod
@@ -72,6 +109,11 @@ class TargetDatabase (ABC):
     def create_schema_if_missing (self, schemaName:str) -> None:
         """Creates schema if it does not exist."""
         raise NotImplementedError
+    
+    @abstractmethod
+    def create_table_if_missing (self, schemaName:str, tableName:str, data_class) -> None:
+        """Creates a table using dataclass variables for column names. This does not work for nested dataclasses!"""
+        raise NotImplementedError
 
     @abstractmethod
     def create_empty_target_table (self, sourceDatabase:str, sourceSchema:str, sourceTable:str, sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str) -> None:
@@ -91,6 +133,16 @@ class TargetDatabase (ABC):
     @abstractmethod
     def insert_data (self, sourceDatabase:str, sourceSchema:str, sourceTable:str, sourceColumns:List[str], sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str, runDate:date) -> None:
         """Inserts all rows in the source table into the target table and adds a load-date to it."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def insert_dataclass (self, database:str, schema:str, table:str, data_class) -> None:
+        """Inserts the contents of a single data class instance."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def insert_dataclasses (self, database:str, schema:str, table:str, data_classes:list) -> None:
+        """Inserts the contents of a list of data class instances."""
         raise NotImplementedError
     
     @abstractmethod

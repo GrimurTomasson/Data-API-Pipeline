@@ -12,6 +12,7 @@ from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetD
 from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
 from .Shared.DataClasses import CountPercentage
 from .Shared import Json
+from .Shared.AuditDecorators import audit
 
 relationStatsQuery = """
             WITH baseline AS (
@@ -384,6 +385,7 @@ class DataHealthReport: # Main class
 
     @output_headers
     @execution_time
+    @audit
     def generate (self) -> None:
         """Producing a data health report"""
 

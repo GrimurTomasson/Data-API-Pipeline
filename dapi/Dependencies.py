@@ -6,6 +6,7 @@ from .Shared.Config import Config
 from .Shared.Utils import Utils
 from .TargetDatabase.TargetDatabase import Relations, Relation
 from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from .Shared.AuditDecorators import audit
 
 class Dependencies:
     _argParser = argparse.ArgumentParser (prog='Dependencies.py', description='Updates dependencies.')
@@ -16,6 +17,7 @@ class Dependencies:
         
     @output_headers
     @execution_time
+    @audit
     def update_dbt (self):
         """Update dbt dependencies"""
         dbtOperation = ["dbt", "deps"] 
@@ -24,6 +26,7 @@ class Dependencies:
     
     @output_headers
     @execution_time
+    @audit
     def test_dbt (self):
         """Test dbt setup"""
         operation = Utils.add_dbt_profile_location (['dbt', 'debug'])
@@ -32,6 +35,7 @@ class Dependencies:
     
     @output_headers
     @execution_time
+    @audit
     def test_db_connection (self):
         """Test db connection"""
         TargetDatabaseFactory ().get_target_database ()

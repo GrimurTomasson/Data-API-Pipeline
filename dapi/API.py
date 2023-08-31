@@ -3,6 +3,7 @@ import argparse
 from sys import argv
 
 from .Shared.Decorators import output_headers, execution_time
+from .Shared.AuditDecorators import audit
 
 from .Cleanup import Cleanup
 from .Dependencies import Dependencies
@@ -17,6 +18,7 @@ class API:
     
     @output_headers
     @execution_time
+    @audit
     def generate (self) -> None:
         """API pipeline run"""
         
@@ -32,6 +34,7 @@ class API:
 
     @output_headers
     @execution_time
+    @audit
     def generate_data_only (self) -> None:
         """API pipeline run, limited to only creating data (useful for multi-instance api)"""
         

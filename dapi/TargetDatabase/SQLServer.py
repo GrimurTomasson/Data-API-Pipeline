@@ -5,6 +5,7 @@ from typing import List
 from datetime import date
 from colorama import Fore
 from dataclasses import dataclass
+from typing import get_type_hints
 
 from ..Shared.Environment import Environment
 from ..Shared.Config import Config
@@ -188,6 +189,84 @@ class SQLServer (TargetDatabase):
             print (f'Schema ({self._databaseName}.{schemaName}) missing, creating it')
             self.get_connection().cursor ().execute (f'CREATE SCHEMA {schemaName}')
             print ('Schema created\n')
+        return
+    
+    
+    def relation_exists (self, schemaName:str, tableName:str) -> bool:
+        ret_val = self.get_connection().cursor ().execute ('SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', schemaName, tableName).fetchval() == 1
+        Logger.debug (f"Table {schemaName}.{tableName} found = {ret_val}")
+        return ret_val
+    
+    def get_database_type (self, pythonType) -> str:
+        if pythonType == "str":
+            return "nvarchar(4000)"
+        if pythonType == "int":
+            return "bigint"
+        if pythonType == "float":
+            return "float"
+        if pythonType == "date":
+            return "date"
+        if pythonType == "datetime":
+            return "datetime"
+        #log, default type!
+        return "nvarchar(2000)"
+    
+    def create_table_if_missing (self, schemaName:str, tableName:str, data_class) -> None:
+        if self.relation_exists (schemaName, tableName) == True:
+            return
+        
+        command = f"CREATE TABLE [{schemaName}].[{tableName}] ("
+        for att_name, att_type in get_type_hints (data_class).items():
+            sql_type = self.get_database_type (att_type.__name__)
+            command += f"\n\t[{att_name}] {sql_type} NULL,"
+            
+        command = command[:-1] # Remove the last comma
+        command += "\n)"
+        Logger.debug (f"Creating table: \n{command}")
+        self.get_connection().cursor ().execute (command)
+        return    
+    
+    @staticmethod
+    def __create_insert_command_from_dataclass_instance (database:str, schema:str, table:str, data_class) -> str:
+        command = f"INSERT INTO [{database}].[{schema}].[{table}]\n"
+        columns = ""
+        values = ""
+        for att_name, att_type in get_type_hints (data_class).items():
+            columns += f"[{att_name}],"
+            values += "?,"
+            
+        columns = columns[:-1] # fjarlægjum auka kommur
+        values = values[:-1]
+    
+        command += f" ({columns}) VALUES ({values})"
+        return command
+    
+    @staticmethod
+    def __dataclass_to_parameter_list (data_class) -> list:
+        params = []
+        for att_name, att_type in get_type_hints (data_class).items():
+            params.append (getattr (data_class, att_name))
+        return params
+    
+    def insert_dataclass (self, database:str, schema:str, table:str, data_class) -> None:
+        command = SQLServer.__create_insert_command_from_dataclass_instance (database, schema, table, data_class)
+        params = SQLServer.__dataclass_to_parameter_list (data_class)
+        self.get_connection().cursor ().execute (command, params)    
+        return
+    
+    def insert_dataclasses (self, database:str, schema:str, table:str, data_classes:list) -> None:
+        if data_classes is None or len (data_classes) == 0:
+            return
+        
+        command = SQLServer.__create_insert_command_from_dataclass_instance (database, schema, table, data_classes[0])
+        
+        param_list = []
+        for dc in data_classes:
+            param_list.append (SQLServer.__dataclass_to_parameter_list (dc))
+        
+        cursor = self.get_connection().cursor ()
+        cursor.fast_executemany = True
+        cursor.executemany (command, param_list)
         return
 
     def create_or_alter_view (self, viewSchema:str, viewName:str, sourceDatabase:str, sourceSchema:str, sourceTable:str) -> None:

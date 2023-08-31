@@ -7,6 +7,7 @@ from sys import argv
 from .Shared.Config import Config
 from .Shared.Decorators import output_headers, execution_time
 from .Shared.Utils import Utils
+from .Shared.AuditDecorators import audit
 
 class Cleanup:
     
@@ -32,6 +33,7 @@ class Cleanup:
 
     @output_headers
     @execution_time
+    @audit
     def cleanup (self) -> None:
         """Removes temporary (run) files created by the API Pipeline and dbt"""
         self.__run_file_cleanup ()

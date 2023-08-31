@@ -8,6 +8,7 @@ from .Shared.Logger import Logger
 from .Shared.Json import EnhancedJSONEncoder
 from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
 from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory
+from .Shared.AuditDecorators import audit
 
 @dataclass
 class ColumnType:
@@ -100,6 +101,7 @@ class Documentation:
 
     @output_headers
     @execution_time
+    @audit
     def generate (self) -> None:
         """Producing user documentation"""
 
