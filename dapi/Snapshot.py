@@ -13,6 +13,7 @@ from .Shared.PrettyPrint import Pretty
 from .Shared.Environment import Environment
 from .TargetDatabase.TargetDatabase import Relations, Relation
 from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from .Shared.AuditDecorators import audit
 
 class Snapshot:
 
@@ -105,6 +106,7 @@ class Snapshot:
 
     @output_headers
     @execution_time(tabCount=1)
+    @audit
     def __create_snapshot (self, source_schema, table_name, snapshot_schema, target_date):
         """Creating a single snapshot"""
         Logger.info (f"\tTaking a snapshot of {self._historyDatabaseName}.{source_schema}.{table_name} and adding it to {self._snapshotDatabaseName}.{snapshot_schema}.{table_name} for {self._snapshotDateColumnName} = {target_date}")
@@ -115,6 +117,7 @@ class Snapshot:
 
     @output_headers
     @execution_time
+    @audit
     def __create_snapshots (self, source_schema, snapshot_schema, history_schema) -> None:
         """Creating snapshots for one schema"""
         # Testing the connection
@@ -145,6 +148,7 @@ class Snapshot:
 
     @output_headers
     @execution_time
+    @audit
     def create (self) -> None:
         """Taking snapshots for the Latest models"""
         if self._enabled == False:

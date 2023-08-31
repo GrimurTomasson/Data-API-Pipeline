@@ -1,5 +1,5 @@
 import functools
-import time
+from time import gmtime, strftime, monotonic
 import datetime 
 from colorama import Fore
 
@@ -23,12 +23,15 @@ def execution_time (_func=None, *, tabCount=0):
     def decorator_execution_time (function):
         @functools.wraps (function)
         def wrapper (*args, **kwargs):
-            startTime = time.monotonic ()
+            startTime = monotonic ()
             retval = function (*args, **kwargs)
-            execution_time = datetime.timedelta (seconds=time.monotonic () - startTime).total_seconds ()
+            execution_time = datetime.timedelta (seconds = monotonic () - startTime).total_seconds ()
             Logger.info (Pretty.assemble (f"\n\tExecution time in seconds: {execution_time} - ({function.__qualname__})", False, False, Fore.LIGHTBLUE_EX, 0, tabCount + 1))
             return retval
         return wrapper
     if _func is None:
         return decorator_execution_time
     return decorator_execution_time (_func)
+            
+            
+            

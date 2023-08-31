@@ -9,6 +9,7 @@ from .Shared.Logger import Logger
 from .Shared.Json import EnhancedJSONEncoder
 from .Shared.DataClasses import CountPercentage
 from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
+from .Shared.AuditDecorators import audit
 
 @dataclass 
 class StatsTotal:
@@ -185,6 +186,7 @@ class DefinitionHealthReport:
 
     @output_headers
     @execution_time
+    @audit
     def generate (self) -> None:
         """Producing a definition health report"""
 

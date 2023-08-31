@@ -17,6 +17,10 @@ class Environment:
     # From environment file only
     databaseUser = str("DAPI_DATABASE_USER")
     databasePassword= str("DAPI_DATABASE_PASSWORD")
+    
+    #Audit
+    auditDatabaseName = str("DAPI_AUDIT_DATABASE_INSTANCE")
+    auditDatabaseSchema = str("DAPI_AUDIT_DATABASE_SCHEMA")
 
     # For Confluence, only required if you publish to Confluence.
     # From environment file only

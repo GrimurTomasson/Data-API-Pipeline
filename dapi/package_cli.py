@@ -14,6 +14,7 @@ from .DataHealthReport import DataHealthReport
 from .MetadataCatalog import MetadataCatalog
 from .DefinitionHealthReport import DefinitionHealthReport
 from .Documentation import Documentation
+from .Shared.Audit import Audit
 
 argParser = argparse.ArgumentParser (
     prog='dapi', 
@@ -51,6 +52,7 @@ def main ():
     #os.environ[Environment.dbtRunParameters] = options.dbt_run_parameters if options.dbt_run_parameters != None else []
     #Config[Environment.dbtRunParameters] = ['1', '2']
     Config.add(Environment.dbtRunParameters, options.dbt_run_parameters.split(' ') if options.dbt_run_parameters != None else [])
+    Audit() # Initialize audit variables
 
     if options.operation == 'build':
         API ().generate ()

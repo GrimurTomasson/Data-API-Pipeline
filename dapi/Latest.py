@@ -1,12 +1,14 @@
 import os
 import sys
 import argparse
+import shutil
 
 from .Shared.Decorators import output_headers, execution_time
 from .Shared.Config import Config
 from .Shared.Utils import Utils
 from .Shared.Logger import Logger
 from .Shared.Environment import Environment
+from .Shared.AuditDecorators import audit, audit_dbt
 
 class Latest:
     _argParser = argparse.ArgumentParser (prog='Latest.py', description='Creates new relations and tests them.')
@@ -14,22 +16,30 @@ class Latest:
 
     def __init__ (self) -> None:
         return
-        
+    
     @output_headers
     @execution_time
+    @audit
+    @audit_dbt
     def refresh (self):
         """Running dbt to refresh models and data (Latest)"""
         operation = ["dbt", "run", "--fail-fast"]
-        #if os.environ[Environment.dbtRunParameters] != None and len (os.environ[Environment.dbtRunParameters]) > 0:
-        #    operation.append(os.environ[Environment.dbtRunParameters])
         operation.extend (Config[Environment.dbtRunParameters])
 
         dbtOperation = Utils.add_dbt_profile_location (operation) 
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
+        
+        # Afritum manifest fyrir auditing & enrichment
+        dbt_output_path = os.path.join (Config.latestPath, "target")
+        source_manifest_file = os.path.join (dbt_output_path, "manifest.json")
+        Logger.info (f"\tManifest \n\t\tSource: {source_manifest_file} \n\t\tTarget: {Config.dbtManifestFileInfo.qualified_name}\n")
+        shutil.copy2 (source_manifest_file, Config.dbtManifestFileInfo.qualified_name)
         return
 
     @output_headers
     @execution_time
+    @audit
+    @audit_dbt
     def run_tests (self):
         """Running dbt tests"""
         dbtOperation = Utils.add_dbt_profile_location (["dbt", "--log-format", "json",  "test"])
