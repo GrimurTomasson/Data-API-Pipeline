@@ -63,7 +63,8 @@ class Audit:
             
         for relationKey in manifestJson['nodes']:
             node = manifestJson['nodes'][relationKey]
-            modelMap[node['unique_id']] = node['relation_name'].replace ('"', '')
+            if 'relation_name' in node:
+                modelMap[node['unique_id']] = str(node['relation_name']).replace ('"', '') 
             
         return modelMap
     
