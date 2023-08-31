@@ -56,9 +56,9 @@ class Audit:
         return
     
     @staticmethod
-    def __get_model_to_relation_map () -> {}:
+    def __get_model_to_relation_map (filename) -> {}:
         modelMap = {}
-        with open (Config.dbtManifestFileInfo.qualified_name, encoding="utf-8") as json_file:
+        with open (filename, encoding="utf-8") as json_file:
             manifestJson = json.load (json_file)
             
         for relationKey in manifestJson['nodes']:
@@ -73,8 +73,6 @@ class Audit:
             return
         if not hasattr (Audit, 'database'):
             Audit()
-        if len (Audit.model_to_relation_map) == 0:
-            Audit.model_to_relation_map = Audit.__get_model_to_relation_map ()
             
         # Afrita run_results.json yfir í vinnsluskráamöppu, endurskýra {operation}_run_results.json
         dbt_output_path = os.path.join (Config.latestPath, "target")
@@ -82,10 +80,17 @@ class Audit:
         normalized_operation = operation.replace (".", "_")
         target_file = os.path.join (Config.runFileDirectory, f"{normalized_operation}_run_results.json")
         
-        Logger.debug (f"Audit - source: {run_results_file} - target: {target_file}")
         shutil.copy2 (run_results_file, target_file)
         
-        # Lesa upp afritaða skrá
+        # Afrita manifest yfir í vinnsluskráamöppu, endurskýra {operation}_manifest.json
+        manifest_file = os.path.join (dbt_output_path, "manifest.json")
+        target_manifest_file = os.path.join (Config.runFileDirectory, f"{normalized_operation}_manifest.json")
+        shutil.copy2 (manifest_file, target_manifest_file)
+        
+        if len (Audit.model_to_relation_map) == 0:
+            Audit.model_to_relation_map = Audit.__get_model_to_relation_map (target_manifest_file)
+        
+        # Lesa upp afritaða run-result skrá
         with open (target_file, encoding="utf-8") as json_file:
             runResults = json.load (json_file)
         
