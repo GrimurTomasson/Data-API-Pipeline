@@ -69,9 +69,13 @@ class MetadataCatalog:
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
 
         dbt_output_path = os.path.join (Config.latestPath, "target")
+        source_manifest_file = os.path.join (dbt_output_path, "manifest.json")
         source_catalog_file = os.path.join (dbt_output_path, "catalog.json")
 
+        Logger.info (f"\tManifest \n\t\tSource: {source_manifest_file} \n\t\tTarget: {Config.dbtManifestFileInfo.qualified_name}\n")
         Logger.info (f"\tCatalog \n\t\tSource: {source_catalog_file} \n\t\tTarget: {Config.dbtCatalogFileInfo.qualified_name}\n")        
+        
+        shutil.copy2 (source_manifest_file, Config.dbtManifestFileInfo.qualified_name)
         shutil.copy2 (source_catalog_file, Config.dbtCatalogFileInfo.qualified_name)
         
         with open (Config.dbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
