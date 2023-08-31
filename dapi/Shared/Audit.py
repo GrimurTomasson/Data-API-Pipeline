@@ -16,10 +16,14 @@ from ..TargetDatabase.TargetDatabase import TargetDatabase, dapi_invocation, dbt
 
 class Audit:
     def __init__ (self) -> None:
+        Audit.enabled =  'audit' in Config._config and 'enabled' in Config['audit']
+        if Audit.enabled == False:
+            Logger.debug ("Audit is disabled !!!")
+            return
+        
         Audit.database = Utils.retrieve_variable ('Audit database name', Environment.auditDatabaseName, Config['audit'], 'database')
         Audit.schema = Utils.retrieve_variable ('Audit database schema name', Environment.auditDatabaseSchema, Config['audit'], 'schema')
-        
-        Audit.enabled =  'audit' in Config._config and 'enabled' in Config['audit'] and Config['audit']['enabled'] == True and len (Audit.database) > 0 and len (Audit.schema) > 0 # Athuga hvort þessi breyta er til?
+        Audit.enabled = Config['audit']['enabled'] == True and len (Audit.database) > 0 and len (Audit.schema) > 0 
         if Audit.enabled == False:
             Logger.debug ("Audit is disabled !!!")
             return
