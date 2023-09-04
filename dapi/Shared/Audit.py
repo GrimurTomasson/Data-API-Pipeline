@@ -6,6 +6,7 @@ import json
 from importlib.metadata import version
 from getpass import getuser
 from socket import gethostname
+from threading import Lock
 
 from .Utils import Utils
 from .Environment import Environment
@@ -48,17 +49,22 @@ class Audit:
         Audit.id = str (uuid.uuid4())
         Audit.version = version("dapi")
         Audit.model_to_relation_map = {}
+        
+        Audit.dapi_lock = Lock()
+        Audit.dapi_op_number = 0
         return
     
     @staticmethod
     def dapi (start_time, operation, parameters, status, execution_time_in_seconds, stack_depth):
-        if Audit.enabled == False:
+        with Audit.dapi_lock:
+            if Audit.enabled == False:
+                return
+            if not hasattr (Audit, 'database'):
+                Audit()
+            stack_depth_indicator = ' ' * stack_depth + '|'
+            Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.publicDatabase, operation, status, parameters, execution_time_in_seconds, stack_depth, stack_depth_indicator, Audit.version, Audit.user, Audit.host, start_time, Audit.dapi_op_number))
+            Audit.dapi_op_number += 1
             return
-        if not hasattr (Audit, 'database'):
-            Audit()
-        stack_depth_indicator = ' ' * stack_depth + '|'
-        Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.publicDatabase, operation, status, parameters, execution_time_in_seconds, stack_depth, stack_depth_indicator, Audit.version, Audit.user, Audit.host, start_time))
-        return
     
     @staticmethod
     def __get_model_to_relation_map (filename) -> {}:

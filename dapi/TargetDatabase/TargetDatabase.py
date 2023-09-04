@@ -36,6 +36,7 @@ class dapi_invocation:
     user:str
     host:str
     start_time:datetime
+    op_number:int
 
 @dataclass
 class dbt_invocation:
