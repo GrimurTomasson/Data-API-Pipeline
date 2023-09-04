@@ -30,13 +30,14 @@ class dapi_invocation:
     status:str
     parameters:str
     execution_time_in_seconds:float
-    stack_depth:int
-    stack_depth_indicator:str
     version:str
     user:str
     host:str
     start_time:datetime
-    op_number:int
+    op_number_starts:int
+    op_number_ends:int
+    stack_depth:int
+    stack_depth_indicator:str
 
 @dataclass
 class dbt_invocation:
