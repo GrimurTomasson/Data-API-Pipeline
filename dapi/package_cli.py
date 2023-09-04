@@ -2,6 +2,8 @@ import sys
 import os
 import argparse
 
+from importlib.metadata import version
+
 from .Shared.Environment import Environment
 from .Shared.Config import Config
 
@@ -41,6 +43,7 @@ The only parameter for operations is en environment file, which is optional.
                                 ''')
 argParser.add_argument ('-e', '--environment', required=False, help='Select an environment file to load.')
 argParser.add_argument('-d', '--dbt_run_parameters', required=False, type=str, help='Add any dbt parameters for the run command.')
+argParser.add_argument('-v', '--version', action='version', version=version('dapi'))
 
 def main ():
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename

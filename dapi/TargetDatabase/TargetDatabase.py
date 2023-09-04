@@ -27,6 +27,7 @@ class dapi_invocation:
     id:str
     database:str
     operation:str
+    parameters:str
     execution_time_in_seconds:float
     version:str
     user:str
