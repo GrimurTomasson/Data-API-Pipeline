@@ -51,19 +51,27 @@ class Audit:
         Audit.model_to_relation_map = {}
         
         Audit.dapi_lock = Lock()
-        Audit.dapi_op_number = 0
+        Audit.dapi_op_number_starts = 0
+        Audit.dapi_op_number_ends = 0
         return
     
     @staticmethod
-    def dapi (start_time, operation, parameters, status, execution_time_in_seconds, stack_depth):
+    def get_and_increment_dapi_op_number_starts () -> int:
+        with Audit.dapi_lock:
+            op_no = Audit.dapi_op_number_starts
+            Audit.dapi_op_number_starts += 1
+            return op_no
+    
+    @staticmethod
+    def dapi (start_time, operation, parameters, status, execution_time_in_seconds, stack_depth, op_number_starts):
         with Audit.dapi_lock:
             if Audit.enabled == False:
                 return
             if not hasattr (Audit, 'database'):
                 Audit()
             stack_depth_indicator = ' ' * stack_depth + '|'
-            Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.publicDatabase, operation, status, parameters, execution_time_in_seconds, stack_depth, stack_depth_indicator, Audit.version, Audit.user, Audit.host, start_time, Audit.dapi_op_number))
-            Audit.dapi_op_number += 1
+            Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.publicDatabase, operation, status, parameters, execution_time_in_seconds, Audit.version, Audit.user, Audit.host, start_time, op_number_starts, Audit.dapi_op_number_ends, stack_depth, stack_depth_indicator))
+            Audit.dapi_op_number_ends += 1
             return
     
     @staticmethod
