@@ -25,6 +25,7 @@ def audit (_func=None, *, tabCount=0):
             retval = None
             status = 'success'
             thrownException = None
+            stackDepth = len(inspect.stack(0))
             try:
                 retval = function (*args, **kwargs)
             except Exception as ex:
@@ -32,7 +33,7 @@ def audit (_func=None, *, tabCount=0):
                 thrownException = ex
             execution_time = datetime.timedelta (seconds = monotonic () - startTime).total_seconds ()
             params = get_parameter_info (function, args)    
-            Audit.dapi (startDatetime, function.__qualname__, params, status, execution_time)
+            Audit.dapi (startDatetime, function.__qualname__, params, status, execution_time, stackDepth)
             if thrownException is not None:
                 raise (thrownException)
             return retval

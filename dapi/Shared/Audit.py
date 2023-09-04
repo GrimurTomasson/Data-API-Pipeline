@@ -51,13 +51,13 @@ class Audit:
         return
     
     @staticmethod
-    def dapi (start_time, operation, parameters, status, execution_time_in_seconds):
+    def dapi (start_time, operation, parameters, status, execution_time_in_seconds, stack_depth):
         if Audit.enabled == False:
             return
         if not hasattr (Audit, 'database'):
             Audit()
-            
-        Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.publicDatabase, operation, status, parameters, execution_time_in_seconds, Audit.version, Audit.user, Audit.host, start_time))
+        stack_depth_indicator = ' ' * stack_depth + '|'
+        Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.publicDatabase, operation, status, parameters, execution_time_in_seconds, stack_depth, stack_depth_indicator, Audit.version, Audit.user, Audit.host, start_time))
         return
     
     @staticmethod

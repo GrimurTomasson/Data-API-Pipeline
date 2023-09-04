@@ -30,6 +30,8 @@ class dapi_invocation:
     status:str
     parameters:str
     execution_time_in_seconds:float
+    stack_depth:int
+    stack_depth_indicator:str
     version:str
     user:str
     host:str
