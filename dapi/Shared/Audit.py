@@ -31,6 +31,11 @@ class Audit:
         Audit.user = getuser()
         Audit.host = gethostname()
         
+        # Get public (API) database name
+        db = TargetDatabaseFactory ().get_target_database ()
+        db.get_connection ()
+        Audit.publicDatabase = db.get_database_name ()
+        
         # Make sure audit tables exist
         Audit.targetDatabase = TargetDatabaseFactory ().get_target_database ()
         Audit.targetDatabase.set_connection (Audit.database)
@@ -46,13 +51,13 @@ class Audit:
         return
     
     @staticmethod
-    def dapi (start_time, operation, parameters, execution_time_in_seconds):
+    def dapi (start_time, operation, parameters, status, execution_time_in_seconds):
         if Audit.enabled == False:
             return
         if not hasattr (Audit, 'database'):
             Audit()
             
-        Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.database, operation, parameters, execution_time_in_seconds, Audit.version, Audit.user, Audit.host, start_time))
+        Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dapi_invocation.__name__, dapi_invocation (Audit.id, Audit.publicDatabase, operation, status, parameters, execution_time_in_seconds, Audit.version, Audit.user, Audit.host, start_time))
         return
     
     @staticmethod
@@ -69,7 +74,7 @@ class Audit:
         return modelMap
     
     @staticmethod
-    def dbt (start_time, operation):
+    def dbt (start_time, operation, status):
         if Audit.enabled == False:
             return
         if not hasattr (Audit, 'database'):
@@ -101,7 +106,7 @@ class Audit:
         execution_time = runResults['elapsed_time']
         params = str (runResults['args'])
         
-        invocation = dbt_invocation (id, Audit.id, operation, execution_time, params, version, start_time )
+        invocation = dbt_invocation (id, Audit.id, operation, status, execution_time, params, version, start_time )
         Audit.targetDatabase.insert_dataclass (Audit.database, Audit.schema, dbt_invocation.__name__, invocation)
         
         # Vinna nóður & skrifa

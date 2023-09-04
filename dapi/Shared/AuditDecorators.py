@@ -22,10 +22,19 @@ def audit (_func=None, *, tabCount=0):
         def wrapper (*args, **kwargs):
             startTime = monotonic ()
             startDatetime = datetime.datetime.now ()
-            retval = function (*args, **kwargs)
+            retval = None
+            status = 'success'
+            thrownException = None
+            try:
+                retval = function (*args, **kwargs)
+            except Exception as ex:
+                status = 'exception'
+                thrownException = ex
             execution_time = datetime.timedelta (seconds = monotonic () - startTime).total_seconds ()
             params = get_parameter_info (function, args)    
-            Audit.dapi (startDatetime, function.__qualname__, params, execution_time)
+            Audit.dapi (startDatetime, function.__qualname__, params, status, execution_time)
+            if thrownException is not None:
+                raise (thrownException)
             return retval
         return wrapper
     if _func is None:
@@ -37,8 +46,17 @@ def audit_dbt (_func=None, *, tabCount=0):
         @functools.wraps (function)
         def wrapper (*args, **kwargs):
             startDatetime = datetime.datetime.now ()
-            retval = function (*args, **kwargs)
-            Audit.dbt (startDatetime, function.__qualname__)
+            retval = None
+            status = 'success'
+            thrownException = None
+            try:
+                retval = function (*args, **kwargs)
+            except Exception as ex:
+                status = 'exception'
+                thrownException = ex
+            Audit.dbt (startDatetime, function.__qualname__, status)
+            if thrownException is not None:
+                raise (thrownException)
             return retval
         return wrapper
     if _func is None:

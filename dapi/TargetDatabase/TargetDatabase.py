@@ -27,6 +27,7 @@ class dapi_invocation:
     id:str
     database:str
     operation:str
+    status:str
     parameters:str
     execution_time_in_seconds:float
     version:str
@@ -39,6 +40,7 @@ class dbt_invocation:
     id:str
     dapi_invocation_id:str
     operation:str
+    status:str
     execution_time_in_seconds:float
     parameters:str
     version:str
