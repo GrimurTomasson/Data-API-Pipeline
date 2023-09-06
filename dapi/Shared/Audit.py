@@ -100,11 +100,14 @@ class Audit:
         normalized_operation = operation.replace (".", "_")
         target_file = os.path.join (Config.runFileDirectory, f"{normalized_operation}_run_results.json")
         
+        Logger.info (f"Audit - Copying run results\n\tSource: {run_results_file}\n\tTarget: {target_file}\n")
         shutil.copy2 (run_results_file, target_file)
         
         # Afrita manifest yfir í vinnsluskráamöppu, endurskýra {operation}_manifest.json
         manifest_file = os.path.join (dbt_output_path, "manifest.json")
         target_manifest_file = os.path.join (Config.runFileDirectory, f"{normalized_operation}_manifest.json")
+        
+        Logger.info (f"Audit - Copying run manifest\n\tSource: {manifest_file}\n\tTarget: {target_manifest_file}\n")
         shutil.copy2 (manifest_file, target_manifest_file)
         
         if len (Audit.model_to_relation_map) == 0:
