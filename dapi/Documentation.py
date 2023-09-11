@@ -1,9 +1,11 @@
 import json
 from dataclasses import dataclass, field
 
-from .Shared.Decorators import output_headers, execution_time
+from .Shared.Decorators import post_execution_output
 from .Shared.Config import Config
 from .Shared.Utils import Utils
+from .Shared.PrettyPrint import Pretty
+from .Shared.LogLevel import LogLevel
 from .Shared.Logger import Logger
 from .Shared.Json import EnhancedJSONEncoder
 from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
@@ -57,10 +59,10 @@ class Documentation:
             relationData = enrichedCatalogJson['nodes'][relationKey]
             schemaName = relationData['metadata']['schema']
             relationName = relationData['metadata']['name']
-            Logger.debug (f"\tSchema: {schemaName} - Relation: {relationName}")
+            Logger.debug (Pretty.assemble_simple (f"Schema: {schemaName} - Relation: {relationName}"))
             
             if not schemaName in Config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
-                Logger.debug (f"\tNon public schema: {schemaName}")
+                Logger.debug (Pretty.assemble_simple (f"Non public schema: {schemaName}"))
                 continue
             
             relation = Relation (schemaName, relationName)
@@ -72,8 +74,7 @@ class Documentation:
             docs.relations.append (relation)
         return docs
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def generate_data (self) -> None:
         """Generating user documentation data"""
         with open (Config.enrichedDbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
@@ -85,26 +86,22 @@ class Documentation:
         Utils.write_file (jsonData, Config.apiDocumentationDataFileInfo.qualified_name)
         return 
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def generate_documentation (self) -> None:
         """Generating user documentation"""
         Utils.generate_markdown_document ("api_documentation_template.md", Config.apiDocumentationDataFileInfo.name, self._docFilename, True)
         return
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def publish (self) -> None:
         """Publishing user documentation"""
         self._targetKnowledgeBase.publish (self._docFilename, 'user-documentation')
         return
 
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def generate (self) -> None:
         """Producing user documentation"""
-
         if Config['documentation']['user-documentation']['generate'] != True:
             return
             

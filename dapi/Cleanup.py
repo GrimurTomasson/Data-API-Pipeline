@@ -5,7 +5,10 @@ from os import path, mkdir
 from sys import argv
 
 from .Shared.Config import Config
-from .Shared.Decorators import output_headers, execution_time
+from .Shared.LogLevel import LogLevel
+from .Shared.Logger import Logger
+from .Shared.PrettyPrint import Pretty
+from .Shared.Decorators import post_execution_output
 from .Shared.Utils import Utils
 from .Shared.AuditDecorators import audit
 
@@ -14,25 +17,24 @@ class Cleanup:
     def __init__ (self) -> None:
         return
 
-    @output_headers
+    @post_execution_output (logLevel=LogLevel.INFO)
     def __run_file_cleanup (self):
         """Cleaning up runfiles"""
         runFileDirectory = Config.runFileDirectory
         if len (runFileDirectory) < 15: # Við viljum ekki henda hálfu drifi út af mistökum!
             message = f"The run file directory looks suspicious, no files deleted! Run file directory: {runFileDirectory}"
-            logging.error (message)
+            Logger.error (Pretty.assemble_simple (message))
             raise Exception (message)
 
         if path.exists (runFileDirectory):
             shutil.rmtree (runFileDirectory)
-            logging.info ("\tRun file directory deleted!")
+            Logger.debug (Pretty.assemble_simple ("Run file directory deleted!"))
         
         mkdir (runFileDirectory)
-        logging.info (f"\tRun file directory created at: {runFileDirectory}")
+        Logger.info (Pretty.assemble_simple (f"Run file directory created at: {runFileDirectory}"))
         return
 
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def cleanup (self) -> None:
         """Removes temporary (run) files created by the API Pipeline and dbt"""

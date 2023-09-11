@@ -13,7 +13,7 @@ from ..Shared.Utils import Utils
 from ..Shared.Logger import Logger
 from ..Shared.PrettyPrint import Pretty
 from .TargetDatabase import TargetDatabase, Relation, Relations
-from ..Shared.Decorators import execution_time, output_headers
+from ..Shared.Decorators import post_execution_output
 
 class SQLServer (TargetDatabase):
     typeQuery = """
@@ -42,7 +42,7 @@ class SQLServer (TargetDatabase):
         self._databaseName = None
         return
 
-    @execution_time
+    @post_execution_output
     def __load_data (self, query, enrichmentFunction, destination, what):
         rows = self.get_connection ().cursor().execute(query).fetchall()
         for row in rows:
@@ -56,7 +56,7 @@ class SQLServer (TargetDatabase):
                 destination[schemaName][tableName] = { }
             info = enrichmentFunction(row)
             destination[schemaName][tableName][columnName] = info
-        Logger.debug (f"\t\tNumber of items for {what}: {len (rows)}")
+        Logger.debug (Pretty.assemble_simple (f"Number of items for {what}: {len (rows)}"))
         return
         
     def __retrieve_type_info (self, row): # ToDo: Búa til dataclass fyrir þetta, á heima í TargetDatabase (sjá ConceptGlossary útfærslu)
@@ -100,7 +100,7 @@ class SQLServer (TargetDatabase):
     def set_connection (self, databaseName:str):
         self._databaseName = databaseName
         connectionString = self.__get_connection_string (self._databaseName)
-        Logger.debug (f"\tConnection set to: {connectionString.masked}")
+        Logger.debug (Pretty.assemble_simple (f"Connection set to: {connectionString.masked}"))
         self._connection = pyodbc.connect (connectionString.normal)
         self._connection.autocommit = True # Þetta á við allar útfærslur, koma betur fyrir!
 
@@ -152,12 +152,12 @@ class SQLServer (TargetDatabase):
                 relationDict[relation.name] = relation
 
         relations = sorted (list(relationDict.values ()), key=lambda x: x.name)
-        Logger.debug (f"Retrieved relations for {self._databaseName}.{schemaName} - list: {len (relations)} - dictionary: {len (relationDict.keys())}")
+        Logger.debug (Pretty.assemble_simple (f"Retrieved relations for {self._databaseName}.{schemaName} - list: {len (relations)} - dictionary: {len (relationDict.keys())}"))
         return Relations (relations, relationDict)
 
     def clone_column (self, sourceSchema:str, sourceTable:str, targetDatabase:str, targetSchema:str, targetTable:str, columnName:str) -> None:
         columnInfo = self.get_connection().cursor ().execute ("SELECT c.IS_NULLABLE, c.DATA_TYPE, c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, COALESCE (c.NUMERIC_SCALE, 0) AS NUMERIC_SCALE, c.DATETIME_PRECISION FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ? AND c.COLUMN_NAME = ?", sourceSchema, sourceTable, columnName).fetchone()
-        Logger.info(f"\t\tAdding column: {columnName} to {self._databaseName}.{targetSchema}.{targetTable}")
+        Logger.info(Pretty.assemble_simple (f"Adding column: {columnName} to {self._databaseName}.{targetSchema}.{targetTable}"))
         
         alterCommand = f"ALTER TABLE {targetDatabase}.{targetSchema}.{targetTable} ADD {columnName} "
         if columnInfo.DATA_TYPE in ["date", "datetime", "datetime2", "int", "bigint", "tinyint", "smallint", "bit"]:
@@ -173,7 +173,7 @@ class SQLServer (TargetDatabase):
         
         alterCommand += " NULL" # All new columns must be nullable!
         
-        Logger.debug (f"\t\t\tAlter command: {alterCommand}")
+        Logger.debug (Pretty.assemble_simple (f"Alter command: {alterCommand}"))
         self.get_connection().cursor ().execute (alterCommand)
         return
 
@@ -184,17 +184,17 @@ class SQLServer (TargetDatabase):
     def create_schema_if_missing (self, schemaName:str) -> None:
         erTil = self.get_connection().cursor ().execute ('SELECT COUNT(1) AS er_til FROM sys.schemas s WHERE s.name = ?', schemaName).fetchval ()
         if (erTil == 1):
-            print (f'Schema ({self._databaseName}.{schemaName}) already exists\n')
+            Logger.info (Pretty.assemble_simple (f'Schema ({self._databaseName}.{schemaName}) already exists'))
         else:
-            print (f'Schema ({self._databaseName}.{schemaName}) missing, creating it')
+            Logger.info (Pretty.assemble_simple (f'Schema ({self._databaseName}.{schemaName}) missing, creating it'))
             self.get_connection().cursor ().execute (f'CREATE SCHEMA {schemaName}')
-            print ('Schema created\n')
+            Logger.debug (Pretty.assemble_simple ('Schema created\n'))
         return
     
     
     def relation_exists (self, schemaName:str, tableName:str) -> bool:
         ret_val = self.get_connection().cursor ().execute ('SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', schemaName, tableName).fetchval() == 1
-        Logger.debug (f"Table {schemaName}.{tableName} found = {ret_val}")
+        Logger.debug (Pretty.assemble_simple (f"Table {schemaName}.{tableName} found = {ret_val}"))
         return ret_val
     
     def get_database_type (self, pythonType) -> str:
@@ -213,16 +213,18 @@ class SQLServer (TargetDatabase):
     
     def create_table_if_missing (self, schemaName:str, tableName:str, data_class) -> None:
         if self.relation_exists (schemaName, tableName) == True:
+            Logger.info (Pretty.assemble_simple (f'Table ({self._databaseName}.{schemaName}.{tableName}) already exists'))
             return
+        Logger.info (Pretty.assemble_simple (f'Creating table ({self._databaseName}.{schemaName}.{tableName})'))
         
         command = f"CREATE TABLE [{schemaName}].[{tableName}] ("
         for att_name, att_type in get_type_hints (data_class).items():
             sql_type = self.get_database_type (att_type.__name__)
-            command += f"\n\t[{att_name}] {sql_type} NULL,"
+            command += f"\n\t[{att_name}] {sql_type} NULL, "
             
-        command = command[:-1] # Remove the last comma
+        command = command[:-2] # Remove the last comma
         command += "\n)"
-        Logger.debug (f"Creating table: \n{command}")
+        Logger.debug (Pretty.assemble_simple (f"Creating table: \n{command}"))
         self.get_connection().cursor ().execute (command)
         return    
     
@@ -232,11 +234,11 @@ class SQLServer (TargetDatabase):
         columns = ""
         values = ""
         for att_name, att_type in get_type_hints (data_class).items():
-            columns += f"[{att_name}],"
-            values += "?,"
+            columns += f"[{att_name}], "
+            values += "?, "
             
-        columns = columns[:-1] # fjarlægjum auka kommur
-        values = values[:-1]
+        columns = columns[:-2] # fjarlægjum auka kommur
+        values = values[:-2]
     
         command += f" ({columns}) VALUES ({values})"
         return command
@@ -270,7 +272,7 @@ class SQLServer (TargetDatabase):
         return
 
     def create_or_alter_view (self, viewSchema:str, viewName:str, sourceDatabase:str, sourceSchema:str, sourceTable:str) -> None:
-        Logger.debug (f"\t\tCreating view {self._databaseName}.{viewSchema}.{viewName} - Selecting from: {sourceSchema}.{sourceTable}")
+        Logger.debug (Pretty.assemble_simple (f"Creating view {self._databaseName}.{viewSchema}.{viewName} - Selecting from: {sourceSchema}.{sourceTable}"))
         self.get_connection().cursor ().execute (f"CREATE OR ALTER VIEW [{viewSchema}].[{viewName}] AS SELECT * FROM [{sourceDatabase}].[{sourceSchema}].[{sourceTable}]")
         return
 
@@ -280,35 +282,33 @@ class SQLServer (TargetDatabase):
         self.get_connection().cursor ().execute (f"CREATE CLUSTERED COLUMNSTORE INDEX {targetSchema.lower()}_{targetTable.lower()}_cci ON [{targetSchema}].[{targetTable}]")
         return
 
-    @output_headers
-    @execution_time(tabCount=2)
+    @post_execution_output
     def delete_data (self, schemaName:str, tableName:str, comparisonColumn:str, columnValue:str) -> None:
-        Logger.info (f"\tRemoving data from {self._databaseName}.{schemaName}.{tableName} for {comparisonColumn} = {columnValue}")
+        Logger.debug (Pretty.assemble_simple (f"Removing data from {self._databaseName}.{schemaName}.{tableName} for {comparisonColumn} = {columnValue}"))
         deleteCursor = self.get_connection().cursor()
         deleteCursor.execute (f"DELETE [{schemaName}].[{tableName}] WHERE {comparisonColumn} = ?", columnValue)
-        Logger.info (f"\t\t{deleteCursor.rowcount} rows deleted")
+        Logger.debug (Pretty.assemble_simple (f"{deleteCursor.rowcount} rows deleted"))
         return
 
-    @output_headers
-    @execution_time(tabCount=2)
+    @post_execution_output
     def insert_data (self, sourceDatabase:str, sourceSchema:str, sourceTable:str, sourceColumns:List[str], sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str, runDate:date) -> None:
         # Command building
-        selectColumnList = "[" + "],[".join (sourceColumns) + "]" 
+        selectColumnList = "[" + "], [".join (sourceColumns) + "]" 
         insertColumnList = f"{dateColumnName}, {selectColumnList}"
         predicate = " IS NOT NULL AND ".join (sourceKeyColumns) + " IS NOT NULL"
         command = f"INSERT INTO [{targetSchema}].[{targetTable}] ({insertColumnList}) SELECT '{runDate}', {selectColumnList} FROM [{sourceDatabase}].[{sourceSchema}].[{sourceTable}] WHERE {predicate}"
-        Logger.debug (Pretty.assemble ("Executing: ", False, False, Fore.LIGHTMAGENTA_EX, 0, 2))
-        Logger.debug (command)
+        Logger.debug (Pretty.assemble_simple (f"Adding data to {self._databaseName}.{targetSchema}.{targetTable}"))
+        Logger.debug (Pretty.assemble (value="Executing:", color=Fore.LIGHTMAGENTA_EX, tabCount=Pretty.Indent))
+        Logger.debug (Pretty.assemble_simple (command))
         # Execution
         insertCursor = self.get_connection().cursor ()
         insertCursor.execute (command)
-        Logger.info (Pretty.assemble (f"{insertCursor.rowcount} rows inserted", False, False, Fore.WHITE, 0 ,3))
+        Logger.debug (Pretty.assemble (value=f"{insertCursor.rowcount} rows inserted", color=Fore.WHITE, tabCount=Pretty.Indent))
         return
     
-    @output_headers
-    @execution_time(tabCount=2)
+    @post_execution_output
     def retrieve_cardinality (self, schemaName:str, tableName:str) -> int:
         query = f"SELECT COUNT(1) AS fjoldi FROM [{schemaName}].[{tableName}]"
         rows = self.get_connection().cursor ().execute (query).fetchval ()
-        Logger.debug (f"\tCardinality for table {self._databaseName}.{schemaName}.{tableName} retrieved - cardinality: {rows}\n")
+        Logger.debug (Pretty.assemble_simple (f"Cardinality for table {self._databaseName}.{schemaName}.{tableName} retrieved - cardinality: {rows}"))
         return rows

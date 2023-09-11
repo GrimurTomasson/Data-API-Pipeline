@@ -3,11 +3,9 @@ from time import monotonic
 import datetime 
 from colorama import Fore
 
-from .LogLevel import LogLevel
-from .Logger import Logger
 from .PrettyPrint import Pretty
 
-def post_execution_output (_func=None, *, logLevel:LogLevel=LogLevel.DEBUG): 
+def execution_output (_func=None): 
     def decorator_output (function):
         @functools.wraps (function)
         def wrapper (*args, **kwargs):
@@ -16,9 +14,7 @@ def post_execution_output (_func=None, *, logLevel:LogLevel=LogLevel.DEBUG):
             retval = None
             status = "OK"
             thrownException = None
-            
-            start_message = Pretty.assemble_output_start_message (printableStartTime, function.__qualname__)
-            __log (start_message, logLevel)
+            print (Pretty.assemble_output_start_message (printableStartTime, function.__qualname__))
             Pretty.add_indent ()
             
             try:
@@ -26,13 +22,12 @@ def post_execution_output (_func=None, *, logLevel:LogLevel=LogLevel.DEBUG):
             except Exception as ex:
                 status = "ERROR"
                 thrownException = ex
+            
             execution_time = datetime.timedelta (seconds = monotonic () - startTime).total_seconds ()
             printableEndTime = datetime.datetime.now ().strftime ("%H:%M:%S")
-            
             Pretty.reduce_indent ()
-            end_message = Pretty.assemble_output_end_message (printableStartTime, function.__qualname__, status, printableEndTime, execution_time)
-            __log (end_message, logLevel)
-                        
+            print (Pretty.assemble_output_end_message (printableStartTime, function.__qualname__, status, printableEndTime, execution_time))
+            
             if thrownException is not None:
                 raise (thrownException)
             return retval
@@ -40,17 +35,3 @@ def post_execution_output (_func=None, *, logLevel:LogLevel=LogLevel.DEBUG):
     if _func is None:
         return decorator_output
     return decorator_output (_func)
-
-def __log (message:str, logLevel:LogLevel) -> None:
-    if logLevel == LogLevel.CRITICAL:
-        Logger.critical (message)
-    elif logLevel == LogLevel.ERROR:
-        Logger.error (message)
-    elif logLevel == LogLevel.WARNING:
-        Logger.warning (message)
-    elif logLevel == LogLevel.INFO:
-        Logger.info (message)
-    else:
-        Logger.debug (message)
-            
-            

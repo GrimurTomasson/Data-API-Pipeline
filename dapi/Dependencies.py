@@ -1,7 +1,8 @@
 import sys
 import argparse
 
-from .Shared.Decorators import output_headers, execution_time
+from .Shared.Decorators import post_execution_output
+from .Shared.LogLevel import LogLevel
 from .Shared.Config import Config
 from .Shared.Utils import Utils
 from .TargetDatabase.TargetDatabase import Relations, Relation
@@ -15,8 +16,7 @@ class Dependencies:
     def __init__ (self) -> None:
         return
         
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def update_dbt (self):
         """Update dbt dependencies"""
@@ -24,8 +24,7 @@ class Dependencies:
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         return
     
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def test_dbt (self):
         """Test dbt setup"""
@@ -33,8 +32,7 @@ class Dependencies:
         Utils.run_operation (Config.workingDirectory, Config.latestPath, operation)
         return
     
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def test_db_connection (self):
         """Test db connection"""
