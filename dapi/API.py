@@ -2,7 +2,9 @@ import argparse
 
 from sys import argv
 
-from .Shared.Decorators import output_headers, execution_time
+from .Shared.LogLevel import LogLevel
+from .Shared.Logger import Logger
+from .Shared.Decorators import post_execution_output
 from .Shared.AuditDecorators import audit
 
 from .Cleanup import Cleanup
@@ -16,8 +18,7 @@ from .Documentation import Documentation
 
 class API:
     
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def generate (self) -> None:
         """API pipeline run"""
@@ -32,8 +33,7 @@ class API:
         return
     
 
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def generate_data_only (self) -> None:
         """API pipeline run, limited to only creating data (useful for multi-instance api)"""

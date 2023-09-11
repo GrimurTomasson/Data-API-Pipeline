@@ -3,10 +3,12 @@ from pkgutil import get_data
 from dataclasses import dataclass
 import duckdb
 
-from .Shared.Decorators import output_headers, execution_time
+from .Shared.Decorators import post_execution_output
 from .Shared.Config import Config
 from .Shared.Environment import Environment
 from .Shared.Utils import Utils
+from .Shared.PrettyPrint import Pretty
+from .Shared.LogLevel import LogLevel
 from .Shared.Logger import Logger
 from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
 from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
@@ -220,12 +222,12 @@ class DataHealthReport: # Main class
             try:
                 rows = self._targetDatabase.retrieve_cardinality (schemaName, tableName)    
             except Exception as ex:
-                Logger.warning (f"Failure to retrieve relation cardinality: {ex}")
+                Logger.warning (Pretty.assemble_simple (f"Failure to retrieve relation cardinality: {ex}"))
                 
             self._cardinalityMap[key] = rows
             return rows
 
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def __retrieve_json_object (self) -> any:
         """Retrieving json file from disk and fixing it"""
         testLog = Utils.get_file_contents (Config.dbtTestOutputFileInfo.qualified_name)
@@ -237,7 +239,7 @@ class DataHealthReport: # Main class
     
     def __create_relation_stats (self, database_name, schema_name) -> list[RelationStats]:
         relStats = duckdb.sql(f"SELECT * FROM relation_stat WHERE database_name = '{database_name}' AND schema_name = '{schema_name}' ORDER BY relation_name").fetchall()
-        Logger.debug (f"\t\tNumber of relations in {database_name}.{schema_name} in stats data: {len (relStats)}")
+        Logger.debug (Pretty.assemble_simple (f"Number of relations in {database_name}.{schema_name} in stats data: {len (relStats)}"))
         stats = []
         for entry in relStats:
             stats.append (RelationStats (entry[0], entry[1], entry[2], StatsSummary (CountPercentage (entry[3], entry[4]), CountPercentage (entry[5], entry[6]), CountPercentage (entry[7], entry[8]), CountPercentage (entry[9], 100))))
@@ -245,10 +247,10 @@ class DataHealthReport: # Main class
     
     def __create_schema_stats (self, database_name) -> list[SchemaStats]:
         schemaStatsList = duckdb.sql (f"{schemaSummaryQuery} '{database_name}'").fetchall ()
-        Logger.debug (f"\tNumber of schemas in {database_name} in stats data: {len (schemaStatsList)}")
+        Logger.debug (Pretty.assemble_simple (f"Number of schemas in {database_name} in stats data: {len (schemaStatsList)}"))
         schemas = []
         for entry in schemaStatsList:
-            Logger.debug (f"\tStarting work on schema: {entry}")
+            Logger.debug (Pretty.assemble_simple (f"Starting work on schema: {entry}"))
             schemaStats = SchemaStats (database_name, entry[0], StatsSummary (CountPercentage (entry[1], entry[2]), CountPercentage (entry[3], entry[4]), CountPercentage (entry[5], entry[6]), CountPercentage (entry[7], 100)), None)
             schemaStats.relations = self.__create_relation_stats (database_name, entry[0])
             schemas.append (schemaStats)
@@ -260,13 +262,13 @@ class DataHealthReport: # Main class
         #duckdb.execute (f"EXPORT DATABASE '{Config.workingDirectory}'")
         statsSummary = duckdb.sql (statsSummaryQuery).fetchone ()
         summary = StatsSummary (CountPercentage (statsSummary[0], statsSummary[1]), CountPercentage (statsSummary[2], statsSummary[3]), CountPercentage (statsSummary[4], statsSummary[5]), CountPercentage (statsSummary[6], 100))
-        Logger.debug (f"Stats summary: \n\n{summary}\n")
+        Logger.debug (Pretty.assemble_simple (f"Stats summary: {summary}"))
         stats = Stats (summary, [])
         
         databaseStatsList = duckdb.sql (databaseStatsQuery).fetchall ()
-        Logger.debug (f"Number of databases in stats data: {len (databaseStatsList)}")
+        Logger.debug (Pretty.assemble_simple (f"Number of databases in stats data: {len (databaseStatsList)}"))
         for database in databaseStatsList:
-            Logger.debug (f"\nStarting work on database stats for: {database}")
+            Logger.debug (Pretty.assemble_simple (f"Starting work on database stats for: {database}"))
             databaseStats = DatabaseStats (database[0], StatsSummary (CountPercentage (database[1], database[2]), CountPercentage (database[3], database[4]), CountPercentage (database[5], database[6]), CountPercentage (database[7], 100)), None)
             databaseStats.schemas = self.__create_schema_stats (databaseStats.name)
             stats.databases.append (databaseStats)
@@ -281,7 +283,7 @@ class DataHealthReport: # Main class
             if model_name in dependsOn:
                 return manifestJson['nodes'][dependsOn]
         
-        Logger.error (f"No manifest parent node found unique_id: {manifestJson['nodes'][nodeKey]['unique_id']}")
+        Logger.error (Pretty.assemble_simple (f"No manifest parent node found unique_id: {manifestJson['nodes'][nodeKey]['unique_id']}"))
         return None
 
     def __create_manifest_map (self):
@@ -299,7 +301,7 @@ class DataHealthReport: # Main class
             if 'compiled_code' in manifestJson['nodes'][nodeKey]:
                 sql = manifestJson['nodes'][nodeKey]["compiled_code"]
             else:
-                Logger.error (f"No SQL found for test with unique_id: {unique_id}")
+                Logger.error (Pretty.assemble_simple (f"No SQL found for test with unique_id: {unique_id}"))
             parentNode = self.__get_parent_manifest_node (manifestJson, nodeKey)
             schema = parentNode["schema"]
             relation = parentNode["name"]
@@ -310,13 +312,13 @@ class DataHealthReport: # Main class
         return manifest
 
 
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def __retrieve_data(self, jsonObject) -> HealthReport:
         """Extraction of relevant data from dbt testing json"""
         healthReport = HealthReport (None, Stats(None, list[DatabaseStats]), list[Error]())
         
         manifestMap = self.__create_manifest_map ()
-        Logger.debug (f"Number of nodes in manifestMap: {len (manifestMap)}")
+        Logger.debug (Pretty.assemble_simple (f"Number of nodes in manifestMap: {len (manifestMap)}"))
 
         duckdb.sql("create table test_entry(database_name varchar, schema_name varchar, relation_name varchar, test_name varchar, unique_id varchar, result varchar)")
         duckdb.sql("create table error(database_name varchar, schema_name varchar, relation_name varchar, test_name varchar, unique_id varchar, sql_filename varchar, rows_on_error integer, rows_in_relation integer, query_path varchar, sql varchar)")
@@ -353,8 +355,7 @@ class DataHealthReport: # Main class
             errors.append (Error (e[0], e[1], e[2], e[3], e[4], e[5], CountPercentage(e[6], e[7]), e[8], e[9], e[10]))
         return errors
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def generate_data (self) -> None:
         """Generating data health report data"""
         jsonObject = self.__retrieve_json_object () 
@@ -363,38 +364,32 @@ class DataHealthReport: # Main class
         apiHealth.stats = self.__create_stats ()
         apiHealth.errors = self.__generate_errors ()
 
-        Logger.debug (f"\n\nHealth Report: \n{apiHealth}")
-
         jsonData = json.dumps (apiHealth, indent=4, cls=Json.EnhancedJSONEncoder)
         Utils.write_file (jsonData, Config.apiDataHealthReportDataFileInfo.qualified_name)
         return 
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def generate_report (self) -> None:
         """Generating data health report"""
         Utils.generate_markdown_document ("api_data_health_report_template.md", Config.apiDataHealthReportDataFileInfo.name, self._reportFilename)
         return
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def publish (self) -> None:
         """Publishing data health report"""
         self._targetKnowledgeBase.publish (self._reportFilename, 'data-health-report') 
         return
 
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def generate (self) -> None:
         """Producing a data health report"""
 
         if Config['documentation']['data-health-report']['generate'] != True:
             return
-        
-        message = ( f"\tProject name:  {self._projectName}"
-                    f"\tRelative path: {self._projectRelativePath}")
-        Logger.info (message)
+    
+        Logger.debug (Pretty.assemble_simple (f"Project name:  {self._projectName}"))
+        Logger.debug( Pretty.assemble (value=f"Relative path: {self._projectRelativePath}", tabCount=Pretty.Indent+1))
 
         self.generate_data ()
         self.generate_report ()

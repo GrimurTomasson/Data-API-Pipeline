@@ -7,6 +7,7 @@ from .PrettyPrint import Pretty
 from .Logger import Logger
 from .Config import Config
 from .Utils import Utils
+from .BasicDecorators import execution_output
 
 class Environment:
     # From config or environment file
@@ -34,16 +35,17 @@ class Environment:
     environmentVariableFilename = str("dapi.env") # Default value
 
     @staticmethod 
+    @execution_output
     def load (relativePath = None, envFilename = None) -> None:
         filepath = os.path.join (os.getcwd(), relativePath) if relativePath != None and len (relativePath) > 0 else os.getcwd()
         filename = envFilename if envFilename != None and len (envFilename) > 0 else Environment.environmentVariableFilename
         qualifiedName = os.path.join (filepath, filename)
 
         if not os.path.isfile (qualifiedName):
-            print (f"Environment file not found, qualified name: {qualifiedName}")
+            Logger.critical (Pretty.assemble (value=f"Environment file not found, qualified name: {qualifiedName}"))
         else:
             loadType = "" if relativePath == None and envFilename == None else "overridden"
-            Logger.debug (Pretty.assemble (f"\nLoading {loadType} environment variables - {qualifiedName}\n", False, False, Fore.CYAN))
+            Logger.info (Pretty.assemble (value=f"Loading {loadType} environment variables - {qualifiedName}", color=Fore.CYAN, tabCount=Pretty.Indent))
             load_dotenv (dotenv_path=qualifiedName, verbose=True, override=True) 
 
         # We make sure the variables used by dbt profiles are set, port is optional.
@@ -53,7 +55,7 @@ class Environment:
 
         dapiEnvVarKeys = [x for x in os.environ.keys() if x.startswith('DAPI_') and x.find("PASSWORD") == -1]
         for e in dapiEnvVarKeys:
-            Logger.debug (f"{e} = " + Pretty.assemble (f"{os.environ[e]}", False, False, Fore.LIGHTGREEN_EX))
-        Logger.debug ("")
+            value = Pretty.assemble (value=f"{os.environ[e]}", prefixWithIndent=0, color=Fore.LIGHTGREEN_EX)
+            Logger.debug (Pretty.assemble (value=f"{e} = {value}", tabCount=Pretty.Indent))
 
         return

@@ -5,6 +5,7 @@ from colorama import init, Fore, Style
 from .ConfigBase import ConfigBase
 from .PrettyPrint import Pretty
 from .Logger import Logger
+from .BasicDecorators import execution_output
 
 @dataclass
 class FileInfo:
@@ -19,36 +20,55 @@ class FileInfo:
         )
 
 class Config (ConfigBase):
-    _config = ConfigBase.process_config ()
-    logLevel = Logger.logLevel # Upp á config variable logging
+    _config = None
 
     def __init__ (self) -> None:    
-        if hasattr (Config, 'apiDocumentationDataFileInfo'): # Það síðasta sem __generate_path_variables býr til
+        if Config._config is not None:
             return
-
-        Config.__generate_path_variables ()
-        self.__print_contents ()
+        Config.initialize ()
         return
 
+    @staticmethod 
+    @execution_output
+    def initialize () -> None:
+        Config._config = ConfigBase.process_config ()    
+        
+        Config.logLevel = Config._config['log-level']
+        Logger.set_log_level (Config.logLevel)
+        
+        Config.__generate_path_variables ()
+        Config.__print_contents ()
+        return
+
+    @staticmethod
+    def __init_if_needed ():
+        if Config._config is None:
+            Config()
+
     def __class_getitem__ (cls, key):
+        Config.__init_if_needed()
         return Config._config[key]
 
     @staticmethod
     def add (key, value):
+        Config.__init_if_needed()
         Config._config[key] = value
 
     @staticmethod
     def __print_contents ():
-        Logger.debug (Pretty.assemble ("Config variable values", True, True))
+        Config.__init_if_needed()
+        Logger.debug (Pretty.Separator)
+        Logger.debug (Pretty.assemble (value="Config variable values\n", prefixWithIndent=False))
         attributes = Config.get_attributes (Config)
         for key, value in attributes.items(): 
-            Logger.debug (Pretty.assemble (f"\n{key}", False, False, Fore.CYAN))
+            Logger.debug (Pretty.assemble (value=f"{key}", color=Fore.CYAN, prefixWithIndent=False))
             Logger.debug (str (value))
-        Logger.debug ("\n" + Pretty.Separator + "\n")
+        Logger.debug ("\n" + Pretty.Separator)
         return
 
     @staticmethod
     def get_attributes (object):
+        Config.__init_if_needed()
         return { k:v for (k,v) in object.__dict__.items() if not k.startswith ('__') and not callable (getattr (object, k)) }
 
     @staticmethod
@@ -71,5 +91,3 @@ class Config (ConfigBase):
     @staticmethod
     def __get_file_info (name, path) -> FileInfo:
         return FileInfo (name, path, os.path.join (path, name))
-
-Config() # Initialization

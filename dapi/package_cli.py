@@ -17,6 +17,9 @@ from .MetadataCatalog import MetadataCatalog
 from .DefinitionHealthReport import DefinitionHealthReport
 from .Documentation import Documentation
 from .Shared.Audit import Audit
+from .Shared.Logger import Logger
+from .Shared.PrettyPrint import Pretty
+from colorama import Fore
 
 argParser = argparse.ArgumentParser (
     prog='dapi', 
@@ -43,11 +46,16 @@ The only parameter for operations is en environment file, which is optional.
                                 ''')
 argParser.add_argument ('-e', '--environment', required=False, help='Select an environment file to load.')
 argParser.add_argument('-d', '--dbt_run_parameters', required=False, type=str, help='Add any dbt parameters for the run command.')
-argParser.add_argument('-v', '--version', action='version', version=version('dapi'))
+argParser.add_argument('-v', '--version', action='version', version=f"dapi version: {version('dapi')}")
 
 def main ():
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
-
+    print (Pretty.assemble (value=f"\nRunning dapi version: {version('dapi')}\n", color=Fore.GREEN, prefixWithIndent=False))
+    print (Pretty.assemble (value=Pretty.get_postfix_line ("Initialization starts"), color=Fore.LIGHTBLACK_EX, prefixWithIndent=False))
+    
+    Logger()
+    Config() 
+    
     # Overriding the environment, multi-instance support
     envFile = options.environment if options.environment != None and len (options.environment) > 0 else Environment.environmentVariableFilename
     Environment.load (envFilename=envFile)
@@ -56,6 +64,8 @@ def main ():
     #Config[Environment.dbtRunParameters] = ['1', '2']
     Config.add(Environment.dbtRunParameters, options.dbt_run_parameters.split(' ') if options.dbt_run_parameters != None else [])
     Audit() # Initialize audit variables
+
+    print (Pretty.assemble (value=Pretty.get_postfix_line ("Initialization ends") + "\n", color=Fore.LIGHTBLACK_EX, prefixWithIndent=False))
 
     if options.operation == 'build':
         API ().generate ()

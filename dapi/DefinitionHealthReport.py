@@ -1,10 +1,12 @@
 import json
 from dataclasses import dataclass, field
 
-from .Shared.Decorators import output_headers, execution_time
+from .Shared.Decorators import post_execution_output
 from .Shared.Config import Config
 from .Shared.Environment import Environment
 from .Shared.Utils import Utils
+from .Shared.PrettyPrint import Pretty
+from .Shared.LogLevel import LogLevel
 from .Shared.Logger import Logger
 from .Shared.Json import EnhancedJSONEncoder
 from .Shared.DataClasses import CountPercentage
@@ -64,7 +66,6 @@ class HealthReport: # Root
     errors: Errors = Utils.default_field (Errors ())
 
 class DefinitionHealthReport:
-
     def __init__ (self) -> None:
         self._targetKnowledgeBase = TargetKnowledgeBaseFactory ().get_target_knowledge_base ()
         self._reportFilename = "api_definition_health_report.md"
@@ -103,9 +104,9 @@ class DefinitionHealthReport:
             relation = enrichedCatalogJson['nodes'][relationKey]
             schemaName = relation['metadata']['schema']
             relationName = relation['metadata']['name']
-            Logger.debug (f"\tSchema: {schemaName} - Relation: {relationName}")
+            Logger.debug (Pretty.assemble_simple (f"Schema: {schemaName} - Relation: {relationName}"))
             if not schemaName in Config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
-                Logger.debug (f"\tNon public schema: {schemaName}")
+                Logger.debug (Pretty.assemble_simple (f"Non public schema: {schemaName}"))
                 continue
             # Per relation stats
             relationTypeErrorList = []
@@ -158,8 +159,7 @@ class DefinitionHealthReport:
 
         return apiHealth
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def generate_data (self) -> None:
         """Generating definition health report data"""
         with open (Config.enrichedDbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
@@ -170,22 +170,19 @@ class DefinitionHealthReport:
         Utils.write_file (jsonData, Config.apiDefinitionHealthReportDataFileInfo.qualified_name) 
         return
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def generate_report (self) -> None:
         """Generating definition health report"""
         Utils.generate_markdown_document ("api_definition_health_report_template.md", Config.apiDefinitionHealthReportDataFileInfo.name, self._reportFilename)
         return
 
-    @output_headers(tabCount=1)
-    @execution_time(tabCount=1)
+    @post_execution_output (logLevel=LogLevel.INFO)
     def publish (self) -> None:
         """Publishing definition health report"""
         self._targetKnowledgeBase.publish (self._reportFilename, 'definition-health-report')
         return
 
-    @output_headers
-    @execution_time
+    @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def generate (self) -> None:
         """Producing a definition health report"""

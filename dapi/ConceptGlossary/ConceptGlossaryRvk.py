@@ -1,9 +1,10 @@
 from .ConceptGlossary import ConceptGlossary, ConceptGlossaryDefinition
 from ..Shared.Environment import Environment
 from ..Shared.Utils import Utils
+from ..Shared.PrettyPrint import Pretty
 from ..Shared.Logger import Logger
 from ..Shared.Config import Config
-from ..Shared.Decorators import execution_time
+from ..Shared.Decorators import post_execution_output
 from ..TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory
 
 class ConceptGlossaryRvk (ConceptGlossary):
@@ -74,7 +75,7 @@ ORDER BY
     def __init__ (self):
         self._databaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
 
-    @execution_time
+    @post_execution_output
     def load_glossary_data (self):
         ConceptGlossaryRvk._glossary = {}
         targetDatabase = TargetDatabaseFactory ().get_target_database ()
@@ -92,7 +93,7 @@ ORDER BY
                 ConceptGlossaryRvk._glossary[schemaName][tableName] = { }
             ConceptGlossaryRvk._glossary[schemaName][tableName][columnName] = ConceptGlossaryDefinition (row.concept_name, row.description, row.data_type, row.max_length)
         
-        Logger.debug (f"\t\tNumber of concept glossary entries: {len (rows)}")
+        Logger.debug (Pretty.assemble_simple (f"Number of concept glossary entries: {len (rows)}"))
         return
     
     def get_glossary_column_data (self, schemaName, tableName, columnName) -> ConceptGlossaryDefinition:
