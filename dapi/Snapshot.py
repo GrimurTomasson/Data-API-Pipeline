@@ -52,7 +52,7 @@ class Snapshot:
         noMissingTables = len (missingTables)
         Logger.info (Pretty.assemble_simple (f"Number of missing snapshot tables: {noMissingTables}"))
         for missingTable in missingTables:
-            Logger.info (Pretty.assemble (value=f"Creating missing snapshot table: {self._snapshotDb.get_database_name()}.{snapshot_schema}.{missingTable} -> ", end="", tabCount=Pretty.Indent+1))
+            Logger.info (Pretty.assemble (value=f"Creating missing snapshot table: {self._snapshotDb.get_database_name()}.{snapshot_schema}.{missingTable}", tabCount=Pretty.Indent+1))
             # Our API tables always contain a first column, single column unique id
             firstColumn = self.__get_first_column (self._sourceRelations, missingTable)
             self._snapshotDb.create_empty_target_table (source_database, source_schema, missingTable, [firstColumn], snapshot_schema, missingTable, self._snapshotDateColumnName)

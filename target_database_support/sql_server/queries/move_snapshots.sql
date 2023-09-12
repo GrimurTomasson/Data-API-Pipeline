@@ -1,8 +1,8 @@
 WITH
 	snapshot_base AS (
 		SELECT 
-			'MASTER-API' AS source_database
-			,'MASTER-API-PRIVATE' AS target_database
+			'SFS-API' AS source_database
+			,'SFS-API-PRIVATE' AS target_database
 			,'Private_snapshot' AS source_schema
 			,'Snapshot' AS target_schema
 	)
@@ -16,9 +16,9 @@ WITH
 		,'[' + b.source_database + '].[' + b.source_schema + '].[' + t.TABLE_NAME + ']' AS source_name
 		,'[' + b.target_database + '].[' + b.target_schema + '].[' + t.TABLE_NAME + ']' AS target_name
 	FROM 
-		[MASTER-API-PRIVATE].INFORMATION_SCHEMA.TABLES t 
+		[SFS-API-PRIVATE].INFORMATION_SCHEMA.TABLES t 
 		JOIN snapshot_base b ON b.target_schema = t.TABLE_SCHEMA
-		JOIN [MASTER-API].INFORMATION_SCHEMA.TABLES s ON s.TABLE_SCHEMA = b.source_schema AND s.TABLE_NAME = t.TABLE_NAME -- Pössum að töflurnar séu til báðu megin.
+		JOIN [SFS-API].INFORMATION_SCHEMA.TABLES s ON s.TABLE_SCHEMA = b.source_schema AND s.TABLE_NAME = t.TABLE_NAME -- Pössum að töflurnar séu til báðu megin.
 )
 SELECT TOP 1
 '-- Simple insert' + char(13) + char(13) +
@@ -41,7 +41,7 @@ AS simple_insert_sql
 '	BEGIN TRANSACTION' + char(13) + char(13) +
 '	INSERT INTO ' + s.target_name + char(13) +
 -- The target database is pinned here too
-'	SELECT ' + (SELECT string_agg (column_name, ', ') FROM [MASTER-API-PRIVATE].INFORMATION_SCHEMA.COLUMNS WHERE table_schema = s.target_schema and table_name = s.TABLE_NAME) + char(13) +
+'	SELECT ' + (SELECT string_agg (column_name, ', ') FROM [SFS-API-PRIVATE].INFORMATION_SCHEMA.COLUMNS WHERE table_schema = s.target_schema and table_name = s.TABLE_NAME) + char(13) +
 '	FROM ' + s.source_name  + char(13) +
 '	WHERE sogu_dagur =  @sogu_dagur' + char(13) + char(13) +
 '	SET @rows = @@ROWCOUNT' + char(13) +

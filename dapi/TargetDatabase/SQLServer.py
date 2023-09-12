@@ -224,7 +224,7 @@ class SQLServer (TargetDatabase):
             
         command = command[:-2] # Remove the last comma
         command += "\n)"
-        Logger.debug (Pretty.assemble_simple (f"Creating table: \n{command}"))
+        Logger.debug (Pretty.assemble_simple (command))
         self.get_connection().cursor ().execute (command)
         return    
     
