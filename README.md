@@ -17,17 +17,17 @@ Make sure you have the [dependencies](##Dependencies) covered.
 
 ### API Configuration
 1. Create a project folder and perform the following steps in a *PowerShell* terminal in your new folder.
-2. Find a path to the *Python* version you want to use, we need at least 3.11, run: 
+2. Find a path to the *Python* version you want to use, we need at least 3.11, run:  
     `py -0p`
-3. Create a virtual environment for *Python*, called `.venv`
+3. Create a virtual environment for *Python*, called `.venv`  
         Example: `c:\"Program files"\python311\python.exe -m venv .venv`
-4. Activate the virtual environment, run: 
+4. Activate the virtual environment, run:  
     `.\.venv\Scripts\Activate.ps1`
-5. Install *dapi* in the virtual environment, run:
+5. Install *dapi* in the virtual environment, run:  
     `pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 6. Run `create-dapi` with parameters.
 7. Edit `api_documentation_template.md`, write a high level description of the API.
-8. To load environment variables for *dev* environment and activate *python* virtual environment, run:
+8. To load environment variables for *dev* environment and activate *python* virtual environment, run:  
     `.\set_terminal.ps1`
 
 #### Example folder structure
