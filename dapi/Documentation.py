@@ -33,6 +33,7 @@ class Column:
 class Relation:
         schema_name: str = Utils.default_field ('')
         relation_name: str = Utils.default_field ('')
+        description: str = Utils.default_field ('')
         columns: list[Column] = Utils.default_field([])
 
 @dataclass
@@ -49,7 +50,7 @@ class Documentation:
     def __get_column_description (self, columnData) -> ColumnDescription:
         if len (columnData['description']) > 0: # Yfirskrifar skilgreiningar.
             return ColumnDescription (columnData['description'], "Athugasemd við dálk")
-        if len (columnData['glossary_info']['description']) > 0:
+        if 'glossary_info' in columnData and 'description' in columnData['glossary_info'] and len (columnData['glossary_info']['description']) > 0:
             return ColumnDescription (columnData['glossary_info']['description'], "Hugtök")
         return ColumnDescription (None, None, True)
 
@@ -59,13 +60,14 @@ class Documentation:
             relationData = enrichedCatalogJson['nodes'][relationKey]
             schemaName = relationData['metadata']['schema']
             relationName = relationData['metadata']['name']
+            relationDescription = relationData['metadata']['description'] if 'description' in relationData['metadata'] else ''
             Logger.debug (Pretty.assemble_simple (f"Schema: {schemaName} - Relation: {relationName}"))
             
             if not schemaName in Config['public-schemas']: # Það koma með öðrum orðum hvorki öll vensl né dálkar inn
                 Logger.debug (Pretty.assemble_simple (f"Non public schema: {schemaName}"))
                 continue
             
-            relation = Relation (schemaName, relationName)
+            relation = Relation (schemaName, relationName, relationDescription)
             for columnKey in relationData['columns']:
                 columnData = relationData['columns'][columnKey]
                 columnType = ColumnType (columnData['database_info']['type_name'], self._targetDatabase.get_type_length(columnData))
