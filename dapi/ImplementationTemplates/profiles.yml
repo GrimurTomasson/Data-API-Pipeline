@@ -1,4 +1,4 @@
-DataAPI:
+nustada:
   target: prod
   outputs:
     prod:
