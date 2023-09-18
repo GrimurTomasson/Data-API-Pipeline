@@ -14,7 +14,7 @@ concept-glossary:
   type: 'None' # None, csv, Rvk
 
 latest:
-    name: 'Nustada'
+    name: 'DataAPI'
     relative-path: 'DataAPI' # No slashes before or after!
 
 history:
