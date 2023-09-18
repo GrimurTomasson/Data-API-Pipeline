@@ -19,7 +19,7 @@ class CreateApi:
         self._templates = ['api_documentation_template.md', 'api_config.yml', 'dapi.env', 'load_env.ps1', 'set_terminal.ps1']
         
         self._workingDir = os.getcwd ()
-        self._dataApiPath = os.path.join (self._workingDir, self._data_api)
+        self._dataApiPath = os.path.join (self._workingDir, self._current)
         self._superPath, self._workingDirName = os.path.split (self._workingDir)
         return
 
