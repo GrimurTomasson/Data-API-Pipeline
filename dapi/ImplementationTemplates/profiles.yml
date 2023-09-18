@@ -6,7 +6,7 @@ DataAPI:
       driver: 'ODBC Driver 18 for SQL Server'
       server: "{{ env_var('DAPI_DATABASE_SERVER') }}"
       database: "{{ env_var('DAPI_DATABASE_INSTANCE') }}"
-      schema: Nustada
+      schema: nustada
       port: "{{ env_var('DAPI_DATABASE_PORT') | as_number }}"
       trust_cert: True
       windows_login: True

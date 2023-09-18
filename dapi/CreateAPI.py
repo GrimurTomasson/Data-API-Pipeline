@@ -4,28 +4,27 @@ import argparse
 import shutil
 import subprocess
 
+from .Shared.BasicDecorators import execution_output
+
 class CreateApi:
 
     def __init__ (self) -> None:
         self._packageName = 'dapi'
         self._configName = 'api_config.yml'
+        self._dbt_profile = 'profiles.yml'
+        self._env_file = 'dapi.env'
+        self._data_api = 'DataAPI'
         self._implementationTemplates = os.path.join(self._packageName, 'ImplementationTemplates')
 
-        self._templates = ['api_documentation_template.md', 'api_config.yml', 'dapi.env', 'profiles.yml', 'load_env.ps1']
-
+        self._templates = ['api_documentation_template.md', 'api_config.yml', 'dapi.env', 'load_env.ps1', 'set_terminal.ps1']
+        
         self._workingDir = os.getcwd ()
+        self._dataApiPath = os.path.join (self._workingDir, self._data_api)
         self._superPath, self._workingDirName = os.path.split (self._workingDir)
         return
 
-    def __find_package (self) -> str:
-        operation = ['pip3', 'show', self._packageName]
-        packageInfo = subprocess.run (operation, capture_output=True, text=True)
-        locationTxt = "Location: "
-        location = [x for x in packageInfo.stdout.split("\n") if x.startswith(locationTxt)][0].removeprefix(locationTxt)
-        return location
-
+    @execution_output
     def __copy_templates (self) -> None:
-        print ("Copying template files")
         for template in self._templates:
             qualifiedFilename = os.path.join (self._templateDir, template)
             qualifiedTarget = os.path.join (self._workingDir, template)
@@ -33,59 +32,84 @@ class CreateApi:
             shutil.copy2 (qualifiedFilename, qualifiedTarget)
             print (f"\t{template} copied to {self._workingDir}")
         return
+    
+    @execution_output
+    def __copy_profile (self) -> None:
+        qualifiedFilename = os.path.join (self._templateDir, self._dbt_profile)
+        qualifiedTarget = os.path.join (self._dataApiPath, self._dbt_profile)
+        shutil.copy2 (qualifiedFilename, qualifiedTarget)
 
-    def __process_config (self, databaseName, databaseServer, databasePort) -> None:
-        print (f"\nEditing {self._configName}")
-        qualifiedConfig = os.path.join (self._workingDir, self._configName)
-
-        with open (qualifiedConfig, mode="r", encoding="utf-8") as f:
-            config = f.read ()
+    @execution_output
+    def __process_file (self, path, filename, databaseName, databaseServer, databasePort, databaseNamePrivate) -> None:
+        print (f"File: {filename}")
+        qualifiedFilename = os.path.join (path, filename)
+        with open (qualifiedFilename, mode="r", encoding="utf-8") as f:
+            file = f.read ()
 
         # Við breytum þessu með strengjaleikfimi frekar en yml til þess að tapa ekki athugasemdum í config!
-        config = config.replace ('?DATABASE_NAME', databaseName)
-        print (f"\tDatabase name: {databaseName}")
-
-        config = config.replace ('?DATABASE_SERVER', databaseServer)
-        print (f"\tDatabase server: {databaseServer}")
-
-        if databasePort is None:
-            databasePort = ''
-        config = config.replace ('?DATABASE_PORT', databasePort)
-        print (f"\tDatabase server port: {databasePort}")
+        file = file.replace ('?DATABASE_NAME', databaseName)
+        file = file.replace ('?DATABASE_NAME_PRIVATE', databaseNamePrivate if databaseNamePrivate is not None else '')
+        file = file.replace ('?DATABASE_SERVER', databaseServer)
+        file = file.replace ('?DATABASE_PORT', databasePort if databasePort is not None else '')
         
-        targetConfig = os.path.join (os.getcwd (), self._configName)
-        with open (targetConfig, mode="w", encoding="utf-8") as f:
-            f.write (config)
-        print ("\nUpdated config written")
+        with open (qualifiedFilename, mode="w", encoding="utf-8") as f:
+            f.write (file)
         return
+
+    @execution_output
+    def __process_config (self, databaseName, databaseServer, databasePort, databaseNamePrivate) -> None:
+        return self.__process_file (self._workingDir, self._configName, databaseName, databaseServer, databasePort, databaseNamePrivate)    
+    
+    @execution_output
+    def __process_env (self, databaseName, databaseServer, databasePort, databaseNamePrivate) -> None:
+        return self.__process_file (self._workingDir, self._env_file, databaseName, databaseServer, databasePort, databaseNamePrivate)    
+    
+    @execution_output
+    def __create_dbt_project (self) -> None:
+        subprocess.run (['dbt', 'init', self._data_api])
         
-    def generate (self, databaseName, databaseServer, databasePort) -> None:
+    @execution_output
+    def generate (self, databaseName, databaseServer, databasePort, databaseNamePrivate) -> None:
         print (f"\nWorking directory: {self._workingDir}")
-
-        print (f"\nLooking for the {self._packageName} package location")
-        pipelineLocation = self.__find_package ()
-        if len (pipelineLocation) == 0:
-            print (f"We cannot find the location of the {self._packageName} package!")
-            exit(1)
-
-        print (f"{self._packageName} found at: {pipelineLocation}\n")
+        
+        self.__create_dbt_project ()
+        self.__copy_profile ()
+        
+        pipelineLocation = os.path.join(self._workingDir, '.venv\Lib\site-packages\dapi') # Finna með leit?
         self._templateDir = os.path.abspath (os.path.join (pipelineLocation, self._implementationTemplates))
         print (f"Template directory: {self._templateDir}\n")
-
+    
         self.__copy_templates ()
-        self.__process_config (databaseName, databaseServer, databasePort)
+        self.__process_config (databaseName, databaseServer, databasePort, databaseNamePrivate)
+        self.__process_env (databaseName, databaseServer, databasePort, databaseNamePrivate)
 
-        print ("\nAll done! Remember to edit the config!\n")
+        print ("All done!")
+        print ("Run set_terminal.ps1 to set up the environment and then dapi to see what your options are.")
         return
 
 def main():
-    argParser = argparse.ArgumentParser (prog='dapi', description='Data API pipeline creation.', formatter_class=argparse.RawTextHelpFormatter)
+    argParser = argparse.ArgumentParser (prog='dapi', 
+                                         description='Data API pipeline creation. Run this in the project folder you already created.', 
+                                         formatter_class=argparse.RawTextHelpFormatter,
+                                         help='''
+    1. Create a project folder and perform the following steps in a terminal (PowerShell) in that folder.
+    2. To find the highest version Python, we need at least 3.11, run: 
+        py -0p, .
+    3. Create a virtual environment for Python, called .venv. 
+        Example: c:\"Program files"\python311\python.exe -m venv .venv
+    4. Activate the virtual environment, run: 
+        .\.venv\Scripts\Activate.ps1
+    5. Install dapi in the virtual environment, run:
+        pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline
+    6. Run dapi create with parameters.''')
+    
     argParser.add_argument ('-d', '--databaseName', required=True, help='Database name.')
     argParser.add_argument ('-s', '--databaseServer', required=True, help='Database server.')
     argParser.add_argument ('-p', '--databasePort', required=False, help='Database port, if not default.')
+    argParser.add_argument ('-r', '--databaseNamePrivate', required=False, help='Database name for the private database.')
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
 
-    CreateApi ().generate (options.databaseName, options.databaseServer, options.databasePort)
+    CreateApi ().generate (options.databaseName, options.databaseServer, options.databasePort, options.databaseNamePrivate)
 
 if __name__ == '__main__':
     main ()

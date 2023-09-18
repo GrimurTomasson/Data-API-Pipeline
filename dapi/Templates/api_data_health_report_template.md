@@ -63,11 +63,11 @@
 
 ### {{ error.unique_id }}
 
-Gagnagrunnur: `{{ error.database_name }}`
-Skema: `{{ error.schema_name }}`
-Vensl: `{{ error.relation_name }}`
-Heiti prófunar: `{{ error.test_name }}`
-Slóð á SQL fyrirspurn: `{{ error.query_path }}`
+Gagnagrunnur:           `{{ error.database_name }}`  
+Skema:                  `{{ error.schema_name }}`  
+Vensl:                  `{{ error.relation_name }}`  
+Heiti prófunar:         `{{ error.test_name }}`  
+Slóð á SQL fyrirspurn:  `{{ error.query_path }}`  
 
 ```sql
 {{ error.sql }}

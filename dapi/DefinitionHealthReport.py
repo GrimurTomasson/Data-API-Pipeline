@@ -72,17 +72,19 @@ class DefinitionHealthReport:
         return
 
     def __check_for_documentation_error (self, schemaName, relationName, columnName, column) -> Error:
-        if len (column['description']) == 0 and len (column['glossary_info']['description']) == 0:
-            return Error (schemaName, relationName, columnName, 'Skjölun vantar!')
-        return None
+        if len (column['description']) > 0:
+            return None
+        if 'glossary_info' in column and 'description' in column['glossary_info'] and len (column['glossary_info']['description']) > 0:
+            return None
+        return Error (schemaName, relationName, columnName, 'Skjölun vantar!')
 
     def __check_for_concept_overwrite (self, schemaName, relationName, columnName, column) -> Concept:
-        if len (column['description']) > 0 and len (column['glossary_info']['description']) > 0:
+        if len (column['description']) > 0 and 'glossary_info' in column and 'description' in column['glossary_info'] and len (column['glossary_info']['description']) > 0:
             return Concept (schemaName, relationName, columnName, column['glossary_info']['name'])
         return None
 
     def __check_for_type_error (self, schemaName, relationName, columnName, column) -> Error:
-        if len (column['glossary_info']['data_type']) == 0: # Ekki hugtak úr CG/DD
+        if 'glossary_info' not in column or 'data_type' not in column['glossary_info'] or len (column['glossary_info']['data_type']) == 0: # Ekki hugtak úr CG/DD
             return None
 
         glossaryType = column['glossary_info']['data_type']

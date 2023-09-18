@@ -1,10 +1,11 @@
 from ..Shared.Config import Config
 from .ConceptGlossary import ConceptGlossary
 from .ConceptGlossaryRvk import ConceptGlossaryRvk
+from .ConceptGlossaryCsv import ConceptGlossaryCsv
 from .ConceptGlossaryNone import ConceptGlossaryNone
 
 class ConceptGlossaryFactory:
-    _supportedGlossaries = ['Rvk', 'None']
+    _supportedGlossaries = ['Rvk', 'csv', 'None']
 
     def __init__(self):
         self._glossary = self.__generate_glossary ()
@@ -20,5 +21,7 @@ class ConceptGlossaryFactory:
         
         if self._glossaryName == 'Rvk':    
             return ConceptGlossaryRvk ()
+        elif self._glossaryName == 'csv':
+            return ConceptGlossaryCsv ()
         elif self._glossaryName == 'None':
             return ConceptGlossaryNone ()

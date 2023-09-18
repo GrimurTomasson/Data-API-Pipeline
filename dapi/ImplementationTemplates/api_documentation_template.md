@@ -19,6 +19,7 @@ Venslin í þessu viðmóti skiptast í tvo flokka, nústöðu og söguleg gögn
 
 {% for rel in relations -%}
 ## {{ rel.schema_name }}.{{ rel.relation_name }}
+{{ rel.description }}  
 
 | Dálkur        | Lýsing        | Týpa          | Lengd         | Uppruni lýsingar |
 | :------------ | :------------ | :------------ | :------------ | :------------    |
