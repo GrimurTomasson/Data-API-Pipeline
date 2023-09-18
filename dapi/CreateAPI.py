@@ -49,8 +49,9 @@ class CreateApi:
             file = f.read ()
 
         # Við breytum þessu með strengjaleikfimi frekar en yml til þess að tapa ekki athugasemdum í config!
+        databaseNamePrivate = databaseNamePrivate if databaseNamePrivate is not None else ''
+        file = file.replace ('?DATABASE_NAME_PRIVATE', databaseNamePrivate)
         file = file.replace ('?DATABASE_NAME', databaseName)
-        file = file.replace ('?DATABASE_NAME_PRIVATE', databaseNamePrivate if databaseNamePrivate is not None else '')
         file = file.replace ('?DATABASE_SERVER', databaseServer)
         file = file.replace ('?DATABASE_PORT', databasePort if databasePort is not None else '')
         
@@ -111,6 +112,9 @@ def main():
     argParser.add_argument ('-p', '--databasePort', required=False, help='Database port, if not default.')
     argParser.add_argument ('-r', '--databaseNamePrivate', required=False, help='Database name for the private database.')
     options = argParser.parse_args (sys.argv[1:]) # Getting rid of the filename
+
+    # print (sys.argv)
+    # print (options.databaseNamePrivate)
 
     CreateApi ().generate (options.databaseName, options.databaseServer, options.databasePort, options.databaseNamePrivate)
 

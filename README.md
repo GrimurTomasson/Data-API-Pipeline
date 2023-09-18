@@ -25,7 +25,8 @@ Make sure you have the [dependencies](##Dependencies) covered.
     `.\.venv\Scripts\Activate.ps1`
 5. Install *dapi* in the virtual environment, run:  
     `pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline`
-6. Run `create-dapi` with parameters.
+6. Run `create-dapi` with parameters. Example:
+    `create-dapi -s my-server -d my-api -r my-api-private`
 7. Edit `api_documentation_template.md`, write a high level description of the API.
 8. To load environment variables for *dev* environment and activate *python* virtual environment, run:  
     `.\set_terminal.ps1`
