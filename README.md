@@ -15,8 +15,16 @@ Make sure you have the [dependencies](##Dependencies) covered.
     - `X` is the major version and `Y` the minor one.
     - See the branch list for available versions.
 
+#### Example folder structure
+Here, *reference* is the concept we are working with as well as a folder, *data_api* and *current* are subfolders. 
+```
+reference  
+    data_api -> contains api_config.yml, api_documentation_template.md and optionally dapi.env  
+        current -> contains the dbt project and optionally profiles.yml  
+```
+
 ### API Configuration
-1. Create a project folder and perform the following steps in a *PowerShell* terminal in your new folder.
+1. Create a project folder and a `data_api` folder within it and perform the following steps in a *PowerShell* terminal in the `data_api` folder.
 2. Find a path to the *Python* version you want to use, we need at least 3.11, run:  
     `py -0p`
 3. Create a virtual environment for *Python*, called `.venv`  
@@ -30,14 +38,6 @@ Make sure you have the [dependencies](##Dependencies) covered.
 7. Edit `api_documentation_template.md`, write a high level description of the API.
 8. To load environment variables for *dev* environment and activate *python* virtual environment, run:  
     `.\set_terminal.ps1`
-
-#### Example folder structure
-Here, *reference* is the concept we are working with as well as a folder, *data_api* and *current* are subfolders. 
-```
-reference  
-    data_api -> contains api_config.yml, api_documentation_template.md and optionally dapi.env  
-        current -> contains the dbt project and optionally profiles.yml  
-```
 
 ### General use
 In a *console* at the root directory of your Data API, run `dapi build` to run all the steps.
