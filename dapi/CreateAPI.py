@@ -13,7 +13,7 @@ class CreateApi:
         self._configName = 'api_config.yml'
         self._dbt_profile = 'profiles.yml'
         self._env_file = 'dapi.env'
-        self._data_api = 'DataAPI'
+        self._current = 'nustada'
         self._implementationTemplates = os.path.join(self._packageName, 'ImplementationTemplates')
 
         self._templates = ['api_documentation_template.md', 'api_config.yml', 'dapi.env', 'load_env.ps1', 'set_terminal.ps1']
@@ -69,7 +69,7 @@ class CreateApi:
     
     @execution_output
     def __create_dbt_project (self) -> None:
-        subprocess.run (['dbt', 'init', self._data_api])
+        subprocess.run (['dbt', 'init', self._current])
         
     @execution_output
     def generate (self, databaseName, databaseServer, databasePort, databaseNamePrivate) -> None:
