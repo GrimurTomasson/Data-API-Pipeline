@@ -8,20 +8,27 @@ The following is focused on getting this software running on a development machi
 
 ### Setup
 Make sure you have the [dependencies](##Dependencies) covered.  
-- Create a [virtual environment for Python](https://docs.python.org/3/library/venv.html). For example, on a *Windows* machine we could run `python -m venv .\pyEnv`  
-- Enable the virtual environment by running `.\pyEnv\Scripts\activate`  
+- Create a [virtual environment for Python](https://docs.python.org/3/library/venv.html). For example, on a *Windows* machine we could run `python -m venv .venv`  
+- Enable the virtual environment by running `.\.venv\Scripts\activate`  
 - For the most recent version, run `pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline`
 - For a specific version, run `pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline.git@rX.Y`
     - `X` is the major version and `Y` the minor one.
     - See the branch list for available versions.
 
 ### API Configuration
-1. Create a `dbt` project in a subfolder of the root directory of your Data API.
-2. In a *console* at the root directory of your Data API, run `create-dapi` to initialize the pipeline.
-3. Consider using the `profiles.yml` file as the base for your `dbt` profiles, it supports environment variables quite well.
-4. Edit `api_config.yml`, it contains helpful information in the form of comments.
-5. Edit `api_documentation_template.md`, write a high level description of the API.
-6. Edit `dapi.env` if you need to store secrets on development machines.
+1. Create a project folder and perform the following steps in a *PowerShell* terminal in your new folder.
+2. Find a path to the *Python* version you want to use, we need at least 3.11, run: 
+    `py -0p`
+3. Create a virtual environment for *Python*, called `.venv`
+        Example: `c:\"Program files"\python311\python.exe -m venv .venv`
+4. Activate the virtual environment, run: 
+    `.\.venv\Scripts\Activate.ps1`
+5. Install *dapi* in the virtual environment, run:
+    `pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline`
+6. Run `create-dapi` with parameters.
+7. Edit `api_documentation_template.md`, write a high level description of the API.
+8. To load environment variables for *dev* environment and activate *python* virtual environment, run:
+    `.\set_terminal.ps1`
 
 #### Example folder structure
 Here, *reference* is the concept we are working with as well as a folder, *data_api* and *current* are subfolders. 
