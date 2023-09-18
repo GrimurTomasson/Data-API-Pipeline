@@ -37,6 +37,8 @@ class CreateApi:
     def __copy_profile (self) -> None:
         qualifiedFilename = os.path.join (self._templateDir, self._dbt_profile)
         qualifiedTarget = os.path.join (self._dataApiPath, self._dbt_profile)
+        print (f"Source file: {qualifiedFilename}")
+        print (f"Target file: {qualifiedTarget}")
         shutil.copy2 (qualifiedFilename, qualifiedTarget)
 
     @execution_output
@@ -72,18 +74,16 @@ class CreateApi:
     def generate (self, databaseName, databaseServer, databasePort, databaseNamePrivate) -> None:
         print (f"\nWorking directory: {self._workingDir}")
         
-        self.__create_dbt_project ()
-        self.__copy_profile ()
-        
-        pipelineLocation = os.path.join(self._workingDir, '.venv\Lib\site-packages\dapi') # Finna með leit?
+        pipelineLocation = os.path.join(self._workingDir, '.venv\Lib\site-packages') # Finna með leit?
         self._templateDir = os.path.abspath (os.path.join (pipelineLocation, self._implementationTemplates))
         print (f"Template directory: {self._templateDir}\n")
-    
+        
+        self.__create_dbt_project ()
+        self.__copy_profile ()
         self.__copy_templates ()
         self.__process_config (databaseName, databaseServer, databasePort, databaseNamePrivate)
         self.__process_env (databaseName, databaseServer, databasePort, databaseNamePrivate)
 
-        print ("All done!")
         print ("Run set_terminal.ps1 to set up the environment and then dapi to see what your options are.")
         return
 
@@ -91,7 +91,9 @@ def main():
     argParser = argparse.ArgumentParser (prog='dapi', 
                                          description='Data API pipeline creation. Run this in the project folder you already created.', 
                                          formatter_class=argparse.RawTextHelpFormatter,
-                                         help='''
+                                         epilog='''
+    Instructions
+    -----------------------------------------------------------------------------------------------------
     1. Create a project folder and perform the following steps in a terminal (PowerShell) in that folder.
     2. To find the highest version Python, we need at least 3.11, run: 
         py -0p, .
@@ -101,7 +103,8 @@ def main():
         .\.venv\Scripts\Activate.ps1
     5. Install dapi in the virtual environment, run:
         pip install -U git+https://github.com/GrimurTomasson/Data-API-Pipeline
-    6. Run dapi create with parameters.''')
+    6. Run create-dapi with parameters.
+    -----------------------------------------------------------------------------------------------------''')
     
     argParser.add_argument ('-d', '--databaseName', required=True, help='Database name.')
     argParser.add_argument ('-s', '--databaseServer', required=True, help='Database server.')
