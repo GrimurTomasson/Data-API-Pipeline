@@ -172,13 +172,20 @@ class DefinitionHealthReport:
             docErrors = CountPercentage (len (relationDocsErrorList), Utils.to_percentage (len (relationDocsErrorList), relationColumns))
             testErrors = CountPercentage (len (relationTestCoverageErrorList), Utils.to_percentage (len (relationTestCoverageErrorList), relationColumns))
             relationStats = StatsRelation (schemaName, relationName, relationColumns, overwrittenConcepts, okColumns, errors, typeErrors, docErrors, testErrors)
-            apiHealth.stats.relation.append (relationStats)
+            apiHealth.stats.relation.append (relationStats) 
             
             apiHealth.overwritten_concepts.extend (relationOverwrittenConceptList)
             apiHealth.errors.type.extend (relationTypeErrorList)
             apiHealth.errors.documentation.extend (relationDocsErrorList)
             apiHealth.errors.test_coverage.extend (relationTestCoverageErrorList)
-            
+        
+        # Röðun niðurstaða
+        apiHealth.overwritten_concepts = sorted (apiHealth.overwritten_concepts, key=lambda x: x.schema_name + x.relation_name + x.column_name)
+        apiHealth.errors.type = sorted (apiHealth.errors.type, key=lambda x: x.schema_name + x.relation_name + x.column_name)
+        apiHealth.errors.documentation = sorted (apiHealth.errors.documentation, key=lambda x: x.schema_name + x.relation_name + x.column_name)
+        apiHealth.errors.test_coverage = sorted (apiHealth.errors.test_coverage, key=lambda x: x.schema_name + x.relation_name + x.column_name)
+        apiHealth.stats.relation = sorted (apiHealth.stats.relation, key=lambda x: x.schema_name + x.relation_name)
+        
         oaOverwrittenConcepts = CountPercentage (len (apiHealth.overwritten_concepts), Utils.to_percentage (len (apiHealth.overwritten_concepts), columnsTotal))
         oaOkColumns = CountPercentage (okColumnsTotal, Utils.to_percentage (okColumnsTotal, columnsTotal))
         

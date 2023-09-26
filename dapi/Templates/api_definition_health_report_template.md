@@ -66,3 +66,17 @@ Fjöldatölur prófana ná bæði yfir prófanir á stökum dálkum og venslum, 
 {% endfor -%}
 {% endfor -%}
 ---
+### Vensl
+| Gagnagrunnur           | Skema                 | Vensl                                | Dálkur                                 | Fjöldi prófana |
+| :--------------------- | :-------------------- | :----------------------------------- | :------------------------------------- | -------------: |
+{% for db_key, db_value in test_coverage.column.items() -%}
+{% for schema_key, schema_value in db_value.items() -%}
+{% for relation_key, relation_value in schema_value.items() -%}
+{% for column_key, column_value in relation_value.items() -%}
+| {{ db_key }} | {{ schema_key }} | {{ relation_key }} | {{ column_key }} | {{ column_value }} |
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+
+---
