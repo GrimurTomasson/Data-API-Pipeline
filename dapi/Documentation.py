@@ -83,6 +83,7 @@ class Documentation:
             enrichedCatalogJson = json.load (json_file)
         
         documentation = self.__generate_documentation (enrichedCatalogJson)
+        documentation.relations = sorted (documentation.relations, key=lambda x: x.schema_name + x.relation_name)
 
         jsonData = json.dumps (documentation, indent=4, cls=EnhancedJSONEncoder)
         Utils.write_file (jsonData, Config.apiDocumentationDataFileInfo.qualified_name)
