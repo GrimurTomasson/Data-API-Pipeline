@@ -220,14 +220,19 @@ class DefinitionHealthReport:
         
     def __get_test_schema_name (self, database: str, relationName: str, node) -> str:
         code = node["compiled_code"]
-        start = code.find (database) + len (database) + 1
-        end = code.find (relationName) -1
+        #print (Pretty.Separator)
+        end = code.find ('."' + relationName) 
         while end < 0 and relationName.find ("_") > -1: # Vensl hafa verið endurskýrð, við höfum ekki endanlegt nafn en almennt er það án kerfis forskeytis módels. Þetta hangir á nafnahefð :(
-            tempRelationName = relationName[relationName.find ("_") +1 :]
-            print (f"name: {relationName} - cut down name: {tempRelationName}")
-            end = code.find (tempRelationName) -1
+            tempRelationName = relationName[relationName.find ("_") + 1 :]
+            #print (f"name: {relationName} - cut down name: {tempRelationName}")
+            end = code.find ('."' + tempRelationName)
 
-        schema = code[start:end].strip (".\"")
+        codeTemp = code[:end]
+        start = codeTemp.rfind (database + '".') + len (database) + 1 # The one closest to our table name
+        schema = codeTemp[start:end].strip (".\"")
+        #print (f"relation: {relationName} - schema: {schema} - start: {start} - end: {end}")
+        #if schema.find(".") > 0:
+         #   print (f"code: {code}")
         return schema
     
     def __init_dictionary_map(self, map: {}, keys: [], base_value) -> None: # Ætti ekki að vera hér, almennt fall
