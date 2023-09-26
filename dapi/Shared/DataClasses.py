@@ -4,3 +4,8 @@ from dataclasses import dataclass
 class CountPercentage: 
     count: int
     percentage: int 
+    
+dataclass
+class KeyValue:
+    key: str
+    value: str
