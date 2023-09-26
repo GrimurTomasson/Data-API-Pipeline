@@ -211,34 +211,36 @@ class DefinitionHealthReport:
                 name_index[ref[0]] = unique_id.index (ref[0])
             return min (name_index, key=name_index.get)
         
-    def __get_test_schema_name (self, database, relationName, node) -> str:
+    def __get_test_schema_name (self, database: str, relationName: str, node) -> str:
         code = node["compiled_code"]
-        start = code.index (database) + len (database) + 1
-        end = code.index (relationName) -1
+        start = code.find (database) + len (database) + 1
+        end = code.find (relationName) -1
+        while end < 0 and relationName.find ("_") > -1: # Vensl hafa verið endurskýrð, við höfum ekki endanlegt nafn en almennt er það án kerfis forskeytis módels. Þetta hangir á nafnahefð :(
+            tempRelationName = relationName[relationName.find ("_") +1 :]
+            print (f"name: {relationName} - cut down name: {tempRelationName}")
+            end = code.find (tempRelationName) -1
+
         schema = code[start:end].strip (".\"")
-        # print (f"start: {start} - end: {end} - schema: {schema}")
         return schema
     
     def __init_dictionary_map(self, map: {}, keys: [], base_value) -> None: # Ætti ekki að vera hér, almennt fall
         curr_map = map
-        last_key = keys[-1]
-        exists = True
-        for  key in keys:
+        lastIdx = len (keys) - 1
+        for idx, key in enumerate (keys):
             if key not in curr_map:
-                exists = False
-                curr_map[key] = {}
-            if key != last_key:
+                if idx != lastIdx:
+                    curr_map[key] = {}
+                else:
+                    curr_map[key] = base_value        
+            if idx != lastIdx:
                 curr_map = curr_map[key]
-                
-        if exists == False:
-            curr_map[last_key] = base_value
-    
+            
     @post_execution_output
-    def generate_test_data (self, dbtCatalog) -> None:
+    def generate_test_data (self, dbtManifest) -> None:
         relationTestMap = {}
         columnTestMap = {} 
-        for relationKey in dbtCatalog['nodes']:
-            node = dbtCatalog['nodes'][relationKey]
+        for relationKey in dbtManifest['nodes']:
+            node = dbtManifest['nodes'][relationKey]
             if node["resource_type"] != "test":
                 continue
             
@@ -264,9 +266,9 @@ class DefinitionHealthReport:
             enrichedCatalogJson = json.load(json_file)
             
         with open (Config.dbtManifestFileInfo.qualified_name, encoding="utf-8") as json_file:
-            dbtCatalog = json.load(json_file)
+            dbtManifest = json.load(json_file)
 
-        self.generate_test_data (dbtCatalog)
+        self.generate_test_data (dbtManifest)
         apiHealth = self.__generate_health_data (enrichedCatalogJson)
         apiHealth.test_coverage = TestCoverage (self._relationTestMap, self._columnTestMap)
         jsonData = json.dumps (apiHealth, indent=4, cls=EnhancedJSONEncoder)
