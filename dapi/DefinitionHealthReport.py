@@ -9,7 +9,7 @@ from .Shared.PrettyPrint import Pretty
 from .Shared.LogLevel import LogLevel
 from .Shared.Logger import Logger
 from .Shared.Json import EnhancedJSONEncoder
-from .Shared.DataClasses import CountPercentage
+from .Shared.DataClasses import CountPercentage, KeyValue
 from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
 from .Shared.AuditDecorators import audit
 
@@ -22,6 +22,7 @@ class StatsTotal:
     errors: CountPercentage = None
     type_errors: CountPercentage = None
     documentation_errors: CountPercentage = None
+    test_coverage_errors: CountPercentage = None
 
 @dataclass
 class StatsRelation:
@@ -33,6 +34,7 @@ class StatsRelation:
     errors: CountPercentage = None
     type_errors: CountPercentage = None
     documentation_errors: CountPercentage = None
+    test_coverage_errors: CountPercentage = None
 
 @dataclass
 class Stats:
@@ -57,6 +59,12 @@ class Error:
 class Errors:
     type: list[Error] = Utils.default_field ([])
     documentation: list[Error] = Utils.default_field ([])
+    test_coverage: list[Error] = Utils.default_field ([])
+    
+@dataclass
+class TestCoverage:
+    relation: Utils.default_field({})
+    column: Utils.default_field({})
 
 @dataclass
 class HealthReport: # Root 
@@ -64,6 +72,7 @@ class HealthReport: # Root
     stats: Stats = Utils.default_field (Stats ())
     overwritten_concepts: list[Concept] = Utils.default_field([])
     errors: Errors = Utils.default_field (Errors ())
+    test_coverage: TestCoverage = None
 
 class DefinitionHealthReport:
     def __init__ (self) -> None:
@@ -95,6 +104,16 @@ class DefinitionHealthReport:
         if glossaryType == databaseType and glossaryType in ['char', 'nchar', 'varchar', 'nvarchar'] and column['glossary_info']['max_length'] != column['database_info']['max_length']:
             return Error (schemaName, relationName, columnName, f"Lengd gagnatýpu í skilgreiningu hugtaks: {column['glossary_info']['max_length']} - Lengd í grunni: {column['database_info']['max_length']}")
         return None
+    
+    def __check_for_column_test_coverage_error (self, database, schema, relation, column) -> Error:
+        coverage = 0
+        try:
+            coverage = self._columnTestMap[database][schema][relation][column]
+        except Exception as ex:
+            None 
+        if coverage > 0:
+            return None
+        return Error (schema, relation, column, "Engar prófanir skilgreindar fyrir dálk!")
 
     def __generate_health_data (self, enrichedCatalogJson) -> HealthReport:
         apiHealth = HealthReport (api_name = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name'))
@@ -104,6 +123,7 @@ class DefinitionHealthReport:
         
         for relationKey in enrichedCatalogJson['nodes']:
             relation = enrichedCatalogJson['nodes'][relationKey]
+            databaseName = relation['metadata']['database']
             schemaName = relation['metadata']['schema']
             relationName = relation['metadata']['name']
             Logger.debug (Pretty.assemble_simple (f"Schema: {schemaName} - Relation: {relationName}"))
@@ -113,6 +133,7 @@ class DefinitionHealthReport:
             # Per relation stats
             relationTypeErrorList = []
             relationDocsErrorList = []
+            relationTestCoverageErrorList = []
             relationOverwrittenConceptList = []
             relationOkColumns = 0
             
@@ -132,8 +153,12 @@ class DefinitionHealthReport:
                 typeError = self.__check_for_type_error (schemaName, relationName, columnName, column) # Skrifa þetta fall, og líka föll fyrir hinar villurnar!
                 if typeError is not None:
                     relationTypeErrorList.append (typeError)
+                    
+                testError = self.__check_for_column_test_coverage_error (databaseName, schemaName, relationName, columnName)
+                if testError is not None:
+                    relationTestCoverageErrorList.append (testError)
                 
-                relationOkColumns += docError is not None and typeError is not None
+                relationOkColumns += docError is not None and typeError is not None and testError is not None
                 
             relationColumns = len (relation['columns'])
             columnsTotal += relationColumns
@@ -141,33 +166,109 @@ class DefinitionHealthReport:
             
             overwrittenConcepts = CountPercentage (len (relationOverwrittenConceptList), Utils.to_percentage (len (relationOverwrittenConceptList), relationColumns))
             okColumns = CountPercentage (relationOkColumns, Utils.to_percentage (relationOkColumns, relationColumns))
-            combinedErrors = len (relationTypeErrorList) + len (relationDocsErrorList)
+            combinedErrors = len (relationTypeErrorList) + len (relationDocsErrorList) + len (relationTestCoverageErrorList)
             errors = CountPercentage (combinedErrors, Utils.to_percentage (combinedErrors, relationColumns))
             typeErrors = CountPercentage (len (relationTypeErrorList), Utils.to_percentage (len (relationTypeErrorList), relationColumns))
             docErrors = CountPercentage (len (relationDocsErrorList), Utils.to_percentage (len (relationDocsErrorList), relationColumns))
-            relationStats = StatsRelation (schemaName, relationName, relationColumns, overwrittenConcepts, okColumns, errors, typeErrors, docErrors)
+            testErrors = CountPercentage (len (relationTestCoverageErrorList), Utils.to_percentage (len (relationTestCoverageErrorList), relationColumns))
+            relationStats = StatsRelation (schemaName, relationName, relationColumns, overwrittenConcepts, okColumns, errors, typeErrors, docErrors, testErrors)
             apiHealth.stats.relation.append (relationStats)
             
             apiHealth.overwritten_concepts.extend (relationOverwrittenConceptList)
             apiHealth.errors.type.extend (relationTypeErrorList)
             apiHealth.errors.documentation.extend (relationDocsErrorList)
+            apiHealth.errors.test_coverage.extend (relationTestCoverageErrorList)
             
         oaOverwrittenConcepts = CountPercentage (len (apiHealth.overwritten_concepts), Utils.to_percentage (len (apiHealth.overwritten_concepts), columnsTotal))
         oaOkColumns = CountPercentage (okColumnsTotal, Utils.to_percentage (okColumnsTotal, columnsTotal))
-        oaErrors = CountPercentage (len (apiHealth.errors.type) + len (apiHealth.errors.documentation), Utils.to_percentage (len (apiHealth.errors.type) + len (apiHealth.errors.documentation), columnsTotal))
+        
+        oaErrorCount = len (apiHealth.errors.type) + len (apiHealth.errors.documentation) + len (apiHealth.errors.test_coverage)
+        oaErrors = CountPercentage (oaErrorCount, Utils.to_percentage (oaErrorCount, columnsTotal))
+        
         oaTypeErrors = CountPercentage (len (apiHealth.errors.type), Utils.to_percentage (len (apiHealth.errors.type), columnsTotal))
         oaDocErrors = CountPercentage (len (apiHealth.errors.documentation), Utils.to_percentage (len (apiHealth.errors.documentation), columnsTotal))
-        apiHealth.stats.total = StatsTotal (relationsTotal, oaOverwrittenConcepts, columnsTotal, oaOkColumns, oaErrors, oaTypeErrors, oaDocErrors)
+        oaTestErrors = CountPercentage (len (apiHealth.errors.test_coverage), Utils.to_percentage (len (apiHealth.errors.test_coverage), columnsTotal))
+        
+        apiHealth.stats.total = StatsTotal (relationsTotal, oaOverwrittenConcepts, columnsTotal, oaOkColumns, oaErrors, oaTypeErrors, oaDocErrors, oaTestErrors)
 
         return apiHealth
+    
+    def __get_test_relation_name (self, node) -> str:
+        if len (node["refs"]) == 0:
+            Logger.error (Pretty.assemble_simple (f"No relation name found for test (unique_id): {unique_id}"))
+            return None
+        
+        refs = node["refs"]
+        #print (f"{refs} - len: {len(refs)} - unique_id: {node['unique_id']}")
+        
+        if len (refs) == 1:
+            return refs[0][0]
+        unique_id = node["unique_id"]
+        
+        if len (refs) > 1:
+            name_index = {}
+            for ref in refs:
+                name_index[ref[0]] = unique_id.index (ref[0])
+            return min (name_index, key=name_index.get)
+        
+    def __get_test_schema_name (self, database, relationName, node) -> str:
+        code = node["compiled_code"]
+        start = code.index (database) + len (database) + 1
+        end = code.index (relationName) -1
+        schema = code[start:end].strip (".\"")
+        # print (f"start: {start} - end: {end} - schema: {schema}")
+        return schema
+    
+    def __init_dictionary_map(self, map: {}, keys: [], base_value) -> None: # Ætti ekki að vera hér, almennt fall
+        curr_map = map
+        last_key = keys[-1]
+        exists = True
+        for  key in keys:
+            if key not in curr_map:
+                exists = False
+                curr_map[key] = {}
+            if key != last_key:
+                curr_map = curr_map[key]
+                
+        if exists == False:
+            curr_map[last_key] = base_value
+    
+    @post_execution_output
+    def generate_test_data (self, dbtCatalog) -> None:
+        relationTestMap = {}
+        columnTestMap = {} 
+        for relationKey in dbtCatalog['nodes']:
+            node = dbtCatalog['nodes'][relationKey]
+            if node["resource_type"] != "test":
+                continue
+            
+            database = node["database"]
+            relation_name = self.__get_test_relation_name (node)
+            schema_name = self.__get_test_schema_name (database, relation_name, node)
+            column_name = node["column_name"] # multi-column tests at least have None as a value.
+            
+            if column_name is not None: 
+                self.__init_dictionary_map (columnTestMap, [database, schema_name, relation_name, column_name], 0)
+                columnTestMap[database][schema_name][relation_name][column_name] += 1
+            
+            self.__init_dictionary_map (relationTestMap, [database, schema_name, relation_name], 0)
+            relationTestMap[database][schema_name][relation_name] += 1
+            
+        self._relationTestMap = relationTestMap
+        self._columnTestMap = columnTestMap
 
     @post_execution_output (logLevel=LogLevel.INFO)
     def generate_data (self) -> None:
         """Generating definition health report data"""
         with open (Config.enrichedDbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
             enrichedCatalogJson = json.load(json_file)
+            
+        with open (Config.dbtManifestFileInfo.qualified_name, encoding="utf-8") as json_file:
+            dbtCatalog = json.load(json_file)
 
+        self.generate_test_data (dbtCatalog)
         apiHealth = self.__generate_health_data (enrichedCatalogJson)
+        apiHealth.test_coverage = TestCoverage (self._relationTestMap, self._columnTestMap)
         jsonData = json.dumps (apiHealth, indent=4, cls=EnhancedJSONEncoder)
         Utils.write_file (jsonData, Config.apiDefinitionHealthReportDataFileInfo.qualified_name) 
         return
