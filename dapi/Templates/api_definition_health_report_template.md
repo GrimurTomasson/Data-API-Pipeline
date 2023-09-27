@@ -7,7 +7,7 @@
 ### Heild
 |                                      | Fjöldi             | Prósent af dálkum  |
 | :----------------------------------- | -----------------: | -----------------: |
-| Vensl                                | {{ stats.total.number_of_relations }}  |  | 
+| **Vensl**                            | {{ stats.total.number_of_relations }}  |  | 
 | Yfirskrifaðar skilgreiningar hugtaka | {{ stats.total.overwritten_concepts.count }} | {{ stats.total.overwritten_concepts.percentage }} |
 | Týpu villur | {{ stats.total.type_errors.count }} | {{ stats.total.type_errors.percentage }} |
 | Skjölunar villur | {{ stats.total.documentation_errors.count }} | {{ stats.total.documentation_errors.percentage }} |
@@ -15,6 +15,7 @@
 | **Villur samtals** | **{{ stats.total.errors.count }}** | **{{ stats.total.errors.percentage }}** |
 ---
 ### Vensl
+Villur eru niður á dálk og fleiri en ein villutegund getur átt við sama dálkinn, við getum því verið með fleiri villur en dálkafjölda. `Dálkar í lagi` er nálgun sem og `Samtals villur %`, það fyrra getur verið núll þó svo einhverjir dálkar séu í lagi ef villurnar eru nógu margar og það síðar nefnda getur farið yfir eitt hundrað.
 | Skema | Vensl | Fjöldi dálka | Yfirskrifuð hugtök |  %  | Dálkar í lagi |  %  | Týpu villur |  %  | Skjölunar villur |  %  | Prófana villur |  %  | Samtals villur |  %  |
 | :---- | :---- | -----------: | -----------------: | --: | ------------: | --: | ----------: | --: | ---------------: | --: | -------------: | --: | -------------: | --: |
 {% for rel in stats.relation -%}
@@ -22,6 +23,7 @@
 {% endfor %}
 ---
 ## Yfirskrifar skilgreiningar hugtaka
+Lýsing skilgreinds hugtaks hefur verið yfriskrifuð í *dbt* `YAML` módeli. 
 |  Skema                         | Vensl                          |  Dálkur                        |  Hugtak                        |
 | :----------------------------- | :----------------------------- | :----------------------------- | :----------------------------- |
 {% for concept in overwritten_concepts -%}
@@ -30,6 +32,7 @@
 ---
 ## Villur
 ### Týpu
+Dálkur er skilgreindur með rangri týpu eða lengd miðað við *Data Dictionary* (*DD*) skilgreiningu. Athugið að heiti dálks verður að vera í samræmi við *DD* til að við finnum þessar villur vélrænt.
 |  Skema                         | Vensl                          |  Dálkur                        |  Villa                         |
 | :----------------------------- | :----------------------------- | :----------------------------- | :----------------------------- |
 {% for error in errors.type -%}
@@ -37,6 +40,7 @@
 {% endfor %}
 
 ### Skjölunar
+Skjölun fyrir dálk er hvorki að finna í skilgreindum hugtökum né *dbt* `YAML` módeli. Ef yfirskriftin er ekki til þess að bæta við ítarupplýsingum, fellur þetta undir villu.
 |  Skema                         | Vensl                          |  Dálkur                        |  Villa                         |
 | :----------------------------- | :----------------------------- | :----------------------------- | :----------------------------- |
 {% for error in errors.documentation -%}
@@ -53,7 +57,8 @@ Eftirfarandi dálkar eru skilgreindir í venslum en engar prófanir eru til fyri
 
 ---
 ## Prófanaþekja
-### Yfirlit
+Fjöldi prófana niður á vensl og dálka, lauslegur mælikvarði á gagnagæði.
+### Vensl
 Fjöldatölur prófana ná bæði yfir prófanir á stökum dálkum og venslum, en ekki yfir `SQL` prófanir.
 {% for db_key, db_value in test_coverage.relation.items() -%}
 {% for schema_key, schema_value in db_value.items() -%}
@@ -66,7 +71,7 @@ Fjöldatölur prófana ná bæði yfir prófanir á stökum dálkum og venslum, 
 {% endfor -%}
 {% endfor -%}
 ---
-### Vensl
+### Vensl & Dálkar
 | Gagnagrunnur           | Skema                 | Vensl                                | Dálkur                                 | Fjöldi prófana |
 | :--------------------- | :-------------------- | :----------------------------------- | :------------------------------------- | -------------: |
 {% for db_key, db_value in test_coverage.column.items() -%}
