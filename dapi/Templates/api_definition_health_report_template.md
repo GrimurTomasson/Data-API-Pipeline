@@ -15,7 +15,7 @@
 | **Villur samtals** | **{{ stats.total.errors.count }}** | **{{ stats.total.errors.percentage }}** |
 ---
 ### Vensl
-Villur eru niður á dálk og fleiri en ein villutegund getur átt við sama dálkinn, við getum því verið með fleiri villur en dálkafjölda. `Dálkar í lagi` er nálgun sem og `Samtals villur %`, það fyrra getur verið núll þó svo einhverjir dálkar séu í lagi ef villurnar eru nógu margar og það síðar nefnda getur farið yfir eitt hundrað.
+Villur eru niður á dálk og fleiri en ein villutegund getur átt við sama dálkinn, við getum því verið með fleiri villur en dálkafjölda. `Dálkar í lagi` er nálgun sem og `Samtals villur %`, það fyrra getur verið núll þó svo einhverjir dálkar séu í lagi ef villurnar eru nógu margar og það síðar nefnda getur farið yfir eitt hundrað.  
 | Skema | Vensl | Fjöldi dálka | Yfirskrifuð hugtök |  %  | Dálkar í lagi |  %  | Týpu villur |  %  | Skjölunar villur |  %  | Prófana villur |  %  | Samtals villur |  %  |
 | :---- | :---- | -----------: | -----------------: | --: | ------------: | --: | ----------: | --: | ---------------: | --: | -------------: | --: | -------------: | --: |
 {% for rel in stats.relation -%}
@@ -23,7 +23,7 @@ Villur eru niður á dálk og fleiri en ein villutegund getur átt við sama dá
 {% endfor %}
 ---
 ## Yfirskrifar skilgreiningar hugtaka
-Lýsing skilgreinds hugtaks hefur verið yfriskrifuð í *dbt* `YAML` módeli. 
+Lýsing skilgreinds hugtaks hefur verið yfriskrifuð í *dbt* `YAML` módeli.  
 |  Skema                         | Vensl                          |  Dálkur                        |  Hugtak                        |
 | :----------------------------- | :----------------------------- | :----------------------------- | :----------------------------- |
 {% for concept in overwritten_concepts -%}
@@ -32,7 +32,7 @@ Lýsing skilgreinds hugtaks hefur verið yfriskrifuð í *dbt* `YAML` módeli.
 ---
 ## Villur
 ### Týpu
-Dálkur er skilgreindur með rangri týpu eða lengd miðað við *Data Dictionary* (*DD*) skilgreiningu. Athugið að heiti dálks verður að vera í samræmi við *DD* til að við finnum þessar villur vélrænt.
+Dálkur er skilgreindur með rangri týpu eða lengd miðað við *Data Dictionary* (*DD*) skilgreiningu. Athugið að heiti dálks verður að vera í samræmi við *DD* til að við finnum þessar villur vélrænt.  
 |  Skema                         | Vensl                          |  Dálkur                        |  Villa                         |
 | :----------------------------- | :----------------------------- | :----------------------------- | :----------------------------- |
 {% for error in errors.type -%}
@@ -40,7 +40,7 @@ Dálkur er skilgreindur með rangri týpu eða lengd miðað við *Data Dictiona
 {% endfor %}
 
 ### Skjölunar
-Skjölun fyrir dálk er hvorki að finna í skilgreindum hugtökum né *dbt* `YAML` módeli. Ef yfirskriftin er ekki til þess að bæta við ítarupplýsingum, fellur þetta undir villu.
+Skjölun fyrir dálk er hvorki að finna í skilgreindum hugtökum né *dbt* `YAML` módeli. Ef yfirskriftin er ekki til þess að bæta við ítarupplýsingum, fellur þetta undir villu.  
 |  Skema                         | Vensl                          |  Dálkur                        |  Villa                         |
 | :----------------------------- | :----------------------------- | :----------------------------- | :----------------------------- |
 {% for error in errors.documentation -%}
@@ -48,7 +48,7 @@ Skjölun fyrir dálk er hvorki að finna í skilgreindum hugtökum né *dbt* `YA
 {% endfor %}
 
 ### Prófana
-Eftirfarandi dálkar eru skilgreindir í venslum en engar prófanir eru til fyrir þá. Mögulega er ekkert `YAML` módel til fyrir venslin.
+Eftirfarandi dálkar eru skilgreindir í venslum en engar prófanir eru til fyrir þá. Mögulega er ekkert `YAML` módel til fyrir venslin.  
 |  Skema                         | Vensl                          |  Dálkur                        |  Villa                         |
 | :----------------------------- | :----------------------------- | :----------------------------- | :----------------------------- |
 {% for error in errors.test_coverage -%}
@@ -57,9 +57,9 @@ Eftirfarandi dálkar eru skilgreindir í venslum en engar prófanir eru til fyri
 
 ---
 ## Prófanaþekja
-Fjöldi prófana niður á vensl og dálka, lauslegur mælikvarði á gagnagæði.
+Fjöldi prófana niður á vensl og dálka, lauslegur mælikvarði á gagnagæði.  
 ### Vensl
-Fjöldatölur prófana ná bæði yfir prófanir á stökum dálkum og venslum, en ekki yfir `SQL` prófanir.
+Fjöldatölur prófana ná bæði yfir prófanir á stökum dálkum og venslum, en ekki yfir `SQL` prófanir.  
 {% for db_key, db_value in test_coverage.relation.items() -%}
 {% for schema_key, schema_value in db_value.items() -%}
 #### {{ db_key }}.{{ schema_key }}
