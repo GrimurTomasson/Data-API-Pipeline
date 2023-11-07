@@ -159,11 +159,12 @@ class SQLServer (TargetDatabase):
         columnInfo = self.get_connection().cursor ().execute ("SELECT c.IS_NULLABLE, c.DATA_TYPE, c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, COALESCE (c.NUMERIC_SCALE, 0) AS NUMERIC_SCALE, c.DATETIME_PRECISION FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ? AND c.COLUMN_NAME = ?", sourceSchema, sourceTable, columnName).fetchone()
         Logger.info(Pretty.assemble_simple (f"Adding column: {columnName} to {self._databaseName}.{targetSchema}.{targetTable}"))
         
-        alterCommand = f"ALTER TABLE {targetDatabase}.{targetSchema}.{targetTable} ADD {columnName} "
+        alterCommand = f"ALTER TABLE [{targetDatabase}].[{targetSchema}].[{targetTable}] ADD {columnName} "
         if columnInfo.DATA_TYPE in ["date", "datetime", "datetime2", "int", "bigint", "tinyint", "smallint", "bit"]:
             alterCommand += str(columnInfo.DATA_TYPE)
         elif columnInfo.DATA_TYPE in ["char", "varchar", "nvarchar"]:
-            alterCommand += f"{columnInfo.DATA_TYPE}({columnInfo.CHARACTER_MAXIMUM_LENGTH})"
+            maxLength = columnInfo.CHARACTER_MAXIMUM_LENGTH if columnInfo.CHARACTER_MAXIMUM_LENGTH > 0 else 'MAX'
+            alterCommand += f"{columnInfo.DATA_TYPE}({maxLength})"
         elif columnInfo.DATA_TYPE in ["decimal", "numeric"]:
             alterCommand += f"{columnInfo.DATA_TYPE}({columnInfo.NUMERIC_PRECISION}, {columnInfo.NUMERIC_SCALE})"
         elif columnInfo.DATA_TYPE == "float":
