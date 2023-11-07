@@ -98,7 +98,7 @@ class Snapshot:
 
             Logger.info (Pretty.assemble (value=f"{len(missingColumns)} missing columns in {snapshot_schema}.{sourceTable.name}", tabCount=Pretty.Indent+1))
             for missingColumn in missingColumns:
-                self._snapshotDb.clone_column (source_schema, sourceTable.name, snapshot_schema, sourceTable.name, missingColumn) # ToDo: Laga. Fer á milli grunna, mun brotna !!!
+                self._historyDb.clone_column (source_schema, sourceTable.name, self._snapshotDatabaseName, snapshot_schema, sourceTable.name, missingColumn) 
             # We cannot update the view in the history schema because we don't know if it is union'ing multiple versions of snapshots!
         return
 
