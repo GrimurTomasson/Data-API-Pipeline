@@ -20,6 +20,10 @@ class Snapshot:
 
     @post_execution_output (logLevel=LogLevel.DEBUG)
     def __init__ (self):
+        if not 'history' in Config._config:
+            self._enabled = False
+            return
+        
         self._enabled = Config['history']['enabled'] if 'enabled' in Config['history'] else True
         if self._enabled == False:
             return
