@@ -13,7 +13,7 @@ packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase"
 
 [project]
 name = "dapi"
-version = "1.78"
+version = "1.79"
 authors = [ {name = "Grimur Tomasson", email = "grimur@gthugbunadarradgjof.com"} ]
 description = "Logic to simplify the implementation of data API pipelines built on top of dbt."
 readme = "README.md"
@@ -26,6 +26,8 @@ dependencies = ["dbt-sqlserver==1.4.3", "dbt-core==1.4.6", "python-dotenv", "duc
 [project.scripts]
 dapi = "dapi.package_cli:main"
 create-dapi = "dapi.CreateAPI:main"
+dapi-version = "dapi.Version:main"
+dapi-prepare = "dapi.Update:main" # So updates don't try to rename the exe running.
 
 # pip install build
 # python -m build .
