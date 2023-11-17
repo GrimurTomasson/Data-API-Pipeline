@@ -70,7 +70,7 @@ Heiti prófunar:         `{{ error.test_name }}`
 Slóð á SQL fyrirspurn:  `{{ error.query_path }}`  
 
 ```sql
-{{ error.sql }}
+{{ error.sql | replace("#|#", "'") }}
 ```
 
 {% endfor %}
