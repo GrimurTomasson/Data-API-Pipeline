@@ -340,7 +340,8 @@ class DataHealthReport: # Main class
                 if result == "fail": # Error -> Skoða að hafa bara eina töflu fyrir bæði, mismunandi select upp en annars eins
                     errors = entry["data"]["num_failures"]
                     rowsInRelation = self.__retrieve_relation_cardinality (database_name, schema_name, relation_name)
-                    duckdb.sql(f"insert into error values ('{database_name}', '{schema_name}', '{relation_name}', '{test_name}', '{unique_id}', '{sql_filename}', {errors}, {rowsInRelation}, '{query_path}', '{sql}')")
+                    safeSql = sql.replace('\'', '#|#')
+                    duckdb.sql(f"insert into error values ('{database_name}', '{schema_name}', '{relation_name}', '{test_name}', '{unique_id}', '{sql_filename}', {errors}, {rowsInRelation}, '{query_path}', '{safeSql}')")
 
             if entry["info"]["name"] == "MainReportVersion": 
                 headerExecution = HeaderExecution (entry["info"]["ts"], entry["info"]["invocation_id"])
