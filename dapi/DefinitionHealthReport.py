@@ -158,7 +158,7 @@ class DefinitionHealthReport:
                 if testError is not None:
                     relationTestCoverageErrorList.append (testError)
                 
-                relationOkColumns += docError is not None and typeError is not None and testError is not None
+                relationOkColumns += 1 if docError is None and typeError is None and testError is None else 0
                 
             relationColumns = len (relation['columns'])
             columnsTotal += relationColumns
