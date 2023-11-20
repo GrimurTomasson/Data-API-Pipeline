@@ -15,7 +15,7 @@
 | **Villur samtals** | **{{ stats.total.errors.count }}** | **{{ stats.total.errors.percentage }}** |
 ---
 ### Vensl
-Villur eru niður á dálk og fleiri en ein villutegund getur átt við sama dálkinn, við getum því verið með fleiri villur en dálkafjölda. `Dálkar í lagi` er nálgun sem og `Samtals villur %`, það fyrra getur verið núll þó svo einhverjir dálkar séu í lagi ef villurnar eru nógu margar og það síðar nefnda getur farið yfir eitt hundrað.  
+Villur eru niður á dálk og fleiri en ein villutegund getur átt við sama dálkinn, við getum því verið með fleiri villur en dálkafjölda. `Samtals villur %` er nálgun og getur farið yfir eitt hundrað ef villur eru fleiri en dálkar.
 
 | Skema | Vensl | Fjöldi dálka | Yfirskrifuð hugtök |  %  | Dálkar í lagi |  %  | Týpu villur |  %  | Skjölunar villur |  %  | Prófana villur |  %  | Samtals villur |  %  |
 | :---- | :---- | -----------: | -----------------: | --: | ------------: | --: | ----------: | --: | ---------------: | --: | -------------: | --: | -------------: | --: |
