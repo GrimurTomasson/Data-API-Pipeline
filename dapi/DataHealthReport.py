@@ -23,7 +23,7 @@ relationStatsQuery = """
                     ,schema_name
                     ,relation_name
                     ,COUNT(result) FILTER (result = 'pass') AS ok_count
-                    ,COUNT(result) FILTER (result = 'warning') AS warning_count
+                    ,COUNT(result) FILTER (result = 'warn') AS warning_count
                     ,COUNT(result) FILTER (result = 'fail') AS fail_count
                 FROM
                     test_entry
