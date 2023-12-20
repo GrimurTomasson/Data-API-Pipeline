@@ -1,18 +1,18 @@
 {% test kennitala_ok(model, column_name) %}
 WITH gogn AS (
 	SELECT
-		s.*
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 1, 1) ELSE -1 END AS smu_kt_1
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 2, 1) ELSE -1 END AS smu_kt_2
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 3, 1) ELSE -1 END AS smu_kt_3
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 4, 1) ELSE -1 END AS smu_kt_4
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 5, 1) ELSE -1 END AS smu_kt_5
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 6, 1) ELSE -1 END AS smu_kt_6
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 7, 1) ELSE -1 END AS smu_kt_7
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 8, 1) ELSE -1 END AS smu_kt_8
-		,CASE WHEN LEN (s.{{ column_name }}) = 10 AND ISNUMERIC (s.{{ column_name }}) = 1 THEN SUBSTRING (s.{{ column_name }}, 9, 1) ELSE 5000 END AS smu_kt_vartala
+		*
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 1, 1) ELSE -1 END AS smu_kt_1
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 2, 1) ELSE -1 END AS smu_kt_2
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 3, 1) ELSE -1 END AS smu_kt_3
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 4, 1) ELSE -1 END AS smu_kt_4
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 5, 1) ELSE -1 END AS smu_kt_5
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 6, 1) ELSE -1 END AS smu_kt_6
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 7, 1) ELSE -1 END AS smu_kt_7
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 8, 1) ELSE -1 END AS smu_kt_8
+		,CASE WHEN LEN ({{ column_name }}) = 10 AND ISNUMERIC ({{ column_name }}) = 1 THEN SUBSTRING ({{ column_name }}, 9, 1) ELSE 5000 END AS smu_kt_vartala
 	FROM
-		{{ model }} s
+		{{ model }}
 ),
 gogn_med_summu AS (
 	SELECT

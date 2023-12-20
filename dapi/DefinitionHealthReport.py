@@ -12,6 +12,7 @@ from .Shared.Json import EnhancedJSONEncoder
 from .Shared.DataClasses import CountPercentage, KeyValue
 from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseFactory, TargetKnowledgeBase
 from .Shared.AuditDecorators import audit
+from .Shared.EnvironmentVariable import EnvironmentVariable
 
 @dataclass 
 class StatsTotal:
@@ -221,6 +222,7 @@ class DefinitionHealthReport:
     def __get_test_schema_name (self, database: str, relationName: str, node) -> str:
         code = node["compiled_code"]
         #print (Pretty.Separator)
+        #print (node)
         end = code.find ('."' + relationName) 
         while end < 0 and relationName.find ("_") > -1: # Vensl hafa verið endurskýrð, við höfum ekki endanlegt nafn en almennt er það án kerfis forskeytis módels. Þetta hangir á nafnahefð :(
             tempRelationName = relationName[relationName.find ("_") + 1 :]
@@ -255,6 +257,8 @@ class DefinitionHealthReport:
             node = dbtManifest['nodes'][relationKey]
             if node["resource_type"] != "test":
                 continue
+
+            print (node["name"])
             
             database = node["database"]
             relation_name = self.__get_test_relation_name (node)
@@ -290,7 +294,8 @@ class DefinitionHealthReport:
     @post_execution_output (logLevel=LogLevel.INFO)
     def generate_report (self) -> None:
         """Generating definition health report"""
-        Utils.generate_markdown_document ("api_definition_health_report_template.md", Config.apiDefinitionHealthReportDataFileInfo.name, self._reportFilename)
+        metadata = Utils.retrieve_variable ('Definition metadata', EnvironmentVariable.knowledgebaseDefinitionHealthReportMetadata, Config['documentation']['definition-health-report'], 'metadata', optional=True)
+        Utils.generate_markdown_document ("api_definition_health_report_template.md", Config.apiDefinitionHealthReportDataFileInfo.name, self._reportFilename, metadata)
         return
 
     @post_execution_output (logLevel=LogLevel.INFO)

@@ -20,7 +20,7 @@ class Utils:
         return template.render (testResults)
 
     @staticmethod 
-    def generate_markdown_document (templateFilename, jsonDataFilename, targetFilename, templateNotShared=False) -> None:
+    def generate_markdown_document (templateFilename, jsonDataFilename, targetFilename, metadataCsv, templateNotShared=False) -> None:
         qualifiedDataFilename = os.path.join (Config.runFileDirectory, jsonDataFilename)
         if templateNotShared == True:
             templateDirectory = Config.workingDirectory
@@ -33,9 +33,12 @@ class Utils:
         message += Pretty.assemble (value="Json data filename: " + qualifiedDataFilename + "\n", tabCount=Pretty.Indent+1)
         message += Pretty.assemble (value="Working directory:  " + Config.workingDirectory + "\n", tabCount=Pretty.Indent+1)
         message += Pretty.assemble (value="Target filename:    " + targetFilename + "\n", tabCount=Pretty.Indent+1)
+        message += Pretty.assemble (value="Metadata csv:       " + metadataCsv if metadataCsv is not None else 'None' + "\n", tabCount=Pretty.Indent+1)
         Logger.debug (message)
         
-        report = Utils.render_jinja_template (templateFilename, qualifiedDataFilename, templateDirectory)
+        prefix = metadataCsv.replace (',', '\n') + "\n" if metadataCsv is not None else str()
+        report = prefix + Utils.render_jinja_template (templateFilename, qualifiedDataFilename, templateDirectory)
+        
         Utils.write_file (report, os.path.join (Config.workingDirectory, targetFilename))
         Logger.info (Pretty.assemble_simple (f"Markdown document {targetFilename} has been generated!"))
         return

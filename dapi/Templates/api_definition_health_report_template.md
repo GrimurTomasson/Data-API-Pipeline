@@ -1,6 +1,3 @@
-<!-- Space: DAT -->
-<!-- Parent: Skjölun -->
-<!-- Title: {{ api_name }} - API gæði -->
 # Skilgreininga heilbrigði {{ api_name }}
 ---
 ## Tölfræði 

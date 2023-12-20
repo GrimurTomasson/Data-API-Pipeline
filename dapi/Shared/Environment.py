@@ -29,6 +29,10 @@ class Environment:
     markPassword = str("DAPI_MARK_PASSWORD")
     markBaseUri = str("DAPI_MARK_BASE_URI")
 
+    knowledgebaseDocumentationMetadata = str("DAPI_KNOWLEDGEBASE_METADATA_CSV_DOCUMENTATION")
+    knowledgebaseDataHealthReportMetadata = str("DAPI_KNOWLEDGEBASE_METADATA_CSV_DATA_HEALTH_REPORT")
+    knowledgebaseDefinitionHealthReportMetadata = str("DAPI_KNOWLEDGEBASE_METADATA_CSV_DEFINITION_HEALTH_REPORT")
+
     # Internal flow control, flags set in cli
     dbtRunParameters = str("DAPI_DBT_RUN_PARAMETERS")
 
