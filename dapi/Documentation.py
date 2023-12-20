@@ -92,7 +92,7 @@ class Documentation:
     @post_execution_output (logLevel=LogLevel.INFO)
     def generate_documentation (self) -> None:
         """Generating user documentation"""
-        Utils.generate_markdown_document ("api_documentation_template.md", Config.apiDocumentationDataFileInfo.name, self._docFilename, True)
+        Utils.generate_markdown_document ("api_documentation_template.md", Config.apiDocumentationDataFileInfo.name, self._docFilename, None, True)
         return
 
     @post_execution_output (logLevel=LogLevel.INFO)

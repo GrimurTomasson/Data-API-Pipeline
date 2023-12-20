@@ -15,6 +15,7 @@ from .TargetKnowledgeBase.TargetKnowledgeBaseFactory import TargetKnowledgeBaseF
 from .Shared.DataClasses import CountPercentage
 from .Shared import Json
 from .Shared.AuditDecorators import audit
+from .Shared.EnvironmentVariable import EnvironmentVariable
 
 relationStatsQuery = """
             WITH baseline AS (
@@ -372,7 +373,8 @@ class DataHealthReport: # Main class
     @post_execution_output (logLevel=LogLevel.INFO)
     def generate_report (self) -> None:
         """Generating data health report"""
-        Utils.generate_markdown_document ("api_data_health_report_template.md", Config.apiDataHealthReportDataFileInfo.name, self._reportFilename)
+        metadata = Utils.retrieve_variable ('Data health metadata', EnvironmentVariable.knowledgebaseDataHealthReportMetadata, Config['documentation']['data-health-report'], 'metadata', optional=True)
+        Utils.generate_markdown_document ("api_data_health_report_template.md", Config.apiDataHealthReportDataFileInfo.name, self._reportFilename, metadata)
         return
 
     @post_execution_output (logLevel=LogLevel.INFO)

@@ -1,6 +1,3 @@
-<!-- Space: DAT -->
-<!-- Parent: Skjölun -->
-<!-- Title: {{ header.api_name }} - Gagnagæði -->
 # Gagna heilbrigði {{ header.api_name }}
 
 |               |            |
