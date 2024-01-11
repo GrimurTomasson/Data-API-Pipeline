@@ -18,8 +18,13 @@ class PatchDbt:
             location = re.search ("Location: .*", output)
             if location is not None:
                 dbtPipPath = re.search (": .*", output).group().replace(': ', '') + '/dbt'
-
+        
+        print (Pretty.assemble_simple (f"Source folder: {dapiPipPath}"))
+        print (Pretty.assemble_simple (f"Target folder: {dbtPipPath}"))
+               
         shutil.move (dapiPipPath, dbtPipPath)
+        
+        print (Pretty.assemble_simple ("All done!"))
         return
     
     # ToDo: Second instance, move to utils!
