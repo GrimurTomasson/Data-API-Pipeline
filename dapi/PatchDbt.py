@@ -1,6 +1,8 @@
+import os
 import shutil
 import re
 import subprocess
+import glob
 
 from .Shared.BasicDecorators import execution_output
 from .Shared.PrettyPrint import Pretty
@@ -11,18 +13,24 @@ class PatchDbt:
         for output in self._execute (['pip', 'show', 'dapi']):
             location = re.search ("Location: .*", output)
             if location is not None:
-                dapiPipPath = re.search (": .*", output).group().replace(': ', '') + '/dapi/DbtPatch'
+                srcDir = re.search (": .*", output).group().replace(': ', '') + '/dapi/DbtPatch'
 
         # Find installation path using pip
         for output in self._execute (['pip', 'show', 'dbt-core']):
             location = re.search ("Location: .*", output)
             if location is not None:
-                dbtPipPath = re.search (": .*", output).group().replace(': ', '') + '/dbt'
+                targetDir = re.search (": .*", output).group().replace(': ', '') + '/dbt'
         
-        print (Pretty.assemble_simple (f"Source folder: {dapiPipPath}"))
-        print (Pretty.assemble_simple (f"Target folder: {dbtPipPath}"))
+        print (Pretty.assemble_simple (f"Source folder: {srcDir}"))
+        print (Pretty.assemble_simple (f"Target folder: {targetDir}"))
                
-        shutil.move (dapiPipPath, dbtPipPath)
+        # shutil.move (dapiPipPath, dbtPipPath)
+        for p in glob.glob('**/*.*', recursive=True, root_dir=srcDir):
+            os.makedirs(os.path.join(targetDir, os.path.dirname(p)), exist_ok=True)
+            srcFile = os.path.join(srcDir, p)
+            targetFile = os.path.join(targetDir, p)
+            print (Pretty.assemble_simple (f"Source: {srcFile} - Target: {targetFile}"))
+            shutil.move(srcFile, targetFile)
         
         print (Pretty.assemble_simple ("All done!"))
         return
