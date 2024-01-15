@@ -116,6 +116,8 @@ class SQLServer (TargetDatabase):
         return self.get_connection().cursor ().execute ("SELECT CAST (GETDATE() AS date)").fetchval () 
 
     def get_type_length(self, columnData) -> str: 
+        if 'database_info' not in columnData or 'type_name' not in columnData['database_info']:
+            return 'Metadata missing!' # Something has gone wrong
         if columnData['database_info']['type_name'] in ['char', 'nchar', 'varchar' ,'nvarchar']: 
             return columnData['database_info']['max_length']
         if columnData['database_info']['type_name'] in ['int', 'bigint', 'tinyint', 'smallint', 'numeric', 'float', 'decimal']:
@@ -128,7 +130,9 @@ class SQLServer (TargetDatabase):
         if not hasattr (SQLServer, "_types"):
             SQLServer._types = {}
             self.__load_data (SQLServer.typeQuery, self.__retrieve_type_info, SQLServer._types, "Datatypes")
-        return SQLServer._types[schemaName][tableName][columnName] 
+        if schemaName in SQLServer._types.keys() and tableName in SQLServer._types[schemaName].keys() and columnName in SQLServer._types[schemaName][tableName].keys():
+            return SQLServer._types[schemaName][tableName][columnName] 
+        return dict()
 
     def retrieve_relations (self, schemaName:str) -> Relations:
         query = """
