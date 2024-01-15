@@ -70,7 +70,8 @@ class Documentation:
             relation = Relation (schemaName, relationName, relationDescription)
             for columnKey in relationData['columns']:
                 columnData = relationData['columns'][columnKey]
-                columnType = ColumnType (columnData['database_info']['type_name'], self._targetDatabase.get_type_length(columnData))
+                columnName = columnData['database_info']['type_name'] if 'database_info' in columnData and 'type_name' in columnData['database_info'] else 'UNKNOWN'
+                columnType = ColumnType (columnName, self._targetDatabase.get_type_length(columnData))
                 relation.columns.append (Column(columnData['name'], columnType, self.__get_column_description (columnData)))
             
             docs.relations.append (relation)
