@@ -281,7 +281,7 @@ class DataHealthReport: # Main class
         depends_on_nodes = manifestJson['nodes'][nodeKey]["depends_on"]["nodes"]
         
         for dependsOn in depends_on_nodes:
-            if model_name in dependsOn:
+            if model_name in dependsOn and dependsOn in manifestJson['nodes']:
                 return manifestJson['nodes'][dependsOn]
         
         Logger.error (Pretty.assemble_simple (f"No manifest parent node found unique_id: {manifestJson['nodes'][nodeKey]['unique_id']}"))
@@ -304,8 +304,12 @@ class DataHealthReport: # Main class
             else:
                 Logger.error (Pretty.assemble_simple (f"No SQL found for test with unique_id: {unique_id}"))
             parentNode = self.__get_parent_manifest_node (manifestJson, nodeKey)
-            schema = parentNode["schema"]
-            relation = parentNode["name"]
+            if parentNode is None:
+                schema = 'UNKNOWN'
+                relation = 'UNKNOWN'
+            else:    
+                schema = parentNode["schema"]
+                relation = parentNode["name"]
             
             #Logger.debug (f"{unique_id} - {database}.{schema}.{relation} - {sql_filename} - {query_path}")
             
@@ -320,6 +324,8 @@ class DataHealthReport: # Main class
         
         manifestMap = self.__create_manifest_map ()
         Logger.debug (Pretty.assemble_simple (f"Number of nodes in manifestMap: {len (manifestMap)}"))
+
+        print(manifestMap)
 
         duckdb.sql("create table test_entry(database_name varchar, schema_name varchar, relation_name varchar, test_name varchar, unique_id varchar, result varchar)")
         duckdb.sql("create table error(database_name varchar, schema_name varchar, relation_name varchar, test_name varchar, unique_id varchar, sql_filename varchar, rows_on_error integer, rows_in_relation integer, query_path varchar, sql varchar)")

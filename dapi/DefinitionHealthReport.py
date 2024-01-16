@@ -203,7 +203,7 @@ class DefinitionHealthReport:
     
     def __get_test_relation_name (self, node) -> str:
         if len (node["refs"]) == 0:
-            Logger.error (Pretty.assemble_simple (f"No relation name found for test (unique_id): {unique_id}"))
+            Logger.error (Pretty.assemble_simple (f"No refs in test node: {node}"))
             return None
         
         refs = node["refs"]
@@ -220,6 +220,9 @@ class DefinitionHealthReport:
             return min (name_index, key=name_index.get)
         
     def __get_test_schema_name (self, database: str, relationName: str, node) -> str:
+        if not 'compiled_code' in node or database is None or relationName is None:
+            return None
+        
         code = node["compiled_code"]
         #print (Pretty.Separator)
         #print (node)
@@ -264,6 +267,10 @@ class DefinitionHealthReport:
             relation_name = self.__get_test_relation_name (node)
             schema_name = self.__get_test_schema_name (database, relation_name, node)
             column_name = node["column_name"] # multi-column tests at least have None as a value.
+
+            print (f"   {relation_name}")
+            print (f"   {schema_name}")
+            print (f"   {column_name}")
             
             if column_name is not None: 
                 self.__init_dictionary_map (columnTestMap, [database, schema_name, relation_name, column_name], 0)
