@@ -98,7 +98,7 @@ class DefinitionHealthReport:
             return None
 
         glossaryType = column['glossary_info']['data_type']
-        databaseType = column['database_info']['type_name']
+        databaseType = column['database_info']['type_name'] if 'database_info' in column and 'type_name' in column['database_info'] else 'UNKNOWN'
         
         if glossaryType != databaseType:
             return Error (schemaName, relationName, columnName, f"Gagnatýpa í skilgreiningu hugtaks: {glossaryType} - Gagnatýpa í grunni: {databaseType}")
