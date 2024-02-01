@@ -42,6 +42,7 @@ class API:
         Dependencies ().update_all ()
         Dependencies ().test_all ()
         Latest ().refresh ()
+        Latest ().generate_docs ()
         Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
         return
 

@@ -33,12 +33,25 @@ class Cleanup:
         mkdir (runFileDirectory)
         Logger.info (Pretty.assemble_simple (f"Run file directory created at: {runFileDirectory}"))
         return
+    
+    @post_execution_output (logLevel=LogLevel.INFO)
+    def __dbt_docs_cleanup (self):
+        """dbt docs cleanup"""
+        dbtDocsPath = path.join(Config.workingDirectory, "dbt_docs")
+        if path.exists (dbtDocsPath):
+            shutil.rmtree (dbtDocsPath)
+            Logger.debug (Pretty.assemble_simple ("dbt docs directory deleted!"))
+        
+        mkdir (dbtDocsPath)
+        Logger.info (Pretty.assemble_simple (f"dbt docs directory created at: {dbtDocsPath}"))
+        return
 
     @post_execution_output (logLevel=LogLevel.INFO)
     @audit
     def cleanup (self) -> None:
         """Removes temporary (run) files created by the API Pipeline and dbt"""
         self.__run_file_cleanup ()
+        self.__dbt_docs_cleanup ()
         Utils.run_operation (Config.workingDirectory, Config.latestPath, ["dbt", "clean"])
 
 def main (args):
