@@ -1,6 +1,6 @@
-DECLARE @db VARCHAR(MAX) = 'REFERENCE-API-PRIVATE'
-DECLARE @schema VARCHAR(MAX) = 'byggdastofnun'
-DECLARE @table VARCHAR(MAX) = 'thjonustukort'
+DECLARE @db VARCHAR(MAX) = 'sfs-API-PRIVATE'
+DECLARE @schema VARCHAR(MAX) = 'hafdis_staging'
+DECLARE @table VARCHAR(MAX) = 'skoli_map'
 
 DECLARE @newline CHAR(1) = CHAR(10)
 DECLARE @scopeOne VARCHAR(20) = '  ' 
@@ -34,3 +34,5 @@ SET @definition = @definition + (
 		AND s.TABLE_SCHEMA = @schema
 		AND s.TABLE_NAME = @table
 )
+
+SELECT @definition

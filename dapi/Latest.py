@@ -50,6 +50,27 @@ class Latest:
         Logger.debug (Pretty.assemble_simple (f"Output for dbt test results: {Config.dbtTestOutputFileInfo.qualified_name}"))
         Utils.write_file (output.stdout, Config.dbtTestOutputFileInfo.qualified_name)
         return
+    
+    @post_execution_output (logLevel=LogLevel.INFO)
+    @audit
+    @audit_dbt
+    def generate_docs (self):
+        """Generating dbt docs"""
+        dbtOperation = Utils.add_dbt_profile_location (["dbt", "docs", "generate"])
+        Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
+        
+        source_path = os.path.join (Config.latestPath, "target")
+        target_path = os.path.join (Config.workingDirectory, "dbt_docs")
+
+        for file in ['manifest.json', 'catalog.json', 'index.html']:
+            source_file = os.path.join (source_path, file)
+            target_file = os.path.join (target_path, file)
+            Logger.debug (Pretty.assemble_simple (f"Copying {file}"))
+            Logger.debug (Pretty.assemble (value=f"Source: {source_file}", tabCount=Pretty.Indent+1))
+            Logger.debug (Pretty.assemble (value=f"Target: {target_file}", tabCount=Pretty.Indent+1))
+            shutil.copy2 (source_file, target_file)
+        return
+
 
 def main (args):
     options = Latest._argParser.parse_args (args)
