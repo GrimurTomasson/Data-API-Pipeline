@@ -207,16 +207,18 @@ class DefinitionHealthReport:
             return None
         
         refs = node["refs"]
-        #print (f"{refs} - len: {len(refs)} - unique_id: {node['unique_id']}")
+        # print (f"{refs} - len: {len(refs)} - unique_id: {node['unique_id']}")
         
         if len (refs) == 1:
-            return refs[0][0]
+            return refs[0][0] if len (refs[0]) > 0 else '?'
         unique_id = node["unique_id"]
         
         if len (refs) > 1:
             name_index = {}
             for ref in refs:
-                name_index[ref[0]] = unique_id.index (ref[0])
+                # print (f"ref: {ref} - unique_id: {unique_id}")
+                if ref[0] in unique_id:
+                    name_index[ref[0]] = unique_id.index (ref[0])
             return min (name_index, key=name_index.get)
         
     def __get_test_schema_name (self, database: str, relationName: str, node) -> str:
