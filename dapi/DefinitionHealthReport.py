@@ -207,20 +207,18 @@ class DefinitionHealthReport:
             return None
         
         refs = node["refs"]
-        # print (f"\nnode: {node}\n") # DEBUG
-        # print (f"{refs} - len: {len(refs)} - unique_id: {node['unique_id']}") # DEBUG
+        # print (f"{refs} - len: {len(refs)} - unique_id: {node['unique_id']}")
         
         if len (refs) == 1:
-            # print (f"refs[0]: {refs[0]['name']}") # DEBUG
-            return refs[0]['name'] if len (refs[0]) > 0 else '?'
+            return refs[0][0] if len (refs[0]) > 0 else '?'
         unique_id = node["unique_id"]
         
         if len (refs) > 1:
             name_index = {}
             for ref in refs:
-                # print (f"ref: {ref} - unique_id: {unique_id}") # DEBUG
-                if ref['name'] in unique_id:
-                    name_index[ref['name']] = unique_id.index (ref['name'])
+                # print (f"ref: {ref} - unique_id: {unique_id}")
+                if ref[0] in unique_id:
+                    name_index[ref[0]] = unique_id.index (ref[0])
             return min (name_index, key=name_index.get)
         
     def __get_test_schema_name (self, database: str, relationName: str, node) -> str:
@@ -228,21 +226,20 @@ class DefinitionHealthReport:
             return None
         
         code = node["compiled_code"]
-        # print (Pretty.Separator) # DEBUG
-        # print (node) # DEBUG
-
+        #print (Pretty.Separator)
+        #print (node)
         end = code.find ('."' + relationName) 
         while end < 0 and relationName.find ("_") > -1: # Vensl hafa verið endurskýrð, við höfum ekki endanlegt nafn en almennt er það án kerfis forskeytis módels. Þetta hangir á nafnahefð :(
             tempRelationName = relationName[relationName.find ("_") + 1 :]
-            # print (f"name: {relationName} - cut down name: {tempRelationName}") # DEBUG
+            #print (f"name: {relationName} - cut down name: {tempRelationName}")
             end = code.find ('."' + tempRelationName)
 
         codeTemp = code[:end]
         start = codeTemp.rfind (database + '".') + len (database) + 1 # The one closest to our table name
         schema = codeTemp[start:end].strip (".\"")
-        # print (f"relation: {relationName} - schema: {schema} - start: {start} - end: {end}") # DEBUG
-        # if schema.find(".") > 0: # DEBUG
-          #  print (f"code: {code}") # DEBUG
+        #print (f"relation: {relationName} - schema: {schema} - start: {start} - end: {end}")
+        #if schema.find(".") > 0:
+         #   print (f"code: {code}")
         return schema
     
     def __init_dictionary_map(self, map: {}, keys: [], base_value) -> None: # Ætti ekki að vera hér, almennt fall
@@ -292,11 +289,9 @@ class DefinitionHealthReport:
         """Generating definition health report data"""
         with open (Config.enrichedDbtCatalogFileInfo.qualified_name, encoding="utf-8") as json_file:
             enrichedCatalogJson = json.load(json_file)
-        Logger.debug (Pretty.assemble (value=f"Read from disk: {Config.enrichedDbtCatalogFileInfo.qualified_name}", tabCount=Pretty.Indent+1))
             
         with open (Config.dbtManifestFileInfo.qualified_name, encoding="utf-8") as json_file:
             dbtManifest = json.load(json_file)
-        Logger.debug (Pretty.assemble (value=f"Read from disk: {Config.dbtManifestFileInfo.qualified_name}", tabCount=Pretty.Indent+1))
 
         self.generate_test_data (dbtManifest)
         apiHealth = self.__generate_health_data (enrichedCatalogJson)
@@ -336,3 +331,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
