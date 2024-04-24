@@ -1,6 +1,6 @@
-DECLARE @db VARCHAR(MAX) = 'REFERENCE-API-PRIVATE'
-DECLARE @schema VARCHAR(MAX) = 'lmi'
-DECLARE @table VARCHAR(MAX) = 'postnumer_stg'
+DECLARE @db VARCHAR(MAX) = 'THON-API-PRIVATE'
+DECLARE @schema VARCHAR(MAX) = 'umsoknastjorinn'
+DECLARE @table VARCHAR(MAX) = 'applications_stg'
 
 DECLARE @newline CHAR(1) = CHAR(10)
 DECLARE @scopeOne VARCHAR(20) = '  ' 

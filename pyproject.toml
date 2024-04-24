@@ -13,12 +13,12 @@ packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase"
 
 [project]
 name = "dapi"
-version = "1.88"
+version = "1.9"
 authors = [ {name = "Grimur Tomasson", email = "grimur@gthugbunadarradgjof.com"} ]
 description = "Logic to simplify the implementation of data API pipelines built on top of dbt."
 readme = "README.md"
 requires-python = ">= 3.9"
-dependencies = ["dbt-sqlserver==1.4.3", "dbt-core==1.4.6", "python-dotenv", "duckdb==0.8.1"]
+dependencies = ["dbt-sqlserver==1.7.4", "dbt-core==1.7.13", "python-dotenv", "duckdb==0.10.2"]
 
 #[project.optional-dependencies]
 #sqlserver = ["dbt-sqlserver==1.4.0"]
