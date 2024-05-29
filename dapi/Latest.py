@@ -48,7 +48,7 @@ class Latest:
         dbtOperation = Utils.add_dbt_profile_location (operation) 
         # Vísun í réttan grunn
         dbInstance = Utils.retrieve_variable (Environment.databaseName, Environment.databaseName, None, None)
-        os.environ[Environment.databaseName] = Config['history']['snapshot_database']
+        os.environ[Environment.databaseName] = Config['history']['snapshot-database']
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         # Grunn vísun breytt til baka
         os.environ[Environment.databaseName] = dbInstance
