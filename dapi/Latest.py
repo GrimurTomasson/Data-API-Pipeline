@@ -38,6 +38,21 @@ class Latest:
         Logger.debug (Pretty.assemble (value=f"Target: {Config.dbtManifestFileInfo.qualified_name}", tabCount=Pretty.Indent+1))
         shutil.copy2 (source_manifest_file, Config.dbtManifestFileInfo.qualified_name)
         return
+    
+    @post_execution_output (logLevel=LogLevel.INFO)
+    @audit
+    @audit_dbt
+    def snapshot (self):
+        """Running dbt to create type-2 snapshots of current data"""
+        operation = ["dbt", "snapshot", "--fail-fast"] # Ath, við notum ekki auka params hér!
+        dbtOperation = Utils.add_dbt_profile_location (operation) 
+        # Vísun í réttan grunn
+        dbInstance = Utils.retrieve_variable (Environment.databaseName, Environment.databaseName, None, None)
+        os.environ[Environment.databaseName] = Config['history']['snapshot_database']
+        Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
+        # Grunn vísun breytt til baka
+        os.environ[Environment.databaseName] = dbInstance
+        return
 
     @post_execution_output (logLevel=LogLevel.INFO)
     @audit
