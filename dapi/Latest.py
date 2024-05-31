@@ -45,7 +45,7 @@ class Latest:
     def snapshot (self):
         """Running dbt to create type-2 snapshots of current data"""
         
-        snapshotDatabase = Config['history']['snapshot-database'] if 'history' in Config and 'snapshot-database' in Config['history'] else None
+        snapshotDatabase = Config['history']['snapshot-database'] if 'history' in Config._config and 'snapshot-database' in Config['history'] else None
         if snapshotDatabase is None:
             Logger.debug (Pretty.assemble_simple (f"No history->snapshot-database in config!"))    
             return
