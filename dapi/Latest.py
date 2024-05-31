@@ -44,11 +44,16 @@ class Latest:
     @audit_dbt
     def snapshot (self):
         """Running dbt to create type-2 snapshots of current data"""
+        
+        snapshotDatabase = Config['history']['snapshot-database'] if 'history' in Config and 'snapshot-database' in Config['history'] else None
+        if snapshotDatabase is None:
+            Logger.debug (Pretty.assemble_simple (f"No history->snapshot-database in config!"))    
+            return
         operation = ["dbt", "snapshot", "--fail-fast"] # Ath, við notum ekki auka params hér!
         dbtOperation = Utils.add_dbt_profile_location (operation) 
         # Vísun í réttan grunn
         dbInstance = Utils.retrieve_variable (Environment.databaseName, Environment.databaseName, None, None)
-        os.environ[Environment.databaseName] = Config['history']['snapshot-database']
+        os.environ[Environment.databaseName] = snapshotDatabase
         Utils.run_operation (Config.workingDirectory, Config.latestPath, dbtOperation)
         # Grunn vísun breytt til baka
         os.environ[Environment.databaseName] = dbInstance
