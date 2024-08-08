@@ -5,22 +5,22 @@ from tkinter import FIRST
 from colorama import Fore
 from typing import List
 
-from .Shared.Decorators import post_execution_output
-from .Shared.Config import Config
-from .Shared.Utils import Utils
-from .Shared.LogLevel import LogLevel
-from .Shared.Logger import Logger
-from .Shared.PrettyPrint import Pretty
-from .Shared.Environment import Environment
-from .TargetDatabase.TargetDatabase import Relations, Relation
-from .TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
-from .Shared.AuditDecorators import audit
+from ..Shared.Decorators import post_execution_output
+from ..Shared.Config import Config
+from ..Shared.Utils import Utils
+from ..Shared.LogLevel import LogLevel
+from ..Shared.Logger import Logger
+from ..Shared.PrettyPrint import Pretty
+from ..Shared.Environment import Environment
+from ..TargetDatabase.TargetDatabase import Relations, Relation
+from ..TargetDatabase.TargetDatabaseFactory import TargetDatabaseFactory, TargetDatabase
+from ..Shared.AuditDecorators import audit
 
 class Snapshot:
 
     @post_execution_output (logLevel=LogLevel.DEBUG)
     def __init__ (self):
-        if not 'history' in Config._config:
+        if not 'history' in Config._config or not 'snapshot' in Config['history']:
             self._enabled = False
             return
         
@@ -28,15 +28,16 @@ class Snapshot:
         if self._enabled == False:
             return
         
-        self._snapshotDateColumnName = Config["history"]["snapshot-date-column"]
         self._historyDatabaseName = Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
-        self._snapshotDatabaseName = Config['history']['snapshot-database'] if 'snapshot-database' in Config['history'] else Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
+        self._snapshotDateColumnName = Config["history"]['snapshot']["snapshot-date-column"]
+        self._snapshotDatabaseName = Config['history']['snapshot']['snapshot-database'] if 'snapshot-database' in Config['history']['snapshot'] else Utils.retrieve_variable ('Database name', Environment.databaseName, Config['database'], 'name')
+        
+        self._snapshotDb = TargetDatabaseFactory ().get_target_database ()
+        self._snapshotDb.set_connection (self._snapshotDatabaseName)
 
         self._historyDb = TargetDatabaseFactory ().get_target_database ()
         self._historyDb.set_connection (self._historyDatabaseName)
 
-        self._snapshotDb = TargetDatabaseFactory ().get_target_database ()
-        self._snapshotDb.set_connection (self._snapshotDatabaseName)
         return
 
     @post_execution_output (logLevel=LogLevel.DEBUG)
@@ -154,7 +155,7 @@ class Snapshot:
                 Logger.info (Pretty.assemble_simple ("History snapshots have been disabled!"))
                 return
         
-        if Config["history"]["projects"] == None:
+        if Config["history"]['snapshot']["projects"] == None:
             Logger.debug (Pretty.assemble_simple ("No snapshots defined!"))
             return
         
@@ -162,7 +163,7 @@ class Snapshot:
         Logger.info (Pretty.assemble_simple (f"History database:         {self._historyDatabaseName}"))
         Logger.info (Pretty.assemble_simple (f"Snapshot database:        {self._snapshotDatabaseName}\n"))
 
-        for item in Config["history"]["projects"]:
+        for item in Config["history"]['snapshot']["projects"]:
             sourceSchema = item["project"]["source-schema"]
             snapshotSchema = item["project"]["snapshot-schema"]
             publicSchema = item["project"]["public-schema"]

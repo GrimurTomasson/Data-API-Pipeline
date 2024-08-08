@@ -14,5 +14,7 @@ SELECT DISTINCT
 	,dags
 FROM
 	gogn
+WHERE
+	dags >= DATEADD (DAY, -7, GETDATE()) -- Síðasta vika
 ORDER BY 
-	operation, dags
+	operation, dags DESC
