@@ -10,7 +10,8 @@ from .Shared.AuditDecorators import audit
 from .Cleanup import Cleanup
 from .Dependencies import Dependencies
 from .Latest import Latest
-from .Snapshot import Snapshot
+from .History.Snapshot import Snapshot
+from .History.Type2 import Type2
 from .DataHealthReport import DataHealthReport
 from .MetadataCatalog import MetadataCatalog
 from .DefinitionHealthReport import DefinitionHealthReport
@@ -44,7 +45,8 @@ class API:
         Latest ().refresh ()
         Latest ().snapshot ()
         Latest ().generate_docs ()
-        Snapshot ().create() # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
+        Snapshot ().create () # Creates current state snapshots, removes re-run data and creates and extends snapshot tables as needed. Creates snapshot views, does not maintain them.    
+        Type2 ().create ()
         return
 
 if __name__ == '__main__':

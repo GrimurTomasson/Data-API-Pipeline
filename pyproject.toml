@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase", "dapi.TargetKnowledgeBase", "dapi.Templates", "dapi.ImplementationTemplates", "dapi.DbtPatch"]
+packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase", "dapi.TargetKnowledgeBase", "dapi.Templates", "dapi.ImplementationTemplates", "dapi.History", "dapi.DbtPatch"]
 
 #[tool.setuptools.packages.find]
 #where = ["dapi"]
@@ -13,7 +13,7 @@ packages = ["dapi", "dapi.ConceptGlossary", "dapi.Shared", "dapi.TargetDatabase"
 
 [project]
 name = "dapi"
-version = "1.95"
+version = "2.00"
 authors = [ {name = "Grimur Tomasson", email = "grimur@gthugbunadarradgjof.com"} ]
 description = "Logic to simplify the implementation of data API pipelines built on top of dbt."
 readme = "README.md"

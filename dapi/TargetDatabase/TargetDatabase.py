@@ -101,6 +101,11 @@ class TargetDatabase (ABC):
     def retrieve_relations (self, schemaName:str) -> Relations:
         """Returns an alphabetically ordered list of relations, including column name in declaration order."""
         raise NotImplementedError
+    
+    @abstractmethod
+    def retrieve_columns (self, schemaName:str, relationName:str) -> List[str]:
+        """Returns the column names of a relation, in order."""
+        raise NotImplementedError
 
     @abstractmethod
     def clone_column (self, sourceSchema:str, sourceTable:str, targetDatabase:str, targetSchema:str, targetTable:str, columnName:str) -> None:
@@ -127,6 +132,11 @@ class TargetDatabase (ABC):
         """Creates an empty snapshot table which prefixes a date column to the column list of the source table but is otherwise type identical."""
         raise NotImplementedError
 
+    @abstractmethod
+    def create_or_alter_view (self, viewSchema:str, viewName:str, sourceDatabase:str, sourceSchema:str, sourceTable:str, viewColumns:str = None, selectColumns:str = None) -> None:
+        """Adds or replaces a view which selects all columns from a source table."""
+        raise NotImplementedError
+    
     @abstractmethod
     def create_or_alter_view (self, viewSchema:str, viewName:str, sourceDatabase:str, sourceSchema:str, sourceTable:str) -> None:
         """Adds or replaces a view which selects all columns from a source table."""

@@ -158,6 +158,10 @@ class SQLServer (TargetDatabase):
         relations = sorted (list(relationDict.values ()), key=lambda x: x.name)
         Logger.debug (Pretty.assemble_simple (f"Retrieved relations for {self._databaseName}.{schemaName} - list: {len (relations)} - dictionary: {len (relationDict.keys())}"))
         return Relations (relations, relationDict)
+    
+    def retrieve_columns (self, schemaName:str, relationName:str) -> List[str]:
+        results = self.get_connection().cursor ().execute (f"SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", schemaName, relationName).fetchall()
+        return [row[0] for row in results]
 
     def clone_column (self, sourceSchema:str, sourceTable:str, targetDatabase:str, targetSchema:str, targetTable:str, columnName:str) -> None:
         columnInfo = self.get_connection().cursor ().execute ("SELECT c.IS_NULLABLE, c.DATA_TYPE, c.CHARACTER_MAXIMUM_LENGTH, c.NUMERIC_PRECISION, COALESCE (c.NUMERIC_SCALE, 0) AS NUMERIC_SCALE, c.DATETIME_PRECISION FROM INFORMATION_SCHEMA.COLUMNS c WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ? AND c.COLUMN_NAME = ?", sourceSchema, sourceTable, columnName).fetchone()
@@ -195,7 +199,6 @@ class SQLServer (TargetDatabase):
             self.get_connection().cursor ().execute (f'CREATE SCHEMA {schemaName}')
             Logger.debug (Pretty.assemble_simple ('Schema created\n'))
         return
-    
     
     def relation_exists (self, schemaName:str, tableName:str) -> bool:
         ret_val = self.get_connection().cursor ().execute ('SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', schemaName, tableName).fetchval() == 1
@@ -276,9 +279,14 @@ class SQLServer (TargetDatabase):
         cursor.executemany (command, param_list)
         return
 
-    def create_or_alter_view (self, viewSchema:str, viewName:str, sourceDatabase:str, sourceSchema:str, sourceTable:str) -> None:
-        Logger.debug (Pretty.assemble_simple (f"Creating view {self._databaseName}.{viewSchema}.{viewName} - Selecting from: {sourceSchema}.{sourceTable}"))
-        self.get_connection().cursor ().execute (f"CREATE OR ALTER VIEW [{viewSchema}].[{viewName}] AS SELECT * FROM [{sourceDatabase}].[{sourceSchema}].[{sourceTable}]")
+    def create_or_alter_view (self, viewSchema:str, viewName:str, sourceDatabase:str, sourceSchema:str, sourceTable:str, viewColumns:str = None, selectColumns:str = None) -> None:
+        if viewColumns is None and selectColumns is None:
+            command = f"CREATE OR ALTER VIEW [{viewSchema}].[{viewName}] AS SELECT * FROM [{sourceDatabase}].[{sourceSchema}].[{sourceTable}]"
+        else:
+            command = f"CREATE OR ALTER VIEW [{viewSchema}].[{viewName}] ({viewColumns}) AS SELECT {selectColumns} FROM [{sourceDatabase}].[{sourceSchema}].[{sourceTable}]"
+
+        Logger.debug (Pretty.assemble_simple (f"Creating view: \n{command}"))
+        self.get_connection().cursor ().execute (command)
         return
 
     def create_empty_target_table (self, sourceDatabase:str, sourceSchema:str, sourceTable:str, sourceKeyColumns:List[str], targetSchema:str, targetTable:str, dateColumnName:str) -> None:
