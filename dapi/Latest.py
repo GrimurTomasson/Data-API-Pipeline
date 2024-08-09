@@ -45,9 +45,9 @@ class Latest:
     def snapshot (self):
         """Running dbt to create type-2 snapshots of current data"""
         
-        snapshotDatabase = Config['history']['snapshot-database'] if 'history' in Config._config and 'snapshot-database' in Config['history'] else None
+        snapshotDatabase = Config['history']['type-2']['history-database'] if 'history' in Config._config and 'type-2' in Config['history'] and 'history-database' in Config['history']['type-2'] else None
         if snapshotDatabase is None:
-            Logger.debug (Pretty.assemble_simple (f"No history->snapshot-database in config!"))    
+            Logger.debug (Pretty.assemble_simple (f"No history->type-2->history-database in config!"))    
             return
         operation = ["dbt", "snapshot", "--fail-fast"] # Ath, við notum ekki auka params hér!
         dbtOperation = Utils.add_dbt_profile_location (operation) 
