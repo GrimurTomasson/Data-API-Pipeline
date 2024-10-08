@@ -298,6 +298,7 @@ class DataHealthReport: # Main class
             database = manifestJson['nodes'][nodeKey]["database"]
             sql_filename = manifestJson['nodes'][nodeKey]["path"]            
             query_path = manifestJson['nodes'][nodeKey]["compiled_path"]
+            sql = 'Not found!'
 
             if 'compiled_code' in manifestJson['nodes'][nodeKey]:
                 sql = manifestJson['nodes'][nodeKey]["compiled_code"]
