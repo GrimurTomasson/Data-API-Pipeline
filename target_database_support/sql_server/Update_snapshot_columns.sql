@@ -1,7 +1,7 @@
 -- breytilegt
-DECLARE @public_db nvarchar(100) = '[SFS-API]'
-DECLARE @snapshot_db nvarchar(100) = '[SFS-API-PRIVATE]'
-DECLARE @relation nvarchar(100) = 'adili_v1' 
+DECLARE @public_db nvarchar(100) = '[VEL-API]'
+DECLARE @snapshot_db nvarchar(100) = '[VEL-API-PRIVATE]'
+DECLARE @relation nvarchar(100) = 'umsokn_husnaedi' 
 
 -- mögulega breytilegt
 DECLARE @source_schema nvarchar(100) = 'Nustada' 
@@ -11,9 +11,9 @@ DECLARE @snapshot_schema nvarchar(100) = 'dbt_snapshots'
 DECLARE @temp_snapshot_new nvarchar(100) = @relation + '_new'
 DECLARE @temp_snapshot_old nvarchar(100) = @relation + '_old'
 
-DECLARE @column_list nvarchar(500)
+DECLARE @column_list nvarchar(2000)
 DECLARE @sql nvarchar(max)
-DECLARE @out_param nvarchar(250) = '@column_list_out nvarchar(500) OUTPUT'
+DECLARE @out_param nvarchar(2000) = '@column_list_out nvarchar(2000) OUTPUT'
 
 -- Sækjum dálkalista með nýjum dálkum
 SET @sql = 'WITH missing_columns AS (
