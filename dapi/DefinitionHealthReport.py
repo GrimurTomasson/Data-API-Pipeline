@@ -89,6 +89,9 @@ class DefinitionHealthReport:
         return Error (schemaName, relationName, columnName, 'Skjölun vantar!')
 
     def __check_for_concept_overwrite (self, schemaName, relationName, columnName, column) -> Concept:
+        # Valkvæmt
+        if 'documentation' in Config._config and 'definition-health-report' in Config['documentation'] and 'concept-definition-schemas' in Config['documentation']['definition-health-report'] and schemaName not in Config['documentation']['definition-health-report']['concept-definition-schemas']:
+            return None
         if len (column['description']) > 0 and 'glossary_info' in column and 'description' in column['glossary_info'] and len (column['glossary_info']['description']) > 0:
             return Concept (schemaName, relationName, columnName, column['glossary_info']['name'])
         return None
@@ -107,6 +110,10 @@ class DefinitionHealthReport:
         return None
     
     def __check_for_column_test_coverage_error (self, database, schema, relation, column) -> Error:
+        # valkvæmt
+        if 'documentation' in Config._config and 'definition-health-report' in Config['documentation'] and 'test-coverage-schemas' in Config['documentation']['definition-health-report'] and schema not in Config['documentation']['definition-health-report']['test-coverage-schemas']:
+            return None
+        
         coverage = 0
         try:
             coverage = self._columnTestMap[database][schema][relation][column]
