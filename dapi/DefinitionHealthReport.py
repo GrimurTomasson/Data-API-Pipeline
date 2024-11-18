@@ -97,8 +97,8 @@ class DefinitionHealthReport:
         if 'glossary_info' not in column or 'data_type' not in column['glossary_info'] or len (column['glossary_info']['data_type']) == 0: # Ekki hugtak úr CG/DD
             return None
 
-        glossaryType = column['glossary_info']['data_type']
-        databaseType = column['database_info']['type_name'] if 'database_info' in column and 'type_name' in column['database_info'] else 'UNKNOWN'
+        glossaryType = column['glossary_info']['data_type'].lower()
+        databaseType = column['database_info']['type_name'].lower() if 'database_info' in column and 'type_name' in column['database_info'] else 'UNKNOWN'
         
         if glossaryType != databaseType:
             return Error (schemaName, relationName, columnName, f"Gagnatýpa í skilgreiningu hugtaks: {glossaryType} - Gagnatýpa í grunni: {databaseType}")
@@ -266,16 +266,16 @@ class DefinitionHealthReport:
             if node["resource_type"] != "test":
                 continue
 
-            print (node["name"])
+            # print (node["name"])
             
             database = node["database"]
             relation_name = self.__get_test_relation_name (node)
             schema_name = self.__get_test_schema_name (database, relation_name, node)
             column_name = node["column_name"] # multi-column tests at least have None as a value.
 
-            print (f"   {relation_name}")
-            print (f"   {schema_name}")
-            print (f"   {column_name}")
+            if database is None or schema_name is None or relation_name is None:
+                continue
+                # Log?
             
             if column_name is not None: 
                 self.__init_dictionary_map (columnTestMap, [database, schema_name, relation_name, column_name], 0)
