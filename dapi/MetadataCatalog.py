@@ -106,7 +106,8 @@ class MetadataCatalog:
                 
                 message = f" - {schemaName}.{tableName}.{columnName}"
                 try:
-                    glossaryData = self._conceptGlossary.get_glossary_column_data (schemaName, tableName, columnName).as_dictionary()
+                    workingColumnName = "id" if columnName.endswith ("_id") else columnName # Við viljum ekki þurfa að yfirskrifa DD fyrir alla FK.
+                    glossaryData = self._conceptGlossary.get_glossary_column_data (schemaName, tableName, workingColumnName).as_dictionary()
                     column['glossary_info'] = glossaryData
                     Logger.debug (Pretty.assemble (value=f"Yes{message}", tabCount=Pretty.Indent+3))
                 except Exception as error:
