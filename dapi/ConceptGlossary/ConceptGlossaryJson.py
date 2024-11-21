@@ -10,6 +10,7 @@ from ..Shared.Decorators import post_execution_output
 
 
 class ConceptGlossaryJson (ConceptGlossary):    
+    filename = "concept_glossary.json" # Setja í config?
     
     def get_glossary_column_data (self, schemaName, tableName, columnName) -> ConceptGlossaryDefinition:
         if not hasattr (ConceptGlossaryJson, '_glossary'):
@@ -20,7 +21,8 @@ class ConceptGlossaryJson (ConceptGlossary):
     def load_glossary_data (self):
         ConceptGlossaryJson._glossary = {}
 
-        concept_glossary_filename =  os.path.join (Config.workingDirectory, "concept_glossary.json") # Setja í config?
+        relative_path = Config['concept-glossary']['relative-path'] if 'concept-glossary' in Config._config and 'relative-path' in Config['concept-glossary'] else ''
+        concept_glossary_filename =  os.path.join (Config.workingDirectory, relative_path, ConceptGlossaryJson.filename) 
         Logger.debug (Pretty.assemble_simple (f"Concept glossary file: {concept_glossary_filename}"))
 
         with open (concept_glossary_filename, encoding="utf-8") as json_file:
