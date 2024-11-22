@@ -28,7 +28,7 @@ class ConceptGlossaryJson (ConceptGlossary):
         with open (concept_glossary_filename, encoding="utf-8") as json_file:
             enrichedCatalogJson = json.load(json_file)
             for concept in enrichedCatalogJson: # Get rid of the header
-                max_len = int (concept['max_length'] if len (concept['max_length']) > 0 else -1)
+                max_len = int (concept['max_length'] if 'max_length' in concept else -1)
                 ConceptGlossaryJson._glossary[concept['column_name']] = ConceptGlossaryDefinition (concept['column_name'], concept['description'], concept['data_type'], max_len)
                 
         Logger.debug (Pretty.assemble_simple (f"Number of concept glossary entries: {len (ConceptGlossaryJson._glossary)}"))
