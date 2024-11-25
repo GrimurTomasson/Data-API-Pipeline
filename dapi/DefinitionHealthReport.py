@@ -92,7 +92,7 @@ class DefinitionHealthReport:
         # Valkvæmt
         if 'documentation' in Config._config and 'definition-health-report' in Config['documentation'] and 'concept-definition-schemas' in Config['documentation']['definition-health-report'] and schemaName not in Config['documentation']['definition-health-report']['concept-definition-schemas']:
             return None
-        if len (column['description']) > 0 and 'glossary_info' in column and 'description' in column['glossary_info'] and len (column['glossary_info']['description']) > 0:
+        if len (column['description']) > 0 and 'glossary_info' in column and 'description' in column['glossary_info'] and len (column['glossary_info']['description']) > 0 and column['glossary_info']['name'] != 'id': # Það er eðlilegt að taka fram hvert lykill vísar, ekki yfirskrift per se
             return Concept (schemaName, relationName, columnName, column['glossary_info']['name'])
         return None
 
