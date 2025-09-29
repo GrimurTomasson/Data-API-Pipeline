@@ -1,0 +1,25 @@
+-- Mismunur á lyklanlegum töflum, fjöldatölur og sértæku settin.
+
+DECLARE @first_schema nvarchar(250) = 'hafdis'
+DECLARE @second_schema nvarchar(250) = 'mentor'
+DECLARE @relation_name nvarchar(250) = 'student_int'
+DECLARE @key_column nvarchar(250) = 'kennitala' -- Ef þetta er fjöldálka lykill þarf að breyta fyrirspurninni handvirkt
+
+PRINT ('
+-- Fjöldatölur
+SELECT
+    ''' + @relation_name + ''' AS vensl
+    ,(SELECT COUNT(1) FROM ' + @first_schema + '.' + @relation_name + ') AS ' + @first_schema + '_fjoldi
+    ,(SELECT COUNT(1) FROM ' + @second_schema + '.' + @relation_name + ') AS ' + @second_schema + '_fjoldi
+    ,(SELECT COUNT(DISTINCT f.' + @key_column + ') FROM ' + @first_schema + '.' + @relation_name + ' f WHERE NOT EXISTS (SELECT 1 FROM ' + @second_schema + '.' + @relation_name + ' s WHERE s.' + @key_column + ' = f.' + @key_column + ') ) AS ' + @first_schema + '_sertaekt
+    ,(SELECT COUNT(DISTINCT f.' + @key_column + ') FROM ' + @second_schema + '.' + @relation_name + ' f WHERE NOT EXISTS (SELECT 1 FROM ' + @first_schema + '.' + @relation_name + ' s WHERE s.' + @key_column + ' = f.' + @key_column + ') ) AS ' + @second_schema + '_sertaekt'
+)
+PRINT ('')
+
+PRINT ('-- Sértækt í fyrri venslum')
+PRINT ('SELECT * FROM ' + @first_schema + '.' + @relation_name + ' f WHERE NOT EXISTS (SELECT 1 FROM ' + @second_schema + '.' + @relation_name + ' s WHERE s.' + @key_column + ' = f.' + @key_column + ')')
+PRINT ('')
+PRINT ('-- Sértækt í seinni venslum')
+PRINT ('SELECT * FROM ' + @second_schema + '.' + @relation_name + ' f WHERE NOT EXISTS (SELECT 1 FROM ' + @first_schema + '.' + @relation_name + ' s WHERE s.' + @key_column + ' = f.' + @key_column + ')
+
+')

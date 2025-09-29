@@ -1,0 +1,15 @@
+-- -1 í strengjalengd er MAX, sem er mjög óæskilegt.
+select 
+    'SELECT c.TABLE_CATALOG, c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME, c.data_type FROM [' + s.name + '].INFORMATION_SCHEMA.COLUMNS c WHERE c.DATA_TYPE IN (''varchar'', ''nvarchar'', ''char'', ''ncar'') AND c.CHARACTER_MAXIMUM_LENGTH = -1 ORDER BY 1,2,3,4'
+--    + CHAR(10) + 'UNION ALL'
+from 
+    sys.databases s
+where 
+    s.name like '%API'
+    OR s.name in ('voruhus', 'greining')
+ORDER BY
+    s.name
+
+-- Ath. það þarf að uppfæra sögutöflur eftir að vandamálin í Nustada hafa verið leiðrétt. 
+    -- Keyrið snapshot_data_type_corrections 
+

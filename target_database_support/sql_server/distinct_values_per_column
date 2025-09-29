@@ -1,0 +1,38 @@
+DECLARE @schema NVARCHAR(100) = 'Snapshot'
+DECLARE @relation NVARCHAR(100) = 'manumsokn'
+
+DECLARE @command VARCHAR (MAX) = 'WITH gogn AS (SELECT '
+SET @command = @command + (
+    SELECT
+        'COUNT (DISTINCT ' + STRING_AGG (column_name + ') AS ' + column_name, ', COUNT (DISTINCT ') WITHIN GROUP (ORDER BY ordinal_position)
+    FROM
+        INFORMATION_SCHEMA.COLUMNS
+    WHERE 
+        table_schema = @schema
+        AND table_name = @relation
+)
+SET @command = @command + ' FROM [' + @schema + '].[' + @relation + ']), gogn_2 AS (SELECT dalkur, einkvaem_gildi FROM gogn UNPIVOT (einkvaem_gildi FOR dalkur IN (' 
+SET @command = @command + (
+    SELECT
+        '[' + STRING_AGG (column_name, '],[') WITHIN GROUP (ORDER BY ordinal_position) + '])) u) '
+    FROM
+        INFORMATION_SCHEMA.COLUMNS
+    WHERE 
+        table_schema = @schema
+        AND table_name = @relation
+)
+SET @command = @command + 'SELECT * FROM gogn_2 ORDER BY einkvaem_gildi -- SELECT ''['' + STRING_AGG (dalkur, ''], ['') WITHIN GROUP (ORDER BY einkvaem_gildi) + '']'' + AS order_clause FROM gogn_2'
+
+SELECT @command
+
+-- COMMAND to run
+WITH gogn AS (SELECT COUNT (DISTINCT sogu_dagur) AS sogu_dagur, COUNT (DISTINCT id) AS id, COUNT (DISTINCT kennitala) AS kennitala, COUNT (DISTINCT creation_date) AS creation_date, COUNT (DISTINCT date_begin) AS date_begin, COUNT (DISTINCT amount_hb) AS amount_hb, COUNT (DISTINCT amount_sh) AS amount_sh, COUNT (DISTINCT doc_description_start) AS doc_description_start, COUNT (DISTINCT doc_description_end) AS doc_description_end, COUNT (DISTINCT doc_initial_division) AS doc_initial_division, COUNT (DISTINCT greiðslubyrði) AS greiðslubyrði, COUNT (DISTINCT miðstöð_núna) AS miðstöð_núna, COUNT (DISTINCT owner_soc_sec_num) AS owner_soc_sec_num, COUNT (DISTINCT vmst_hus_fastaNumer) AS vmst_hus_fastaNumer, COUNT (DISTINCT vmst_lei_kennitala) AS vmst_lei_kennitala, COUNT (DISTINCT vmst_sam_leigufjarhaed) AS vmst_sam_leigufjarhaed, COUNT (DISTINCT vmst_greitt_til_leigusala) AS vmst_greitt_til_leigusala, COUNT (DISTINCT vmst_ums_heimili) AS vmst_ums_heimili, COUNT (DISTINCT vmst_ums_nr) AS vmst_ums_nr, COUNT (DISTINCT vmst_ums_stada_heiti) AS vmst_ums_stada_heiti, COUNT (DISTINCT vmst_utr_fjoldi_heimilis) AS vmst_utr_fjoldi_heimilis, COUNT (DISTINCT vmst_utr_heildar_eignir) AS vmst_utr_heildar_eignir, COUNT (DISTINCT vmst_utr_heildar_tekjur) AS vmst_utr_heildar_tekjur, COUNT (DISTINCT vmst_utr_heim_eignir) AS vmst_utr_heim_eignir, COUNT (DISTINCT vmst_utr_heim_tekjur) AS vmst_utr_heim_tekjur, COUNT (DISTINCT vmst_utr_leifufjarhaed) AS vmst_utr_leifufjarhaed, COUNT (DISTINCT vmst_utr_stadfestur) AS vmst_utr_stadfestur FROM [Snapshot].[manumsokn]), gogn_2 AS (SELECT dalkur, einkvaem_gildi FROM gogn UNPIVOT (einkvaem_gildi FOR dalkur IN ([sogu_dagur],[id],[kennitala],[creation_date],[date_begin],[amount_hb],[amount_sh],[doc_description_start],[doc_description_end],[doc_initial_division],[greiðslubyrði],[miðstöð_núna],[owner_soc_sec_num],[vmst_hus_fastaNumer],[vmst_lei_kennitala],[vmst_sam_leigufjarhaed],[vmst_greitt_til_leigusala],[vmst_ums_heimili],[vmst_ums_nr],[vmst_ums_stada_heiti],[vmst_utr_fjoldi_heimilis],[vmst_utr_heildar_eignir],[vmst_utr_heildar_tekjur],[vmst_utr_heim_eignir],[vmst_utr_heim_tekjur],[vmst_utr_leifufjarhaed],[vmst_utr_stadfestur])) u) 
+--SELECT * FROM gogn_2 ORDER BY einkvaem_gildi
+SELECT '[' + STRING_AGG (dalkur, '], [') WITHIN GROUP (ORDER BY einkvaem_gildi) + ']' AS order_clause FROM gogn_2
+
+-- cci update
+/*
+CREATE CLUSTERED COLUMNSTORE INDEX snapshot_manumsokn_cci ON Snapshot.manumsokn 
+ORDER ([vmst_greitt_til_leigusala], [vmst_utr_stadfestur], [miðstöð_núna], [doc_initial_division], [vmst_ums_stada_heiti], [vmst_utr_heim_eignir], [vmst_utr_fjoldi_heimilis], [vmst_utr_heim_tekjur], [sogu_dagur], [doc_description_end], [date_begin], [doc_description_start], [vmst_sam_leigufjarhaed], [vmst_lei_kennitala], [vmst_ums_heimili], [owner_soc_sec_num], [vmst_hus_fastaNumer], [kennitala], [vmst_ums_nr], [vmst_utr_heildar_eignir], [amount_hb], [amount_sh], [vmst_utr_heildar_tekjur], [vmst_utr_leifufjarhaed], [greiðslubyrði], [creation_date], [id] )
+WITH (DROP_EXISTING=ON, ONLINE=ON, MAXDOP=1, DATA_COMPRESSION=COLUMNSTORE_ARCHIVE, COMPRESSION_DELAY=0);
+*/

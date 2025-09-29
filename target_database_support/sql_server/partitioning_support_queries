@@ -1,0 +1,113 @@
+/*
+SELECT
+    DATEPART (YEAR, saga_gildir_fra) AS ar
+    , COUNT (1) AS fjoldi
+FROM
+    master_api_saga.maeligildi_tala_t2
+GROUP BY
+    DATEPART (YEAR, saga_gildir_fra)
+*/
+-- 6.235.061
+
+--SET STATISTICS TIME ON
+
+-- SELECT COUNT(*) FROM master_api_saga.maeligildi_tala_t2 -- 8.043.977
+
+
+-- Input parameters
+-- DECLARE @database_name NVARCHAR(128) = 'VORUHUS-PRIVATE'
+DECLARE @schema_name NVARCHAR(128) = 'snapshot'
+DECLARE @table_name nvarchar(128) = 'maeligildi_tala_v1'
+DECLARE @column_name nvarchar(128) = 'sogu_dagur'
+
+DECLARE @qualified_object_prefix nvarchar(384) = @schema_name + '_' + @table_name
+DECLARE @qualified_table_name nvarchar(384) = '[' + @schema_name + '].[' + @table_name + ']'
+
+-- Ef uppskiptingar fall er ekki til
+DECLARE @partition_function_name nvarchar(300) = @qualified_object_prefix + '_pf_ar' 
+IF NOT EXISTS (select 1 from sys.partition_functions where name = @partition_function_name) BEGIN
+    DECLARE @partition_function_command nvarchar(max) = 
+        N'CREATE PARTITION FUNCTION ' + @partition_function_name + ' (date) 
+        AS RANGE RIGHT FOR VALUES (';  
+    DECLARE @i date = '20000101';  -- Það eru til eldri gildi, en í litlu magni, enda í einni partition
+    WHILE @i < DATEADD (YEAR, 10, GETDATE ())  BEGIN  
+        SET @partition_function_command += '''' + CAST(@i as Nvarchar(10)) + '''' + N', ';  
+        SET @i = DATEADD(YEAR, 1, @i);  
+    END  
+    SET @partition_function_command += '''' + CAST(@i as nvarchar(10))+ '''' + N');';  
+    SELECT @partition_function_command
+    EXEC sp_executesql @partition_function_command;  
+END
+
+-- Ef skema fyrir uppskiptingu er ekki til
+DECLARE @partition_scheme_name nvarchar(300) = @qualified_object_prefix + '_ps_ar'
+IF NOT EXISTS (SELECT 1 FROM sys.partition_schemes WHERE name = @partition_scheme_name) BEGIN
+    DECLARE @partition_scheme_command nvarchar(max) = 'CREATE PARTITION SCHEME ' + @partition_scheme_name + ' AS PARTITION ' + @partition_function_name + ' ALL TO ([PRIMARY])'
+    SELECT @partition_scheme_command
+    EXEC sp_executesql @partition_scheme_command
+END
+
+-- Vísar
+DECLARE @columnstore_index_postfix nvarchar(20) = '_partitioned_cci'
+DECLARE @index_name nvarchar(128) = @qualified_object_prefix + @columnstore_index_postfix
+
+-- Við þurfum að henda öllum index'um á töflunni, nema að til sé partitioned columnstore index (mynstur heitis er nóg)
+DECLARE @old_cci_index nvarchar(128) = (SELECT i.name FROM sys.indexes i JOIN sys.objects o ON o.object_id = i.object_id JOIN sys.schemas s ON s.schema_id = o.schema_id WHERE s.name = @schema_name AND o.name = @table_name AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = @index_name)) -- Gera þetta í loop í dbt!
+IF LEN (@old_cci_index) > 0 BEGIN
+    DECLARE @drop_old_cci_index_command nvarchar(max) = 'DROP INDEX ' + @qualified_table_name + '.' + @old_cci_index 
+    SELECT @drop_old_cci_index_command
+    EXEC sp_executesql @drop_old_cci_index_command
+END
+
+-- Ef keyrslan klikkaði getum við átt index með réttu nafni en ekki columnstore
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = @index_name AND type_desc != 'CLUSTERED COLUMNSTORE') BEGIN
+    DECLARE @drop_current_index nvarchar(max) = 'DROP INDEX ' + @qualified_table_name + '.' + @index_name
+    EXEC sp_executesql @drop_current_index
+
+    -- Búum til raðaðan vísi sem er ekki brotinn upp í dálka (ekki columnar) ef hann er ekki til fyrir
+    DECLARE @create_index_noncol_command nvarchar(max) = 'CREATE CLUSTERED INDEX ' + @index_name + ' ON ' + @qualified_table_name + ' (' + @column_name + ') ON ' + @partition_scheme_name + ' (' + @column_name + ')'
+    SELECT @create_index_noncol_command
+    EXEC sp_executesql @create_index_noncol_command
+END
+
+-- Búum til dálka uppskiptan vísi ef hann er ekki til fyrir
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = @index_name AND type_desc = 'CLUSTERED COLUMNSTORE') BEGIN
+    DECLARE @create_index_columnar_command NVARCHAR(max) = 'CREATE CLUSTERED COLUMNSTORE INDEX ' + @index_name + ' ON ' + @qualified_table_name + ' WITH (DROP_EXISTING=ON, ONLINE=ON, MAXDOP=1, COMPRESSION_DELAY=0) ON ' + @partition_scheme_name + ' (' + @column_name + ')'
+    SELECT @create_index_columnar_command
+    EXEC sp_executesql @create_index_columnar_command
+END
+
+
+/*
+DECLARE @schema_name NVARCHAR(128) = 'master_api_saga'
+DECLARE @table_name nvarchar(128) = 'maeligildi_tala_t2'
+
+SELECT i.name FROM sys.indexes i JOIN sys.tables t ON t.object_id = i.object_id JOIN sys.schemas s ON s.schema_id = t.schema_id WHERE s.name = 'master_api_saga' AND t.name = 'maeligildi_tala_t2' 
+
+ select * from sys.tables
+
+
+
+select * from sys.indexes
+
+SELECT * FROM sys.partition_functions
+drop partition function master_api_saga_maeligildi_tala_t2_pf_ar
+SELECT * FROM sys.partition_schemes
+drop partition scheme master_api_saga_maeligildi_tala_t2_ps_ar
+
+SELECT TOP 100 * FROM master_api_saga.maeligildi_tala_t2
+*/
+/*
+SELECT
+    COUNT (1) AS fjoldi
+FROM
+    sys.tables t
+    JOIN sys.schemas s ON s.schema_id = t.schema_id
+    JOIN sys.partitions p ON p.object_id = t.object_id
+WHERE
+    s.name = 'master_api_saga'
+    --AND t.name = 'adili_heimili_t2'
+    AND t.name = 'stadfang_v2'
+*/  
+
+-- Snapshot	adili_hlutverk_v1	snapshot_adili_hlutverk_v1_cci
