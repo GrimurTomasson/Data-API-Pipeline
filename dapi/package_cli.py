@@ -48,6 +48,7 @@ The only parameter for operations is en environment file, which is optional.
 9.  definition-health-report     Generates a markdown API definition health report, using the enriched metadata and publishes it.
 10. documentation                Generates markdown end-user documentation and publishes it.
 11. patch-dbt                    Patch dbt bugs, empty if the current version pair has no problems.
+12. snapshot                     Runs dbt snapshot in the right working directory.
                                 ''')
 argParser.add_argument ('-e', '--environment', required=False, help='Select an environment file to load.')
 argParser.add_argument('-d', '--dbt_run_parameters', required=False, type=str, help='Add any dbt parameters for the run command.')
@@ -99,5 +100,7 @@ def main ():
         Documentation ().generate () # Skrifar skrá: 7
     elif options.operation == 'patch-dbt':
         PatchDbt ().patch()
+    elif options.operation == 'snapshot':
+        Latest ().snapshot ()
     else:
         argParser.print_help()
