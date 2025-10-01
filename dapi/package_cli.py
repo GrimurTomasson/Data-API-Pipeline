@@ -30,7 +30,7 @@ argParser = argparse.ArgumentParser (
     formatter_class=argparse.RawTextHelpFormatter)
 
 argParser.add_argument ('operation', 
-                        choices=['build', 'build-data', 'cleanup', 'dependencies', 'refresh', 'test', 'history-type2', 'history-snapshot', 'data-health-report', 'enrich-metadata', 'definition-health-report', 'documentation', 'patch-dbt'], 
+                        choices=['build', 'build-data', 'cleanup', 'dependencies', 'refresh', 'test', 'history-type2', 'history-snapshot', 'data-health-report', 'enrich-metadata', 'definition-health-report', 'documentation', 'patch-dbt', 'snapshot'], 
                         help='''
 Aside from build & cleanup, the following steps require that previous steps, from cleanup forward have been run. 
 The steps generate data files, so a single step can be run multiple times as long as those files exist.
