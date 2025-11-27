@@ -101,7 +101,7 @@ gogn_3 AS (
         ,CASE WHEN s.object_type = 'TABLE' AND s.structure = 'CLUSTERED COLUMNSTORE' THEN
             s.use_database + 'ALTER INDEX ' + object_name + ' ON ' + qualified_table_name + ' REORGANIZE WITH (COMPRESS_ALL_ROW_GROUPS = ON) ' + space_used_comment
         ELSE NULL END AS reorganize_command
-        ,CASE WHEN s.object_type = 'TABLE' AND s.structure = 'CLUSTERED COLUMNSTORE' AND s.data_compression != 'COLUMNSTORE_ARCHIVE' THEN -- Add ORDER to this when we upgrade to SQL Server 2022. See: distinct_values_per_column, gives us the correct column list.
+        ,CASE WHEN s.object_type = 'TABLE' AND s.structure = 'CLUSTERED COLUMNSTORE' AND COALESCE (s.data_compression, 'X') != 'COLUMNSTORE_ARCHIVE' THEN -- Add ORDER to this when we upgrade to SQL Server 2022. See: distinct_values_per_column, gives us the correct column list.
             s.use_database + 'CREATE CLUSTERED COLUMNSTORE INDEX ' + object_name + ' ON ' + qualified_table_name + ' WITH (DROP_EXISTING=ON, ONLINE=ON, MAXDOP=1, DATA_COMPRESSION=COLUMNSTORE_ARCHIVE, COMPRESSION_DELAY=0) ' + space_used_comment 
         ELSE NULL END AS compression_command
     FROM
