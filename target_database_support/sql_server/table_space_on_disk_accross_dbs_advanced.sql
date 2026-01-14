@@ -119,7 +119,7 @@ SELECT
     ,s.[data_compression]
     ,s.total_space_MB
     ,s.total_space_GB
-    ,CAST (s.[rows] / s.total_space_mb AS INT) AS rows_per_MB
+    ,CASE WHEN s.total_space_mb > 0 THEN CAST (s.[rows] / s.total_space_mb AS INT) ELSE NULL END AS rows_per_MB
     ,s.used_space_MB
     ,s.unused_space_MB
     ,s.conversion_command
