@@ -33,6 +33,7 @@ SELECT
 	,log_file_size_gb
 	,CAST (CAST (total_size_gb * 100 AS numeric(10,1)) / total_server_size_gb AS numeric(10,1)) AS percentage_of_total_server_size
 	,total_server_size_gb
+    ,'USE [' + database_name + ']' + CHAR(10) + 'GO' + CHAR(10) + 'DBCC SHRINKDATABASE(N''' + database_name + ''')' + CHAR(10) + 'GO' AS shrink_command
 FROM 
 	filesize_2
 ORDER BY
